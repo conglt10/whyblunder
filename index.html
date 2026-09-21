@@ -2442,6 +2442,41 @@
         .highlight-last-coach {
             background-color: rgba(246, 228, 92, 0.45) !important;
         }
+        .highlight-selected {
+            background-color: rgba(246, 228, 92, 0.6) !important;
+        }
+        .highlight-dest {
+            position: relative;
+            cursor: pointer;
+        }
+        .highlight-dest::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32%;
+            height: 32%;
+            background: rgba(20, 85, 30, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .highlight-dest-capture::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            box-sizing: border-box;
+            background: transparent;
+            border: 4px solid rgba(20, 85, 30, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -3087,7 +3122,78 @@
             const mobileMovesOffcanvasBody = document.getElementById('mobileMovesOffcanvasBody');
             const mobileSheetMoveCount = document.getElementById('mobileSheetMoveCount');
 
-            // Coach Drag & Drop Handlers
+            // Coach Drag & Drop / Click-to-Move Handlers
+            let coachSelectedSquare = null;
+            let lastDropClickTime = 0;
+            let lastDropSquare = null;
+
+            function clearClickMoveHighlights() {
+                coachSelectedSquare = null;
+                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                    sq.classList.remove('highlight-selected', 'highlight-dest', 'highlight-dest-capture');
+                });
+            }
+
+            function selectCoachSquare(square) {
+                clearClickMoveHighlights();
+                if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+
+                coachSelectedSquare = square;
+                const selEl = document.querySelector(`#board .square-${square}`);
+                if (selEl) selEl.classList.add('highlight-selected');
+
+                const moves = coachManager.chess.moves({ square: square, verbose: true });
+                moves.forEach(m => {
+                    const destEl = document.querySelector(`#board .square-${m.to}`);
+                    if (destEl) {
+                        if (m.captured) {
+                            destEl.classList.add('highlight-dest-capture');
+                        } else {
+                            destEl.classList.add('highlight-dest');
+                        }
+                    }
+                });
+            }
+
+            function handleCoachSquareClick(square) {
+                if (currentAppMode !== 'coach') return;
+                if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+
+                const piece = coachManager.chess.get(square);
+                const isOwnPiece = piece && piece.color === coachManager.playerColor;
+
+                // 1. Nothing selected yet
+                if (!coachSelectedSquare) {
+                    if (isOwnPiece) {
+                        selectCoachSquare(square);
+                    }
+                    return;
+                }
+
+                // 2. Clicked currently selected square again -> deselect
+                if (square === coachSelectedSquare) {
+                    clearClickMoveHighlights();
+                    return;
+                }
+
+                // 3. Clicked another own piece -> change selection
+                if (isOwnPiece) {
+                    selectCoachSquare(square);
+                    return;
+                }
+
+                // 4. Clicked destination square -> check legality
+                const legalMoves = coachManager.chess.moves({ square: coachSelectedSquare, verbose: true });
+                const match = legalMoves.find(m => m.to === square);
+                if (match) {
+                    const fromSq = coachSelectedSquare;
+                    clearClickMoveHighlights();
+                    executeCoachUserMove({ from: fromSq, to: square, promotion: 'q' });
+                } else {
+                    clearClickMoveHighlights();
+                }
+            }
+
             function handleCoachDragStart(source, piece, position, orientation) {
                 if (!coachManager || coachManager.isGameOver) return false;
                 if (!coachManager.isPlayerTurn()) return false;
@@ -3096,18 +3202,25 @@
                     (pCol === 'b' && piece.search(/^w/) !== -1)) {
                     return false;
                 }
+                clearClickMoveHighlights();
                 return true;
             }
 
             function handleCoachDrop(source, target) {
                 if (!coachManager || coachManager.isGameOver) return 'snapback';
-                if (source === target) return 'snapback';
+                if (source === target) {
+                    lastDropClickTime = Date.now();
+                    lastDropSquare = source;
+                    handleCoachSquareClick(source);
+                    return 'snapback';
+                }
 
                 // Verify move legality with chess.js
                 const testChess = new Chess(coachManager.chess.fen());
                 const m = testChess.move({ from: source, to: target, promotion: 'q' });
                 if (!m) return 'snapback';
 
+                clearClickMoveHighlights();
                 // Execute valid player move asynchronously
                 executeCoachUserMove({ from: source, to: target, promotion: 'q' });
                 return;
@@ -3143,6 +3256,36 @@
                 }
             };
             const board = Chessboard('board', boardConfig);
+
+            // Click-to-Move event listener on the board
+            const boardElement = document.getElementById('board');
+            if (boardElement) {
+                boardElement.addEventListener('click', function(e) {
+                    if (currentAppMode !== 'coach') return;
+                    if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+
+                    const sqEl = e.target.closest('.square-55d63');
+                    if (!sqEl) {
+                        clearClickMoveHighlights();
+                        return;
+                    }
+                    const square = sqEl.getAttribute('data-square');
+                    if (!square) return;
+
+                    if (square === lastDropSquare && Date.now() - lastDropClickTime < 250) {
+                        return;
+                    }
+                    handleCoachSquareClick(square);
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (currentAppMode === 'coach' && coachSelectedSquare) {
+                    if (!e.target.closest('#board')) {
+                        clearClickMoveHighlights();
+                    }
+                }
+            });
 
             function updateSvgDimensions() {
                 const boardEl = document.getElementById('board');
@@ -6049,6 +6192,9 @@
             }
 
             function clearHintHighlights() {
+                if (typeof clearClickMoveHighlights === 'function') {
+                    clearClickMoveHighlights();
+                }
                 document.querySelectorAll('#board .square-55d63').forEach(sq => {
                     sq.classList.remove('highlight-hint');
                 });
@@ -6122,10 +6268,8 @@
                 }
 
                 // Calculate material difference
-                if (typeof ChessEvaluator !== 'undefined' && ChessEvaluator.calculateMaterialDifference) {
-                    const mat = ChessEvaluator.calculateMaterialDifference(coachManager.chess.fen());
-                    renderMaterialDisplay(topMaterialDisplay, isPlayerWhite ? mat.blackPieces : mat.whitePieces, isPlayerWhite ? -mat.scoreDiff : mat.scoreDiff);
-                    renderMaterialDisplay(bottomMaterialDisplay, isPlayerWhite ? mat.whitePieces : mat.blackPieces, isPlayerWhite ? mat.scoreDiff : -mat.scoreDiff);
+                if (typeof updateMaterialDifference === 'function') {
+                    updateMaterialDifference(coachManager.chess.fen());
                 }
             }
 
@@ -6144,6 +6288,9 @@
             async function executeCoachUserMove(moveInput) {
                 if (!coachManager || coachManager.isGameOver) return;
                 clearHintHighlights();
+                if (typeof clearClickMoveHighlights === 'function') {
+                    clearClickMoveHighlights();
+                }
                 highlightLastMove(moveInput.from, moveInput.to);
 
                 const userResult = await coachManager.handleUserMove(moveInput);
@@ -6152,6 +6299,7 @@
                     return;
                 }
 
+                board.position(coachManager.chess.fen());
                 playChessSound(userResult.move.captured ? 'capture' : 'move');
                 renderCoachDialogue();
                 renderCoachMoveSheet();
@@ -6198,7 +6346,13 @@
                     }
                 }
 
-                coachManager = new CoachManager({
+                const CoachManagerClass = (typeof CoachManager === 'function') ? CoachManager : (CoachManager && CoachManager.CoachManager);
+                if (!CoachManagerClass) {
+                    console.error("CoachManager class is not loaded");
+                    return;
+                }
+
+                coachManager = new CoachManagerClass({
                     personaId: selectedCoachPersona,
                     worker: coachWorker,
                     playerColor: selectedCoachColor
@@ -6213,6 +6367,9 @@
                 board.orientation(playerColor === 'w' ? 'white' : 'black');
                 board.position('start');
                 clearHintHighlights();
+                if (typeof clearClickMoveHighlights === 'function') {
+                    clearClickMoveHighlights();
+                }
                 highlightLastMove(null, null);
 
                 // Update UI persona details
@@ -6474,6 +6631,11 @@
 
             // Check URL for game on initial startup
             checkUrlForGame();
+
+            window.switchAppMode = switchAppMode;
+            window.startNewCoachGame = startNewCoachGame;
+            window.getCoachManager = () => coachManager;
+            window.getCurrentAppMode = () => currentAppMode;
 
             // Also re-check when URL hash changes
             window.addEventListener('hashchange', function() {

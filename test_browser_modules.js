@@ -923,6 +923,11 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('function switchAppMode('), "index.html must define switchAppMode");
     assert(indexContent.includes('function startNewCoachGame('), "index.html must define startNewCoachGame");
     assert(indexContent.includes('function executeCoachUserMove('), "index.html must define executeCoachUserMove");
+    assert(indexContent.includes('function handleCoachSquareClick('), "index.html must define handleCoachSquareClick for click-to-move");
+    assert(indexContent.includes('function selectCoachSquare('), "index.html must define selectCoachSquare for highlighting legal squares");
+    assert(indexContent.includes('.highlight-selected'), "index.html must define .highlight-selected CSS");
+    assert(indexContent.includes('.highlight-dest'), "index.html must define .highlight-dest CSS");
+    assert(!indexContent.includes('renderMaterialDisplay('), "index.html must not call undefined renderMaterialDisplay");
 
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");

@@ -8,7 +8,9 @@
     if (typeof module === 'object' && module.exports) {
         module.exports = factory();
     } else {
-        root.CoachManager = factory();
+        const exported = factory();
+        root.CoachManager = exported.CoachManager || exported;
+        root.COACH_PERSONAS = exported.COACH_PERSONAS;
     }
 }(typeof self !== 'undefined' ? self : this, function() {
     'use strict';
@@ -979,6 +981,9 @@
             return header.join('\n') + '\n\n' + this.chess.pgn();
         }
     }
+
+    CoachManager.COACH_PERSONAS = COACH_PERSONAS;
+    CoachManager.CoachManager = CoachManager;
 
     return {
         COACH_PERSONAS,
