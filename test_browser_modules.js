@@ -838,9 +838,10 @@ coach._configureWorkerElo();
 assert.strictEqual(mockWorker.options['UCI_LimitStrength'], 'true');
 assert.strictEqual(mockWorker.options['UCI_Elo'], '1600');
 
-// Test speech bubbles on startup
+// Test speech commentary on startup
 assert(coach.currentBubble1.length > 0, "Initial bubble1 should be present");
 assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
+assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
 
 // Test Player Move
 (async () => {
@@ -945,8 +946,7 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('id="tabModeAnalysis"'), "index.html must contain #tabModeAnalysis");
     assert(indexContent.includes('id="tabModeCoach"'), "index.html must contain #tabModeCoach");
     assert(indexContent.includes('id="colCoach"'), "index.html must contain #colCoach");
-    assert(indexContent.includes('id="coachBubble1"'), "index.html must contain #coachBubble1");
-    assert(indexContent.includes('id="coachBubble2"'), "index.html must contain #coachBubble2");
+    assert(indexContent.includes('id="coachBubble"'), "index.html must contain #coachBubble");
     assert(indexContent.includes('id="coachBlunderCard"'), "index.html must contain #coachBlunderCard");
     assert(indexContent.includes('id="btnCoachRetryMove"'), "index.html must contain #btnCoachRetryMove");
     assert(indexContent.includes('id="btnCoachContinueAnyway"'), "index.html must contain #btnCoachContinueAnyway");

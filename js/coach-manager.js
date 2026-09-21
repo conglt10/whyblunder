@@ -562,9 +562,14 @@
             this.lastMoveQuality = null;
             this.announcedOpening = false;
 
-            // Current speech bubbles
+            // Current speech commentary
             this.currentBubble1 = this.persona.voice.intro;
             this.currentBubble2 = "Make your opening move to get started!";
+            this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
+        }
+
+        getDialogue() {
+            return this.currentDialogue || this.currentBubble2 || this.currentBubble1 || "";
         }
 
         getPersona() {
@@ -578,6 +583,7 @@
                 if (this.moveHistory.length === 0) {
                     this.currentBubble1 = this.persona.voice.intro;
                     this.currentBubble2 = "Make your opening move to get started!";
+                    this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
                 }
                 this._configureWorkerElo();
             }
@@ -625,6 +631,7 @@
             this.currentBubble2 = (this.playerColor === 'w')
                 ? "Make your opening move to get started!"
                 : "I'll make the first move. Let's see what you've got!";
+            this.currentDialogue = `${this.persona.voice.intro} ${this.currentBubble2}`;
         }
 
         /**
@@ -824,12 +831,18 @@
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             }
 
-            if (this.isGameOver) {
-                bubble2 = this._getGameOverMessage();
-            }
-
             this.currentBubble1 = bubble1;
             this.currentBubble2 = bubble2;
+            if (challengeFeedback) {
+                this.currentDialogue = challengeFeedback.text;
+            } else if (isBlunder) {
+                this.currentDialogue = blunderAnalysis || (bestSan ? `That concedes material or leverage. A stronger alternative was ${bestSan}.` : "That move gives away an advantage. Look for a safer alternative!");
+            } else {
+                this.currentDialogue = bubble1;
+            }
+            if (this.isGameOver) {
+                this.currentDialogue = this._getGameOverMessage();
+            }
 
             const record = {
                 ply,
@@ -840,6 +853,7 @@
                 isPlayer: true,
                 bubble1,
                 bubble2,
+                dialogue: this.currentDialogue,
                 quality: classification.detailedQuality,
                 isBlunder,
                 blunderAnalysis,
@@ -852,6 +866,7 @@
                 move: legalMove,
                 bubble1,
                 bubble2,
+                dialogue: this.currentDialogue,
                 quality: classification,
                 isBlunder,
                 blunderAnalysis,
@@ -934,6 +949,7 @@
             }
 
             this.currentBubble2 = bubbles.bubble2;
+            this.currentDialogue = this.isGameOver ? this._getGameOverMessage() : bubbles.bubble2;
 
             const record = {
                 ply,
@@ -944,6 +960,7 @@
                 isPlayer: false,
                 bubble1: this.currentBubble1,
                 bubble2: this.currentBubble2,
+                dialogue: this.currentDialogue,
                 isChallenge
             };
             this.moveHistory.push(record);
@@ -953,6 +970,7 @@
                 move: executed,
                 bubble1: this.currentBubble1,
                 bubble2: this.currentBubble2,
+                dialogue: this.currentDialogue,
                 isChallenge,
                 challengeData,
                 isGameOver: this.isGameOver
@@ -1390,6 +1408,9 @@
             this.currentBubble2 = suggestedSan
                 ? `Take another look at the position. Consider moves like ${suggestedSan} instead!`
                 : "Take your time and search for a safer, more active continuation!";
+            this.currentDialogue = suggestedSan
+                ? `Good instinct to take that back! Consider moves like ${suggestedSan} instead.`
+                : "Good instinct to take that back! Take your time and search for a safer, more active continuation!";
             return true;
         }
 
@@ -1422,6 +1443,7 @@
 
             this.currentBubble1 = "Takeback granted! Let's try that position again.";
             this.currentBubble2 = "Take your time and look for the strongest continuation!";
+            this.currentDialogue = "Takeback granted! Let's try that position again. Take your time and look for the strongest continuation!";
             return true;
         }
 

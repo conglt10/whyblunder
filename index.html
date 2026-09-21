@@ -2313,10 +2313,10 @@
             background: #ffffff;
             color: #1a1a1a;
             border-radius: 12px;
-            padding: 9px 13px;
-            font-size: 0.82rem;
+            padding: 10px 14px;
+            font-size: 0.83rem;
             font-weight: 500;
-            line-height: 1.42;
+            line-height: 1.45;
             position: relative;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
             word-wrap: break-word;
@@ -2332,15 +2332,6 @@
             border-top: 5px solid transparent;
             border-bottom: 5px solid transparent;
             border-right: 7px solid #ffffff;
-        }
-        .coach-speech-bubble.bubble-thought {
-            background: #ffffff;
-            color: #181818;
-        }
-        .coach-speech-bubble.bubble-challenge {
-            background: #f8fafc;
-            color: #0f172a;
-            border-left: 3px solid var(--lic-blue);
         }
 
         /* Blunder / Takeback Action Bar */
@@ -2970,13 +2961,9 @@
                             </div>
                         </div>
                         <div class="coach-bubbles-col">
-                            <!-- Bubble 1: Coach Move Comment -->
-                            <div class="coach-speech-bubble bubble-thought" id="coachBubble1">
-                                Hey! Ready to play? I love passed pawns and fast play—let's do this!
-                            </div>
-                            <!-- Bubble 2: Interactive Challenge / Turn Prompt -->
-                            <div class="coach-speech-bubble bubble-challenge" id="coachBubble2">
-                                Make your opening move to get started!
+                            <!-- Unified Coach Speech Bubble -->
+                            <div class="coach-speech-bubble" id="coachBubble">
+                                Hey! Ready to play? I love passed pawns and fast play—make your opening move to get started!
                             </div>
                             <!-- Blunder Takeback Actions -->
                             <div class="coach-blunder-actions d-none" id="coachBlunderCard">
@@ -6369,11 +6356,11 @@
             }
 
             function renderCoachDialogue() {
-                const b1 = document.getElementById('coachBubble1');
-                const b2 = document.getElementById('coachBubble2');
-                if (coachManager && b1 && b2) {
-                    b1.textContent = coachManager.currentBubble1;
-                    b2.textContent = coachManager.currentBubble2;
+                const bubble = document.getElementById('coachBubble');
+                if (coachManager && bubble) {
+                    bubble.textContent = (typeof coachManager.getDialogue === 'function')
+                        ? coachManager.getDialogue()
+                        : (coachManager.currentDialogue || coachManager.currentBubble2 || coachManager.currentBubble1);
                 }
             }
 
@@ -6454,10 +6441,10 @@
             }
 
             function renderCoachThinking() {
-                const bubble2 = document.getElementById('coachBubble2');
-                if (bubble2 && coachManager) {
+                const bubble = document.getElementById('coachBubble');
+                if (bubble && coachManager) {
                     const thinkingPhrase = coachManager.persona.voice.thinking || "Thinking...";
-                    bubble2.innerHTML = `<span class="spinner-grow spinner-grow-sm text-primary me-1" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span> ${thinkingPhrase}`;
+                    bubble.innerHTML = `<span class="spinner-grow spinner-grow-sm text-primary me-1" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span> ${thinkingPhrase}`;
                 }
             }
 
@@ -6692,8 +6679,8 @@
                 btnCoachHint.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
                     const hint = coachManager.generateHint();
-                    const bubble2 = document.getElementById('coachBubble2');
-                    if (bubble2) bubble2.textContent = hint.hintText;
+                    const bubble = document.getElementById('coachBubble');
+                    if (bubble) bubble.textContent = hint.hintText;
 
                     clearHintHighlights();
                     if (hint.highlightSquares && hint.highlightSquares.length > 0) {
@@ -6935,6 +6922,8 @@
             window.hideBlunderTakebackCard = hideBlunderTakebackCard;
             window.setMobileHeaderHidden = setMobileHeaderHidden;
             window.toggleMobileHeader = toggleMobileHeader;
+            window.renderCoachDialogue = renderCoachDialogue;
+            window.renderCoachThinking = renderCoachThinking;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
 
