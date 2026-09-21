@@ -154,6 +154,11 @@
                     "Strong reply! You're keeping the pressure on.",
                     "Good piece placement! I like that idea."
                 ],
+                playerBestMove: [
+                    "Boom! Best move on the board! Maximum activity!",
+                    "Sharp tactical vision! You found the top engine move.",
+                    "Crushing it! That's the most accurate continuation."
+                ],
                 challengeDevelopment: [
                     "You still have pieces asleep on the back rank. Can you mobilize them?",
                     "Bringing your minor pieces into play is top priority. Which piece will you develop next?"
@@ -269,6 +274,11 @@
                     "Whoa, good move! You're really good at this!",
                     "Nice! That looks super tricky for me.",
                     "Great move! I need to think carefully now."
+                ],
+                playerBestMove: [
+                    "Whoa!! You found the absolute best move! Are you a grandmaster in disguise?!",
+                    "Spectacular move! That's the number one best choice!",
+                    "Awesome find! I didn't even see that coming!"
                 ],
                 challengeDevelopment: [
                     "Don't leave your knights and bishops sleeping in bed! Bring 'em out!",
@@ -386,6 +396,11 @@
                     "Well played. That controls critical central outposts.",
                     "Strong move! You're applying good principles."
                 ],
+                playerBestMove: [
+                    "Superb calculation! That is the computer's top recommended move.",
+                    "Exemplary technique. You identified the strongest move in the position.",
+                    "Masterclass move! Clean, principled, and tactically flawless."
+                ],
                 challengeDevelopment: [
                     "Complete your development! Knights and bishops belong on active squares.",
                     "King safety and piece development—which piece should move next?"
@@ -502,6 +517,11 @@
                     "Good move. Accurate and ambitious.",
                     "Sharp play! You found the best engine response.",
                     "High level technique right there. I like it."
+                ],
+                playerBestMove: [
+                    "Grandmaster-level accuracy. You found the engine's best line.",
+                    "Top-tier play. No concessions given with that move.",
+                    "Absolute precision. The engine confirms that is best."
                 ],
                 challengeDevelopment: [
                     "Undeveloped pieces in the opening are liabilities. Coordinate your army.",
@@ -1036,20 +1056,24 @@
                 bubble1 = challengeFeedback.text;
                 bubble2 = "Calculating response...";
             } else if (wasSuggested) {
-                bubble1 = pickRandom(this.persona.voice.playerGoodMove || [
-                    "Spot on! That's much better."
-                ]);
+                bubble1 = `Great adjustment! Playing ${legalMove.san} keeps your position solid and maintains control.`;
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             } else if (isBlunder) {
                 bubble1 = pickRandom(this.persona.voice.playerBlunder);
                 bubble2 = blunderAnalysis || "That move might be a mistake. Review the tactical oversight card below!";
+            } else if (classification.detailedQuality === 'book') {
+                bubble1 = `Book move! ${legalMove.san} follows standard opening theory.`;
+                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+            } else if (classification.uiQuality === 'inaccuracy') {
+                bubble1 = `${legalMove.san} is playable, but slightly inaccurate. Let's see how you handle my counterplay.`;
+                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             } else {
                 let goodReason = "";
+                const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
                 if (Recognizer && Recognizer.explainGoodMove) {
                     try {
                         const boardBefore = new this.Chess(fenBefore);
                         const boardAfter = new this.Chess(fenAfter);
-                        const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
                         const goodDiag = Recognizer.explainGoodMove({
                             boardBefore,
                             boardAfter,
@@ -1065,10 +1089,18 @@
                     }
                 }
 
-                if (goodReason) {
+                const personaPraise = isBest
+                    ? (pickRandom(this.persona.voice.playerBestMove) || pickRandom(this.persona.voice.playerGoodMove))
+                    : pickRandom(this.persona.voice.playerGoodMove);
+
+                if (goodReason && personaPraise) {
+                    bubble1 = `${personaPraise} ${goodReason}`;
+                } else if (goodReason) {
                     bubble1 = goodReason;
+                } else if (personaPraise) {
+                    bubble1 = `${personaPraise}`;
                 } else {
-                    bubble1 = pickRandom(this.persona.voice.playerGoodMove);
+                    bubble1 = `Good move with ${legalMove.san}!`;
                 }
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             }
@@ -1189,10 +1221,12 @@
             const bubbles = this._generateCoachBubbles(boardBefore, boardAfter, executed, isChallenge, challengeData);
             
             // PRESERVE Bubble 1 from the player's last move so the user's feedback is not wiped!
+            let playerFeedback = "";
             if (this.moveHistory.length > 0) {
                 const lastPlayerRecord = [...this.moveHistory].reverse().find(m => m.isPlayer);
                 if (lastPlayerRecord && lastPlayerRecord.bubble1) {
                     this.currentBubble1 = lastPlayerRecord.bubble1;
+                    playerFeedback = lastPlayerRecord.bubble1;
                 } else {
                     this.currentBubble1 = bubbles.bubble1;
                 }
@@ -1201,7 +1235,13 @@
             }
 
             this.currentBubble2 = bubbles.bubble2;
-            this.currentDialogue = this.isGameOver ? this._getGameOverMessage() : bubbles.bubble2;
+            if (this.isGameOver) {
+                this.currentDialogue = this._getGameOverMessage();
+            } else if (playerFeedback) {
+                this.currentDialogue = `${playerFeedback} ${bubbles.bubble2}`;
+            } else {
+                this.currentDialogue = bubbles.bubble2;
+            }
 
             const record = {
                 ply,
@@ -1213,6 +1253,7 @@
                 bubble1: this.currentBubble1,
                 bubble2: this.currentBubble2,
                 dialogue: this.currentDialogue,
+                playerFeedback: playerFeedback || null,
                 isChallenge
             };
             this.moveHistory.push(record);
@@ -1222,6 +1263,7 @@
                 move: executed,
                 bubble1: this.currentBubble1,
                 bubble2: this.currentBubble2,
+                playerFeedback: playerFeedback || null,
                 dialogue: this.currentDialogue,
                 isChallenge,
                 challengeData,

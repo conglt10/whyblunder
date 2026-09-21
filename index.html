@@ -2443,6 +2443,21 @@
             border-bottom: 5px solid transparent;
             border-right: 7px solid #ffffff;
         }
+        .coach-player-feedback {
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            margin-bottom: 6px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+        .coach-reply-text {
+            color: #2b2b2b;
+            font-weight: 500;
+        }
+        .coach-thinking-status {
+            color: #6c757d;
+            font-style: italic;
+        }
 
         /* Blunder / Takeback Action Bar */
         .coach-blunder-actions {
@@ -4654,6 +4669,8 @@
                     case 'inaccuracy': return '?!';
                     case 'brilliant': return '!!';
                     case 'great': return '!';
+                    case 'best': return '★';
+                    case 'book': return '📖';
                     default: return '';
                 }
             }
@@ -4669,6 +4686,7 @@
                     case 'inaccuracy': return 'quality-inaccuracy';
                     case 'brilliant': return 'quality-brilliant';
                     case 'great': return 'quality-great';
+                    case 'best': return 'quality-best';
                     case 'book': return 'quality-book';
                     default: return '';
                 }
@@ -6644,10 +6662,55 @@
 
             function renderCoachDialogue() {
                 const bubble = document.getElementById('coachBubble');
-                if (coachManager && bubble) {
-                    bubble.textContent = (typeof coachManager.getDialogue === 'function')
+                if (!coachManager || !bubble) return;
+
+                if (coachManager.isGameOver) {
+                    bubble.innerHTML = `<div class="coach-game-over-text fw-bold">${escapeHtml(coachManager.getDialogue())}</div>`;
+                    return;
+                }
+
+                // If initial state (no moves yet)
+                if (coachManager.moveHistory.length === 0) {
+                    bubble.textContent = coachManager.getDialogue();
+                    return;
+                }
+
+                // If player just made a blunder that hasn't been replied to yet, show the blunder dialogue
+                const lastMove = coachManager.moveHistory[coachManager.moveHistory.length - 1];
+                if (lastMove && lastMove.isPlayer && lastMove.isBlunder) {
+                    bubble.textContent = coachManager.getDialogue();
+                    return;
+                }
+
+                const lastPlayerRecord = [...coachManager.moveHistory].reverse().find(m => m.isPlayer);
+                const hasPlayerFeedback = coachManager.currentBubble1 && lastPlayerRecord && coachManager.currentBubble1 !== coachManager.currentBubble2;
+                const hasCoachReply = Boolean(coachManager.currentBubble2);
+
+                if (hasPlayerFeedback && hasCoachReply && coachManager.moveHistory.length >= 2) {
+                    const quality = lastPlayerRecord.detailedQuality || (lastPlayerRecord.quality && lastPlayerRecord.quality.detailedQuality) || 'good';
+                    const badgeMap = {
+                        'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
+                        'great': '<span class="badge bg-primary me-1">! Great</span>',
+                        'best': '<span class="badge bg-primary me-1">★ Best</span>',
+                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'good': '<span class="badge bg-success me-1">✓ Good</span>',
+                        'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
+                    };
+                    const badge = badgeMap[quality] || '<span class="badge bg-success me-1">✓ Good</span>';
+
+                    bubble.innerHTML = `
+                        <div class="coach-player-feedback mb-2">
+                            ${badge} <span>${escapeHtml(coachManager.currentBubble1)}</span>
+                        </div>
+                        <div class="coach-reply-text">
+                            ${escapeHtml(coachManager.currentBubble2)}
+                        </div>
+                    `;
+                } else {
+                    const text = (typeof coachManager.getDialogue === 'function')
                         ? coachManager.getDialogue()
-                        : (coachManager.currentDialogue || coachManager.currentBubble2 || coachManager.currentBubble1);
+                        : (coachManager.currentDialogue || coachManager.currentBubble2 || coachManager.currentBubble1 || '');
+                    bubble.textContent = text;
                 }
             }
 
@@ -6742,11 +6805,38 @@
                 }
             }
 
-            function renderCoachThinking() {
+            function renderCoachThinking(userResult) {
                 const bubble = document.getElementById('coachBubble');
-                if (bubble && coachManager) {
-                    const thinkingPhrase = coachManager.persona.voice.thinking || "Thinking...";
-                    bubble.innerHTML = `<span class="spinner-grow spinner-grow-sm text-primary me-1" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span> ${thinkingPhrase}`;
+                if (!bubble || !coachManager) return;
+                const thinkingPhrase = coachManager.persona.voice.thinking || "Thinking...";
+                const lastPlayerRecord = [...coachManager.moveHistory].reverse().find(m => m.isPlayer);
+                const feedbackText = (userResult && (userResult.bubble1 || userResult.dialogue)) ||
+                                     (lastPlayerRecord && (lastPlayerRecord.bubble1 || lastPlayerRecord.dialogue));
+
+                if (feedbackText) {
+                    const quality = (userResult && (userResult.detailedQuality || (userResult.quality && userResult.quality.detailedQuality))) ||
+                                    (lastPlayerRecord && lastPlayerRecord.detailedQuality) || 'good';
+                    const badgeMap = {
+                        'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
+                        'great': '<span class="badge bg-primary me-1">! Great</span>',
+                        'best': '<span class="badge bg-primary me-1">★ Best</span>',
+                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'good': '<span class="badge bg-success me-1">✓ Good</span>',
+                        'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
+                    };
+                    const badge = badgeMap[quality] || '<span class="badge bg-success me-1">✓ Good</span>';
+
+                    bubble.innerHTML = `
+                        <div class="coach-player-feedback mb-2">
+                            ${badge} <span>${escapeHtml(feedbackText)}</span>
+                        </div>
+                        <div class="coach-thinking-status text-muted small d-flex align-items-center gap-1">
+                            <span class="spinner-grow spinner-grow-sm text-primary" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span>
+                            <span>${escapeHtml(thinkingPhrase)}</span>
+                        </div>
+                    `;
+                } else {
+                    bubble.innerHTML = `<span class="spinner-grow spinner-grow-sm text-primary me-1" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span> ${escapeHtml(thinkingPhrase)}`;
                 }
             }
 
@@ -6863,7 +6953,7 @@
 
                 hideBlunderTakebackCard();
                 clearArrows();
-                renderCoachThinking();
+                renderCoachThinking(userResult);
 
                 const delay = Math.floor(Math.random() * 300) + 1000; // 1000-1300ms natural delay
                 scheduleCoachResponse(delay);

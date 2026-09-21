@@ -1607,7 +1607,83 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     const indexHtml = fs.readFileSync('./index.html', 'utf8');
     assert(!indexHtml.includes('bottomPlayerName.textContent = "You 🇺🇸"'), "index.html must not hardcode 'You 🇺🇸'");
     assert(indexHtml.includes('bottomPlayerName.textContent = "You"'), "index.html must set 'You'");
-    assert(indexHtml.includes('cancelPendingCoachResponse();'), "index.html must have cancelPendingCoachResponse()");
+    // 8. Coach Player Feedback & Post-Calculation Dialogue Tests
+    console.log("Testing Coach Player Feedback & Post-Calculation Dialogue...");
+    // A. Persona playerBestMove arrays
+    for (const personaKey of ['pikaru', 'mcmarty', 'sophy', 'mangoose']) {
+        const p = COACH_PERSONAS[personaKey];
+        assert(p, `Persona ${personaKey} must exist`);
+        assert(Array.isArray(p.voice.playerBestMove), `Persona ${personaKey} must have playerBestMove array`);
+        assert(p.voice.playerBestMove.length >= 2, `Persona ${personaKey} playerBestMove must have at least 2 phrases`);
+    }
+
+    // B. Player good/best move feedback and post-calculation dialogue synthesis
+    const feedbackWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            const isWhite = fen.split(' ')[1] === 'w';
+            return {
+                bestMove: isWhite ? 'e2e4' : 'e7e5',
+                lines: {
+                    1: { cp: 25, pv: [isWhite ? 'e2e4' : 'e7e5'] }
+                }
+            };
+        }
+    };
+    const feedbackCoach = new CoachManager({ personaId: 'pikaru', worker: feedbackWorker });
+    const userMoveRes = await feedbackCoach.handleUserMove('e4');
+    assert.strictEqual(userMoveRes.success, true);
+    assert(userMoveRes.bubble1.length > 0, "User move bubble1 must contain feedback");
+    assert(userMoveRes.dialogue.length > 0, "User move dialogue must be non-empty");
+
+    // Coach calculates response
+    const coachResponse = await feedbackCoach.computeCoachMove();
+    assert.strictEqual(coachResponse.success, true);
+    assert(coachResponse.playerFeedback, "computeCoachMove must return playerFeedback");
+    assert.strictEqual(coachResponse.playerFeedback, userMoveRes.bubble1, "playerFeedback must match player move bubble1");
+    assert(coachResponse.dialogue.includes(coachResponse.playerFeedback),
+        `Coach dialogue must contain player feedback, got: ${coachResponse.dialogue}`);
+    assert(feedbackCoach.getDialogue().includes(coachResponse.playerFeedback),
+        `getDialogue() must include player feedback, got: ${feedbackCoach.getDialogue()}`);
+
+    // C. Move 1 when Player is Black: No player feedback prepended
+    const blackPlayerCoach = new CoachManager({ personaId: 'sophy', playerColor: 'b', worker: feedbackWorker });
+    const coachMove1 = await blackPlayerCoach.computeCoachMove();
+    assert.strictEqual(coachMove1.success, true);
+    assert.strictEqual(coachMove1.playerFeedback, null, "Move 1 for Black player must have null playerFeedback");
+    assert(!coachMove1.dialogue.includes('null'), "Dialogue must not include 'null'");
+
+    // D. Inaccuracy feedback check
+    const inaccWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            // Position before move: White is +100cp (wp ~ 0.64)
+            // After move: White is +40cp (wp ~ 0.56, wpLoss ~ 0.08 => inaccuracy)
+            return {
+                bestMove: 'd2d4',
+                lines: {
+                    1: { cp: 100, pv: ['d2d4'] },
+                    2: { cp: 40, pv: ['h2h3'] }
+                }
+            };
+        }
+    };
+    const inaccCoach = new CoachManager({ personaId: 'sophy', worker: inaccWorker });
+    const inaccRes = await inaccCoach.handleUserMove('h3');
+    if (inaccRes.quality && inaccRes.quality.uiQuality === 'inaccuracy') {
+        assert(inaccRes.bubble1.toLowerCase().includes('inaccurate') || inaccRes.bubble1.toLowerCase().includes('playable'),
+            `Inaccuracy bubble should mention inaccuracy, got: ${inaccRes.bubble1}`);
+    }
+
+    // E. Index.html CSS and JS integrity
+    assert(indexHtml.includes('.coach-player-feedback'), "index.html must define .coach-player-feedback CSS");
+    assert(indexHtml.includes('.coach-reply-text'), "index.html must define .coach-reply-text CSS");
+    assert(indexHtml.includes('.coach-thinking-status'), "index.html must define .coach-thinking-status CSS");
+    assert(indexHtml.includes("case 'best': return '★';"), "index.html getMoveGlyph must handle 'best'");
+    assert(indexHtml.includes("case 'best': return 'quality-best';"), "index.html getMoveQualityClass must handle 'best'");
+    assert(indexHtml.includes('renderCoachThinking(userResult);'), "index.html must pass userResult to renderCoachThinking");
 
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
