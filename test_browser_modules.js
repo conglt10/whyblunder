@@ -940,6 +940,26 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
         }
     }
 
+    // Test Piece Move Commentary Accuracy (Queen vs Rook regression test)
+    const pieceTestCoach = new CoachManager({ personaId: 'pikaru' });
+    const fenBeforeQd5 = 'r1bqkb1r/pp2pppp/2p5/8/3PpB2/8/PPP1PPPP/R2QKB1R b KQkq - 0 4';
+    const boardBeforeQ = new pieceTestCoach.Chess(fenBeforeQd5);
+    const boardAfterQ = new pieceTestCoach.Chess(fenBeforeQd5);
+    const qd5Move = boardAfterQ.move({ from: 'd8', to: 'd5' });
+    assert(qd5Move, "qd5Move must be valid");
+    const qBubbles = pieceTestCoach._generateCoachBubbles(boardBeforeQ, boardAfterQ, qd5Move, false, null);
+    assert(!qBubbles.bubble2.toLowerCase().includes('rook'), `Queen move Qd5 should NOT mention rook, got: ${qBubbles.bubble2}`);
+    assert(qBubbles.bubble2.toLowerCase().includes('queen'), `Queen move Qd5 should mention Queen, got: ${qBubbles.bubble2}`);
+
+    // Verify Rook move commentary mentions rook
+    const fenRook = 'r4rk1/ppp2ppp/8/8/8/8/PPP2PPP/R4RK1 w - - 0 1';
+    const boardBeforeR = new pieceTestCoach.Chess(fenRook);
+    const boardAfterR = new pieceTestCoach.Chess(fenRook);
+    const rMove = boardAfterR.move({ from: 'f1', to: 'd1' });
+    const rBubbles = pieceTestCoach._generateCoachBubbles(boardBeforeR, boardAfterR, rMove, false, null);
+    assert(rBubbles.bubble2.toLowerCase().includes('rook'), `Rook move Rad1 should mention rook, got: ${rBubbles.bubble2}`);
+    assert(!rBubbles.bubble2.toLowerCase().includes('queen'), `Rook move should not mention queen, got: ${rBubbles.bubble2}`);
+
     // Verify index.html Coach Mode Integration
     const fs = require('fs');
     const indexContent = fs.readFileSync('./index.html', 'utf8');

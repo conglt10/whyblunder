@@ -1173,20 +1173,35 @@
                         challengeText = pickRandom(this.persona.voice.challengePinDefense || [
                             "Can you unpin or reinforce the defended square?"
                         ]);
-                    } else if (Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
+                    } else if (move.piece === 'p' && Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
                         coachMoveDesc = `I strike at the center with ${move.san}!`;
                         challengeText = pickRandom(this.persona.voice.challengeCenter || [
                             "Central tension! Will you capture, push, or support the center?"
                         ]);
-                    } else if (Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
+                    } else if (move.piece === 'p' && Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
                         coachMoveDesc = `Pushing my passed pawn to ${move.to} (${move.san}).`;
                         challengeText = "Can you blockade or target the advancing pawn?";
-                    } else if (Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
+                    } else if ((move.piece === 'n' || move.piece === 'b') && Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
                         coachMoveDesc = `Anchoring my ${pName} on ${move.to} (${move.san}) as an active outpost.`;
-                        challengeText = "How will you challenge this well-placed piece?";
-                    } else if (Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
-                        coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the open file.`;
-                        challengeText = "How will you contest control of this file?";
+                        challengeText = `How will you challenge this well-placed ${pName}?`;
+                    } else if (move.piece === 'r' && Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
+                        const fileCtrl = Recognizer.detectFileControl(boardBefore, move);
+                        if (fileCtrl && fileCtrl.includes('7th rank')) {
+                            coachMoveDesc = `Invading the 7th rank with my rook on ${move.to} (${move.san}).`;
+                            challengeText = "Rooks on the 7th rank are dangerous! Can you challenge it or defend your pawns?";
+                        } else {
+                            const isSemi = fileCtrl && fileCtrl.includes('semi-open');
+                            coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the ${isSemi ? 'semi-open' : 'open'} file.`;
+                            challengeText = "How will you contest control of this file?";
+                        }
+                    } else if (move.piece === 'q') {
+                        if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) {
+                            coachMoveDesc = `Centralizing my Queen on ${move.to} (${move.san}) to dominate key squares and diagonals.`;
+                            challengeText = "A centralized Queen commands huge diagonal and vertical influence. How will you challenge her?";
+                        } else {
+                            coachMoveDesc = `Activating my Queen on ${move.to} (${move.san}) to create active threats.`;
+                            challengeText = "Watch out for my Queen's range across the board! What is your best defense?";
+                        }
                     }
                 } catch (e) {}
             }
@@ -1207,18 +1222,42 @@
 
             // 3. Piece development or central advance
             if (!coachMoveDesc) {
-                if (move.piece === 'n' || move.piece === 'b') {
-                    coachMoveDesc = `Developing my ${pName} to ${move.to} (${move.san}) to contest key squares.`;
+                if (move.piece === 'n') {
+                    coachMoveDesc = `Developing my knight to ${move.to} (${move.san}) to contest key squares.`;
                     challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
                         "Which piece will you mobilize next to complete your development?"
                     ]);
-                } else if (move.piece === 'p' && (move.to === 'e4' || move.to === 'd4' || move.to === 'e5' || move.to === 'd5' || move.to === 'c4' || move.to === 'c5')) {
-                    coachMoveDesc = `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`;
-                    challengeText = pickRandom(this.persona.voice.challengeCenter || [
-                        "How will you stake your claim in the center?"
+                } else if (move.piece === 'b') {
+                    coachMoveDesc = `Developing my bishop to ${move.to} (${move.san}) to control key diagonals.`;
+                    challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
+                        "Which piece will you mobilize next to complete your development?"
                     ]);
+                } else if (move.piece === 'p') {
+                    if (['e4', 'd4', 'e5', 'd5', 'c4', 'c5'].includes(move.to)) {
+                        coachMoveDesc = `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`;
+                        challengeText = pickRandom(this.persona.voice.challengeCenter || [
+                            "How will you stake your claim in the center?"
+                        ]);
+                    } else {
+                        coachMoveDesc = `Advancing pawn to ${move.to} (${move.san}) to adjust my pawn structure.`;
+                        challengeText = "Every pawn move creates lasting structural changes. What is your plan?";
+                    }
+                } else if (move.piece === 'r') {
+                    coachMoveDesc = `Mobilizing my rook to ${move.to} (${move.san}) to improve its activity.`;
+                    challengeText = "Active rooks need open lines. How will you contest or limit its reach?";
+                } else if (move.piece === 'q') {
+                    if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) {
+                        coachMoveDesc = `Centralizing my Queen on ${move.to} (${move.san}) to dominate key squares and diagonals.`;
+                        challengeText = "A centralized Queen commands huge diagonal and vertical influence. How will you challenge her?";
+                    } else {
+                        coachMoveDesc = `Repositioning my Queen to ${move.to} (${move.san}) to increase pressure.`;
+                        challengeText = "Keep an eye on my Queen's diagonals. Where is your safest counterplay?";
+                    }
+                } else if (move.piece === 'k') {
+                    coachMoveDesc = `Stepping my king to ${move.to} (${move.san}) for better safety.`;
+                    challengeText = "King placement is critical. How will you organize your pieces now?";
                 } else {
-                    coachMoveDesc = `I play ${move.san} to improve piece activity.`;
+                    coachMoveDesc = `I play ${move.san} with my ${pName} to improve piece activity.`;
                     challengeText = this._getContextualChallenge(boardAfter);
                 }
             }
@@ -1365,18 +1404,21 @@
             }
 
             // General hint: suggest moving a piece toward the center
+            const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
             const centerMoves = legalMoves.filter(m => ['d4', 'd5', 'e4', 'e5', 'c4', 'c5', 'f4', 'f5'].includes(m.to));
             if (centerMoves.length > 0) {
                 const cm = centerMoves[0];
+                const pieceName = PIECE_NAMES[cm.piece] || 'piece';
                 return {
-                    hintText: `Coach Hint: Look for control in the center. Consider mobilizing your ${cm.piece ? cm.piece.toUpperCase() : 'piece'}.`,
+                    hintText: `Coach Hint: Look for control in the center. Consider mobilizing your ${pieceName}.`,
                     highlightSquares: [cm.from]
                 };
             }
 
             const first = legalMoves[0];
+            const firstPieceName = PIECE_NAMES[first.piece] || 'piece';
             return {
-                hintText: `Coach Hint: Take your time. Inspect candidate squares for your ${first.piece ? first.piece.toUpperCase() : 'pieces'}.`,
+                hintText: `Coach Hint: Take your time. Inspect candidate squares for your ${firstPieceName}.`,
                 highlightSquares: [first.from]
             };
         }

@@ -1221,7 +1221,16 @@
             }
         }
 
-        // 2. 7th rank infiltration for Rook / Queen
+        // 2. Queen centralization
+        if (piece.type === 'q' && (toSq === 'd4' || toSq === 'd5' || toSq === 'e4' || toSq === 'e5')) {
+            return {
+                type: 'queen_centralization',
+                tags: ['Center Control', 'Queen Centralization'],
+                description: `centralizes the Queen on ${toSq} to dominate key diagonals and central squares`
+            };
+        }
+
+        // 3. 7th rank infiltration for Rook / Queen
         if (piece.type === 'r' || piece.type === 'q') {
             if ((color === 'w' && rank === 6) || (color === 'b' && rank === 1)) {
                 return {
