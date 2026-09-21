@@ -2523,10 +2523,10 @@
             background-color: rgba(98, 153, 36, 0.3) !important;
         }
         .highlight-last-coach {
-            background-color: rgba(246, 228, 92, 0.45) !important;
+            box-shadow: inset 0 0 0 9999px rgba(246, 228, 92, 0.45) !important;
         }
         .highlight-selected {
-            background-color: rgba(246, 228, 92, 0.6) !important;
+            box-shadow: inset 0 0 0 9999px rgba(246, 228, 92, 0.6) !important;
         }
         .highlight-dest {
             position: relative;
@@ -3328,7 +3328,11 @@
 
             function handleCoachSnapEnd() {
                 if (coachManager) {
-                    board.position(coachManager.chess.fen());
+                    const currentFen = board.fen();
+                    const targetFen = coachManager.chess.fen().split(' ')[0];
+                    if (currentFen !== targetFen) {
+                        board.position(coachManager.chess.fen(), false);
+                    }
                 }
             }
 
@@ -6405,7 +6409,7 @@
                 if (currentAppMode !== 'coach' || !coachManager || coachManager.isGameOver) return;
                 const coachRes = await coachManager.computeCoachMove();
                 if (coachRes && coachRes.success && coachRes.move) {
-                    board.position(coachManager.chess.fen());
+                    board.position(coachManager.chess.fen(), true);
                     highlightLastMove(coachRes.move.from, coachRes.move.to);
                     if (coachRes.isChallenge) {
                         playChessSound('challenge');
@@ -6448,11 +6452,15 @@
 
                 const userResult = await coachManager.handleUserMove(moveInput);
                 if (!userResult || !userResult.success) {
-                    board.position(coachManager.chess.fen());
+                    board.position(coachManager.chess.fen(), false);
                     return;
                 }
 
-                board.position(coachManager.chess.fen());
+                const currentFen = board.fen();
+                const targetFen = coachManager.chess.fen().split(' ')[0];
+                if (currentFen !== targetFen) {
+                    board.position(coachManager.chess.fen(), true);
+                }
                 playChessSound(userResult.move.captured ? 'capture' : 'move');
                 renderCoachDialogue();
                 renderCoachMoveSheet();

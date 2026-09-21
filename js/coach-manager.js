@@ -155,20 +155,20 @@
                     "Good piece placement! I like that idea."
                 ],
                 challengeDevelopment: [
-                    "Challenge: You still have pieces asleep on the back rank. Can you mobilize them?",
-                    "Challenge: Bringing your minor pieces into play is top priority. Which piece will you develop next?"
+                    "You still have pieces asleep on the back rank. Can you mobilize them?",
+                    "Bringing your minor pieces into play is top priority. Which piece will you develop next?"
                 ],
                 challengeCenter: [
-                    "Challenge: Who will command the center? Look for moves that stake a claim.",
-                    "Challenge: The center is up for grabs! Can you seize space?"
+                    "Who will command the center? Look for moves that stake a claim.",
+                    "The center is up for grabs! Can you seize space?"
                 ],
                 challengePinDefense: [
-                    "Challenge: One of your pieces is pinned. Can you break the pin or defend it?",
-                    "Challenge: Don't let my pin paralyze your position!"
+                    "One of your pieces is pinned. Can you break the pin or defend it?",
+                    "Don't let my pin paralyze your position!"
                 ],
                 challengeEndgame: [
-                    "Challenge: In the endgame, the active king is worth a minor piece. Time to march!",
-                    "Challenge: Precision matters in the endgame. Look ahead a few moves before deciding!"
+                    "In the endgame, the active king is worth a minor piece. Time to march!",
+                    "Precision matters in the endgame. Look ahead a few moves before deciding!"
                 ],
                 challengeGeneric: [
                     "Your turn! What's your plan here?",
@@ -271,20 +271,20 @@
                     "Great move! I need to think carefully now."
                 ],
                 challengeDevelopment: [
-                    "Challenge: Don't leave your knights and bishops sleeping in bed! Bring 'em out!",
-                    "Challenge: Let's see you get all your pieces off the back rank!"
+                    "Don't leave your knights and bishops sleeping in bed! Bring 'em out!",
+                    "Let's see you get all your pieces off the back rank!"
                 ],
                 challengeCenter: [
-                    "Challenge: The middle of the board is where the party is! Jump in!",
-                    "Challenge: Can your pawns challenge my pawns in the middle?"
+                    "The middle of the board is where the party is! Jump in!",
+                    "Can your pawns challenge my pawns in the middle?"
                 ],
                 challengePinDefense: [
-                    "Challenge: Uh oh, I pinned you! Can you unpin yourself?",
-                    "Challenge: Be careful with pinned pieces!"
+                    "Uh oh, I pinned you! Can you unpin yourself?",
+                    "Be careful with pinned pieces!"
                 ],
                 challengeEndgame: [
-                    "Challenge: We're in the endgame! Bring out your King!",
-                    "Challenge: Pawns are like gold now. Which one are you pushing?"
+                    "We're in the endgame! Bring out your King!",
+                    "Pawns are like gold now. Which one are you pushing?"
                 ],
                 challengeGeneric: [
                     "Your turn, my friend! Show me your best!",
@@ -387,20 +387,20 @@
                     "Strong move! You're applying good principles."
                 ],
                 challengeDevelopment: [
-                    "Challenge: Complete your development! Knights and bishops belong on active squares.",
-                    "Challenge: King safety and piece development—which piece should move next?"
+                    "Complete your development! Knights and bishops belong on active squares.",
+                    "King safety and piece development—which piece should move next?"
                 ],
                 challengeCenter: [
-                    "Challenge: The center is the heart of the board. How will you contest it?",
-                    "Challenge: Evaluate the central pawn tension. Trade, push, or hold?"
+                    "The center is the heart of the board. How will you contest it?",
+                    "Evaluate the central pawn tension. Trade, push, or hold?"
                 ],
                 challengePinDefense: [
-                    "Challenge: You have a pinned piece. Find a way to unpin or add a defender.",
-                    "Challenge: Pins can be dangerous. Alleviate the pin with proper technique."
+                    "You have a pinned piece. Find a way to unpin or add a defender.",
+                    "Pins can be dangerous. Alleviate the pin with proper technique."
                 ],
                 challengeEndgame: [
-                    "Challenge: In the endgame, the active king is worth a full minor piece. How will you coordinate?",
-                    "Challenge: Calculate pawn races carefully. Precision is everything in endgames."
+                    "In the endgame, the active king is worth a full minor piece. How will you coordinate?",
+                    "Calculate pawn races carefully. Precision is everything in endgames."
                 ],
                 challengeGeneric: [
                     "Your turn. What is your strategic plan here?",
@@ -504,20 +504,20 @@
                     "High level technique right there. I like it."
                 ],
                 challengeDevelopment: [
-                    "Challenge: Undeveloped pieces in the opening are liabilities. Coordinate your army.",
-                    "Challenge: Efficiency is everything. Develop with purpose."
+                    "Undeveloped pieces in the opening are liabilities. Coordinate your army.",
+                    "Efficiency is everything. Develop with purpose."
                 ],
                 challengeCenter: [
-                    "Challenge: The center dictates the wings. Can you maintain stability?",
-                    "Challenge: Every central pawn move has consequences. Calculate carefully."
+                    "The center dictates the wings. Can you maintain stability?",
+                    "Every central pawn move has consequences. Calculate carefully."
                 ],
                 challengePinDefense: [
-                    "Challenge: That pin is suffocating your mobility. Break the bind.",
-                    "Challenge: Passive defense fails against pins. Find an active solution."
+                    "That pin is suffocating your mobility. Break the bind.",
+                    "Passive defense fails against pins. Find an active solution."
                 ],
                 challengeEndgame: [
-                    "Challenge: The endgame is where games are won or lost. Activate your king!",
-                    "Challenge: King activity and passed pawns—that is the essence of chess."
+                    "The endgame is where games are won or lost. Activate your king!",
+                    "King activity and passed pawns—that is the essence of chess."
                 ],
                 challengeGeneric: [
                     "Your turn. Calculate carefully.",
@@ -1127,14 +1127,14 @@
             // 1. Detect tactical & positional motif of coach move
             if (move.san === 'O-O' || move.san === 'O-O-O') {
                 coachMoveDesc = `I castle ${move.san} to tuck my king away safely and activate the rook.`;
-                challengeText = "Challenge: Coordinate your pieces and make sure your own king is safe!";
+                challengeText = "Coordinate your pieces and make sure your own king is safe!";
             } else if (move.san.includes('+')) {
                 coachMoveDesc = `Check! My ${pName} on ${move.to} (${move.san}) attacks your king.`;
-                challengeText = "Challenge: Find the cleanest escape square or interposition.";
+                challengeText = "Find the cleanest escape square or interposition.";
             } else if (move.captured) {
                 const capName = PIECE_NAMES[move.captured] || 'piece';
                 coachMoveDesc = `I play ${move.san}, capturing your ${capName} on ${move.to}.`;
-                challengeText = "Challenge: How do you plan to recapture or counter-attack?";
+                challengeText = "How do you plan to recapture or counter-attack?";
             } else if (Recognizer) {
                 try {
                     const attackedSquares = Recognizer.getPieceAttacks(boardAfter, move.to);
@@ -1146,29 +1146,29 @@
 
                     if (attackedQueen) {
                         coachMoveDesc = `I play ${move.san}, putting pressure on your Queen on ${attackedQueen.sq}!`;
-                        challengeText = "Challenge: Where will your Queen move to maintain active pressure?";
+                        challengeText = "Where will your Queen move to maintain active pressure?";
                     } else if (attackedRook) {
                         coachMoveDesc = `I play ${move.san}, taking aim at your rook on ${attackedRook.sq}.`;
-                        challengeText = "Challenge: How will you defend or counter the threat?";
+                        challengeText = "How will you defend or counter the threat?";
                     } else if (Recognizer.detectPin && Recognizer.detectPin(boardAfter, move)) {
                         coachMoveDesc = `I play ${move.san}, creating an annoying pin against your piece.`;
                         challengeText = pickRandom(this.persona.voice.challengePinDefense || [
-                            "Challenge: Can you unpin or reinforce the defended square?"
+                            "Can you unpin or reinforce the defended square?"
                         ]);
                     } else if (Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
                         coachMoveDesc = `I strike at the center with ${move.san}!`;
                         challengeText = pickRandom(this.persona.voice.challengeCenter || [
-                            "Challenge: Central tension! Will you capture, push, or support the center?"
+                            "Central tension! Will you capture, push, or support the center?"
                         ]);
                     } else if (Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
                         coachMoveDesc = `Pushing my passed pawn to ${move.to} (${move.san}).`;
-                        challengeText = "Challenge: Can you blockade or target the advancing pawn?";
+                        challengeText = "Can you blockade or target the advancing pawn?";
                     } else if (Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
                         coachMoveDesc = `Anchoring my ${pName} on ${move.to} (${move.san}) as an active outpost.`;
-                        challengeText = "Challenge: How will you challenge this well-placed piece?";
+                        challengeText = "How will you challenge this well-placed piece?";
                     } else if (Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
                         coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the open file.`;
-                        challengeText = "Challenge: How will you contest control of this file?";
+                        challengeText = "How will you contest control of this file?";
                     }
                 } catch (e) {}
             }
@@ -1192,12 +1192,12 @@
                 if (move.piece === 'n' || move.piece === 'b') {
                     coachMoveDesc = `Developing my ${pName} to ${move.to} (${move.san}) to contest key squares.`;
                     challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
-                        "Challenge: Which piece will you mobilize next to complete your development?"
+                        "Which piece will you mobilize next to complete your development?"
                     ]);
                 } else if (move.piece === 'p' && (move.to === 'e4' || move.to === 'd4' || move.to === 'e5' || move.to === 'd5' || move.to === 'c4' || move.to === 'c5')) {
                     coachMoveDesc = `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`;
                     challengeText = pickRandom(this.persona.voice.challengeCenter || [
-                        "Challenge: How will you stake your claim in the center?"
+                        "How will you stake your claim in the center?"
                     ]);
                 } else {
                     coachMoveDesc = `I play ${move.san} to improve piece activity.`;
@@ -1219,54 +1219,54 @@
             if (name.includes('sicilian') || eco.startsWith('B2') || eco.startsWith('B3') || eco.startsWith('B4') || eco.startsWith('B5') || eco.startsWith('B6') || eco.startsWith('B7') || eco.startsWith('B8') || eco.startsWith('B9')) {
                 return {
                     bubble1: "The Sicilian Defense! A sharp, combative opening with rich counter-attacking potential.",
-                    bubble2: "Challenge: How will you develop your kingside and challenge my pawn on e4?"
+                    bubble2: "How will you develop your kingside and challenge my pawn on e4?"
                 };
             }
             if (name.includes('french') || eco.startsWith('C0') || eco.startsWith('C1')) {
                 return {
                     bubble1: "The French Defense! Building a rock-solid central pawn chain.",
-                    bubble2: "Challenge: Watch that light-squared bishop! How do you plan to activate it?"
+                    bubble2: "Watch that light-squared bishop! How do you plan to activate it?"
                 };
             }
             if (name.includes('italian') || eco === 'C50' || eco === 'C53' || eco === 'C54' || eco === 'C55') {
                 return {
                     bubble1: "The Italian Game! Classical open piece play targeting the vulnerable f7 square.",
-                    bubble2: "Challenge: Can you neutralize my bishop and fight for central control?"
+                    bubble2: "Can you neutralize my bishop and fight for central control?"
                 };
             }
             if (name.includes('caro-kann') || eco.startsWith('B1')) {
                 return {
                     bubble1: "The Caro-Kann! Renowned for pawn structure solidity and endgame resilience.",
-                    bubble2: "Challenge: Are you preparing to strike at the center with ...d5?"
+                    bubble2: "Are you preparing to strike at the center with ...d5?"
                 };
             }
             if (name.includes('ruy lopez') || name.includes('spanish') || eco.startsWith('C6') || eco.startsWith('C7') || eco.startsWith('C8') || eco.startsWith('C9')) {
                 return {
                     bubble1: "The Spanish Game! Deep, classical positional maneuvering from move 3.",
-                    bubble2: "Challenge: Can you maintain piece harmony under central pressure?"
+                    bubble2: "Can you maintain piece harmony under central pressure?"
                 };
             }
             if (name.includes("queen's gambit") || eco.startsWith('D0') || eco.startsWith('D1') || eco.startsWith('D2') || eco.startsWith('D3') || eco.startsWith('D4') || eco.startsWith('D5') || eco.startsWith('D6')) {
                 return {
                     bubble1: "The Queen's Gambit! A battle of will and central space from move 2.",
-                    bubble2: "Challenge: Do you take the gambit pawn or stand firm in the center?"
+                    bubble2: "Do you take the gambit pawn or stand firm in the center?"
                 };
             }
             if (name.includes("king's indian") || eco.startsWith('E6') || eco.startsWith('E7') || eco.startsWith('E8') || eco.startsWith('E9')) {
                 return {
                     bubble1: "The King's Indian! You're letting me claim space to prepare a kingside storm.",
-                    bubble2: "Challenge: How do you plan to challenge my central pawn chain?"
+                    bubble2: "How do you plan to challenge my central pawn chain?"
                 };
             }
             if (name.includes('scandinavian') || eco === 'B01') {
                 return {
                     bubble1: "The Scandinavian! An immediate strike against e4 right on move 1.",
-                    bubble2: "Challenge: Developing your queen early can be risky. Keep her safe!"
+                    bubble2: "Developing your queen early can be risky. Keep her safe!"
                 };
             }
             return {
                 bubble1: `Entering the ${op.name}! Let's see who controls the key squares.`,
-                bubble2: "Challenge: What is your primary strategic plan in this opening?"
+                bubble2: "What is your primary strategic plan in this opening?"
             };
         }
 
@@ -1287,8 +1287,8 @@
 
             if (sleepingMinors >= 2 && this.moveHistory.length < 16) {
                 return pickRandom(this.persona.voice.challengeDevelopment || [
-                    "Challenge: You still have pieces asleep on the back rank. Can you mobilize them?",
-                    "Challenge: Bringing your minor pieces into play is top priority. Which piece will you develop next?"
+                    "You still have pieces asleep on the back rank. Can you mobilize them?",
+                    "Bringing your minor pieces into play is top priority. Which piece will you develop next?"
                 ]);
             }
 
@@ -1304,8 +1304,8 @@
 
             if (queensCount === 0 && this.moveHistory.length >= 16) {
                 return pickRandom(this.persona.voice.challengeEndgame || [
-                    "Challenge: In the endgame, the active king is worth a minor piece. Time to march!",
-                    "Challenge: Precision matters in the endgame. Look ahead a few moves before deciding!"
+                    "In the endgame, the active king is worth a minor piece. Time to march!",
+                    "Precision matters in the endgame. Look ahead a few moves before deciding!"
                 ]);
             }
 
