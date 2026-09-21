@@ -561,6 +561,8 @@
             this.isGameOver = false;
             this.lastMoveQuality = null;
             this.announcedOpening = false;
+            this.lastSuggestedMove = null; // Track coach suggestion for takeback follow-up { fen, san, uci }
+            this._positionEvalCache = new Map(); // Cache deep evaluations by FEN to prevent search swing
 
             // Current speech commentary
             this.currentBubble1 = this.persona.voice.intro;
@@ -614,6 +616,40 @@
         }
 
         /**
+         * Switch worker to full GM tactical strength for objective move analysis and blunder advice.
+         */
+        _setWorkerAnalysisMode() {
+            if (!this.worker) return;
+            if (typeof this.worker.setOption === 'function') {
+                this.worker.setOption('UCI_LimitStrength', 'false');
+                this.worker.setOption('Skill Level', '20');
+            } else if (this.worker.worker) {
+                try {
+                    this.worker.worker.postMessage('setoption name UCI_LimitStrength value false');
+                    this.worker.worker.postMessage('setoption name Skill Level value 20');
+                } catch (e) {}
+            }
+        }
+
+        /**
+         * Switch worker to persona-tuned Elo rating for in-game AI moves.
+         */
+        _setWorkerPlayMode() {
+            if (!this.worker) return;
+            if (typeof this.worker.setOption === 'function') {
+                this.worker.setOption('UCI_LimitStrength', 'true');
+                this.worker.setOption('UCI_Elo', `${this.persona.elo}`);
+                this.worker.setOption('Skill Level', `${this.persona.skillLevel || 10}`);
+            } else if (this.worker.worker) {
+                try {
+                    this.worker.worker.postMessage('setoption name UCI_LimitStrength value true');
+                    this.worker.worker.postMessage(`setoption name UCI_Elo value ${this.persona.elo}`);
+                    this.worker.worker.postMessage(`setoption name Skill Level value ${this.persona.skillLevel || 10}`);
+                } catch (e) {}
+            }
+        }
+
+        /**
          * Reset game state for a new game.
          */
         resetGame(playerColor = 'w') {
@@ -626,6 +662,8 @@
             this.isGameOver = false;
             this.lastMoveQuality = null;
             this.announcedOpening = false;
+            this.lastSuggestedMove = null;
+            this._positionEvalCache.clear();
 
             this.currentBubble1 = this.persona.voice.intro;
             this.currentBubble2 = (this.playerColor === 'w')
@@ -687,21 +725,47 @@
                 this.pendingChallenge = null;
             }
 
-            // 2. Quick evaluation of user move quality (if worker available)
+            // 2. Evaluation of user move quality (with swing limitation & coach suggestion memory)
             let classification = { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 };
             let isBlunder = false;
             let blunderAnalysis = null;
             let bestSan = null;
 
+            const playedUci = legalMove.from + legalMove.to + (legalMove.promotion || '');
+            const wasSuggested = Boolean(
+                this.lastSuggestedMove &&
+                this.lastSuggestedMove.fen === fenBefore &&
+                (this.lastSuggestedMove.san === legalMove.san ||
+                 this.lastSuggestedMove.uci === playedUci)
+            );
+
             const Evaluator = getEvaluator();
             const Recognizer = getRecognizer();
             const Detector = getOpeningDetector();
 
-            if (this.worker && Evaluator) {
+            if (wasSuggested) {
+                // User played the exact move the coach recommended after a blunder takeback!
+                classification = { uiQuality: 'good move', detailedQuality: 'best', wpLoss: 0.0 };
+                isBlunder = false;
+                this.lastSuggestedMove = null;
+            } else if (this.worker && Evaluator) {
                 try {
-                    const evalBefore = await this._evaluatePosition(fenBefore, 8, 2);
-                    const bestUci = evalBefore.bestMove;
-                    const playedUci = legalMove.from + legalMove.to + (legalMove.promotion || '');
+                    this._setWorkerAnalysisMode();
+
+                    // Check position evaluation cache to prevent search variance / evaluation swing
+                    let evalBefore = this._positionEvalCache.get(fenBefore);
+                    if (!evalBefore) {
+                        evalBefore = await this._evaluatePosition(fenBefore, 12, 3);
+                        if (evalBefore && evalBefore.lines) {
+                            this._positionEvalCache.set(fenBefore, evalBefore);
+                            if (this._positionEvalCache.size > 30) {
+                                const firstKey = this._positionEvalCache.keys().next().value;
+                                this._positionEvalCache.delete(firstKey);
+                            }
+                        }
+                    }
+
+                    const bestUci = evalBefore.bestMove || (evalBefore.lines[1]?.pv && evalBefore.lines[1].pv[0]) || '';
                     const playedIsBest = (playedUci === bestUci);
                     const bestCp = evalBefore.lines[1]?.cp || 0;
                     const wpBefore = Evaluator.cpToWinProb(bestCp);
@@ -717,32 +781,44 @@
                     if (playedIsBest || isBook) {
                         playedCp = bestCp;
                         wpAfter = wpBefore;
-                    } else if (evalBefore.lines[2]?.pv && evalBefore.lines[2].pv[0] === playedUci) {
-                        playedCp = evalBefore.lines[2].cp || 0;
-                        wpAfter = Evaluator.cpToWinProb(playedCp);
                     } else {
-                        evalAfter = await this._evaluatePosition(fenAfter, 8, 1);
-                        playedCp = -(evalAfter.lines[1]?.cp || 0);
-                        wpAfter = Evaluator.cpToWinProb(playedCp);
+                        // Check if played move is in MultiPV lines (2 or 3) from the same root search
+                        let foundInMultipv = false;
+                        for (let m = 2; m <= 3; m++) {
+                            if (evalBefore.lines[m]?.pv && evalBefore.lines[m].pv[0] === playedUci) {
+                                playedCp = evalBefore.lines[m].cp || 0;
+                                wpAfter = Evaluator.cpToWinProb(playedCp);
+                                foundInMultipv = true;
+                                break;
+                            }
+                        }
+                        if (!foundInMultipv) {
+                            evalAfter = await this._evaluatePosition(fenAfter, 12, 1);
+                            playedCp = -(evalAfter.lines[1]?.cp || 0);
+                            wpAfter = Evaluator.cpToWinProb(playedCp);
+                        }
                     }
 
                     classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
 
-                    // Compute best SAN for advice
-                    if (bestUci && bestUci.length >= 4) {
-                        const tempChess = new this.Chess(fenBefore);
-                        const bMove = tempChess.move({
-                            from: bestUci.slice(0, 2),
-                            to: bestUci.slice(2, 4),
-                            promotion: bestUci[4]
-                        });
-                        if (bMove) bestSan = bMove.san;
-                    }
-
+                    // Find and verify best alternative move for advice if blunder or mistake
                     if (!isBook && (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.wpLoss > 0.15)) {
                         isBlunder = true;
+                        const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
+                        if (verified && verified.san) {
+                            bestSan = verified.san;
+                        } else if (bestUci && bestUci.length >= 4) {
+                            const tempChess = new this.Chess(fenBefore);
+                            const bMove = tempChess.move({
+                                from: bestUci.slice(0, 2),
+                                to: bestUci.slice(2, 4),
+                                promotion: bestUci[4]
+                            });
+                            if (bMove) bestSan = bMove.san;
+                        }
+
                         if (!evalAfter) {
-                            evalAfter = await this._evaluatePosition(fenAfter, 8, 1);
+                            evalAfter = await this._evaluatePosition(fenAfter, 12, 1);
                         }
                         if (Recognizer && Recognizer.explainBlunderOrMistake) {
                             const boardBefore = new this.Chess(fenBefore);
@@ -806,6 +882,11 @@
             if (challengeFeedback) {
                 bubble1 = challengeFeedback.text;
                 bubble2 = "Calculating response...";
+            } else if (wasSuggested) {
+                bubble1 = pickRandom(this.persona.voice.playerGoodMove || [
+                    "Spot on! That's much better."
+                ]);
+                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             } else if (isBlunder) {
                 bubble1 = pickRandom(this.persona.voice.playerBlunder);
                 bubble2 = blunderAnalysis || "That move might be a mistake. Review the tactical oversight card below!";
@@ -835,6 +916,8 @@
             this.currentBubble2 = bubble2;
             if (challengeFeedback) {
                 this.currentDialogue = challengeFeedback.text;
+            } else if (wasSuggested) {
+                this.currentDialogue = `Great adjustment! Playing ${legalMove.san} keeps your position solid and maintains control.`;
             } else if (isBlunder) {
                 this.currentDialogue = blunderAnalysis || (bestSan ? `That concedes material or leverage. A stronger alternative was ${bestSan}.` : "That move gives away an advantage. Look for a safer alternative!");
             } else {
@@ -1067,6 +1150,91 @@
         }
 
         /**
+         * Verifies candidate moves from root evaluation to ensure suggested move is tactically sound.
+         * Rejects candidates that hang pieces, walk into mate, or suffer substantial score collapse.
+         * @param {string} fenBefore - Board state before player's move
+         * @param {object} evalBefore - MultiPV evaluation of fenBefore
+         * @returns {Promise<object|null>} { uci, san, moveObj, cp, verified }
+         */
+        async _findVerifiedBestMove(fenBefore, evalBefore) {
+            const Recognizer = getRecognizer();
+            const boardBefore = new this.Chess(fenBefore);
+            const candidates = [];
+
+            // 1. Gather candidates from MultiPV lines (up to 3)
+            for (let m = 1; m <= 3; m++) {
+                const line = evalBefore?.lines?.[m];
+                const uci = (line && line.pv && line.pv[0]) || (m === 1 ? evalBefore?.bestMove : null);
+                if (uci && uci.length >= 4 && !candidates.some(c => c.uci === uci)) {
+                    candidates.push({ uci, cp: line?.cp ?? 0 });
+                }
+            }
+
+            if (candidates.length === 0 && evalBefore?.bestMove) {
+                candidates.push({ uci: evalBefore.bestMove, cp: evalBefore?.lines?.[1]?.cp ?? 0 });
+            }
+
+            const bestCp = evalBefore?.lines?.[1]?.cp ?? 0;
+            let fallback = null;
+
+            for (const cand of candidates) {
+                const uci = cand.uci;
+                const testBoard = new this.Chess(fenBefore);
+                const moveObj = testBoard.move({
+                    from: uci.slice(0, 2),
+                    to: uci.slice(2, 4),
+                    promotion: uci[4]
+                });
+                if (!moveObj) continue;
+
+                if (!fallback) {
+                    fallback = { uci, san: moveObj.san, moveObj, cp: cand.cp, verified: false };
+                }
+
+                // Check A: Does candidate move hang an undefended piece?
+                if (Recognizer && typeof Recognizer.detectHangingPieceBlunder === 'function') {
+                    const hanging = Recognizer.detectHangingPieceBlunder(boardBefore, testBoard, moveObj);
+                    if (hanging) {
+                        // Candidate hangs a piece! Skip this move.
+                        continue;
+                    }
+                }
+
+                // Check B: Evaluate board state after candidate move to check opponent's refutation
+                const fenAfterCand = testBoard.fen();
+                try {
+                    const postCandEval = await this._evaluatePosition(fenAfterCand, 10, 1);
+                    const oppBestCp = postCandEval?.lines?.[1]?.cp ?? 0;
+                    const candPlayerCp = -oppBestCp;
+                    const oppMate = postCandEval?.lines?.[1]?.mate;
+
+                    // If opponent has forced checkmate, candidate is suicidal
+                    if (oppMate !== undefined && oppMate !== null && oppMate > 0) {
+                        continue;
+                    }
+
+                    // Check score drop: if candidate score drops by > 120cp compared to root bestCp
+                    if (candPlayerCp < bestCp - 120) {
+                        continue;
+                    }
+
+                    // Candidate passed verification!
+                    return {
+                        uci,
+                        san: moveObj.san,
+                        moveObj,
+                        cp: candPlayerCp,
+                        verified: true
+                    };
+                } catch (e) {
+                    // Verification evaluation error; keep trying or use fallback
+                }
+            }
+
+            return fallback;
+        }
+
+        /**
          * Get normal engine move from position.
          */
         async _getEngineMove(fen) {
@@ -1076,6 +1244,7 @@
             }
 
             try {
+                this._setWorkerPlayMode();
                 const evalRes = await this._evaluatePosition(fen, 10, 1);
                 if (evalRes && evalRes.bestMove && evalRes.bestMove.length >= 4) {
                     const uci = evalRes.bestMove;
@@ -1379,6 +1548,7 @@
             }
 
             const Recognizer = getRecognizer();
+            const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
             const legalMoves = this.chess.moves({ verbose: true });
             if (legalMoves.length === 0) return { hintText: "No legal moves available.", highlightSquares: [] };
 
@@ -1403,8 +1573,35 @@
                 }
             }
 
+            // If coach just suggested a move after takeback, align hint directly with that move
+            const currentFen = this.chess.fen();
+            if (this.lastSuggestedMove && this.lastSuggestedMove.fen === currentFen && this.lastSuggestedMove.san) {
+                const tempB = new this.Chess(currentFen);
+                const sm = tempB.move(this.lastSuggestedMove.san);
+                if (sm) {
+                    const pName = PIECE_NAMES[sm.piece] || 'piece';
+                    return {
+                        hintText: `Coach Hint: Consider mobilizing your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}) as we discussed!`,
+                        highlightSquares: [sm.from]
+                    };
+                }
+            }
+
+            // If a verified best move is cached for current FEN, use its piece
+            const cached = this._positionEvalCache.get(currentFen);
+            if (cached && cached.bestSan) {
+                const tempB = new this.Chess(currentFen);
+                const cm = tempB.move(cached.bestSan);
+                if (cm) {
+                    const pName = PIECE_NAMES[cm.piece] || 'piece';
+                    return {
+                        hintText: `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName}.`,
+                        highlightSquares: [cm.from]
+                    };
+                }
+            }
+
             // General hint: suggest moving a piece toward the center
-            const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
             const centerMoves = legalMoves.filter(m => ['d4', 'd5', 'e4', 'e5', 'c4', 'c5', 'f4', 'f5'].includes(m.to));
             if (centerMoves.length > 0) {
                 const cm = centerMoves[0];
@@ -1446,6 +1643,15 @@
             }
             this.isGameOver = false;
 
+            if (suggestedSan) {
+                this.lastSuggestedMove = {
+                    fen: this.chess.fen(),
+                    san: suggestedSan
+                };
+            } else {
+                this.lastSuggestedMove = null;
+            }
+
             this.currentBubble1 = "Good instinct to take that back!";
             this.currentBubble2 = suggestedSan
                 ? `Take another look at the position. Consider moves like ${suggestedSan} instead!`
@@ -1481,6 +1687,7 @@
             }
 
             this.pendingChallenge = null;
+            this.lastSuggestedMove = null;
             this.isGameOver = false;
 
             this.currentBubble1 = "Takeback granted! Let's try that position again.";

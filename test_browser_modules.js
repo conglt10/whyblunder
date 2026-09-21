@@ -960,6 +960,89 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert(rBubbles.bubble2.toLowerCase().includes('rook'), `Rook move Rad1 should mention rook, got: ${rBubbles.bubble2}`);
     assert(!rBubbles.bubble2.toLowerCase().includes('queen'), `Rook move should not mention queen, got: ${rBubbles.bubble2}`);
 
+    // =========================================================================
+    // Regression Tests: Coach Suggestion Verification & Swing Limitation
+    // =========================================================================
+
+    // 1. Worker dual-mode options toggle
+    const toggleWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async () => ({ bestMove: 'd2d4', lines: { 1: { cp: 20, pv: ['d2d4'] } } })
+    };
+    const toggleCoach = new CoachManager({ personaId: 'pikaru', worker: toggleWorker });
+    toggleCoach._setWorkerAnalysisMode();
+    assert.strictEqual(toggleWorker.options['UCI_LimitStrength'], 'false', "Analysis mode must disable UCI_LimitStrength");
+    assert.strictEqual(toggleWorker.options['Skill Level'], '20', "Analysis mode must set max Skill Level 20");
+    toggleCoach._setWorkerPlayMode();
+    assert.strictEqual(toggleWorker.options['UCI_LimitStrength'], 'true', "Play mode must enable UCI_LimitStrength");
+    assert.strictEqual(toggleWorker.options['UCI_Elo'], '1600', "Play mode must set persona Elo");
+
+    // 2. Candidate Verification (_findVerifiedBestMove) rejects blunder candidate and picks sound alternative
+    const verifyWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            // If evaluating after e2e4, opponent refutes it with -250 cp
+            if (fen.includes('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR')) {
+                return { bestMove: 'e7e5', lines: { 1: { cp: 250, pv: ['e7e5'] } } }; // Opponent is +250
+            }
+            // If evaluating after d2d4, position is solid (+20 cp)
+            if (fen.includes('rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR')) {
+                return { bestMove: 'd7d5', lines: { 1: { cp: -20, pv: ['d7d5'] } } }; // Opponent is -20 (player is +20)
+            }
+            return { bestMove: 'd2d4', lines: { 1: { cp: 20, pv: ['d2d4'] } } };
+        }
+    };
+    const verifyCoach = new CoachManager({ personaId: 'pikaru', worker: verifyWorker });
+    const fenStart = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    const mockMultiEval = {
+        bestMove: 'e2e4',
+        lines: {
+            1: { cp: 30, pv: ['e2e4'] }, // Cand 1: e4 (will be refuted by -250 in post-eval)
+            2: { cp: 20, pv: ['d2d4'] }  // Cand 2: d4 (solid in post-eval)
+        }
+    };
+    const verifiedMove = await verifyCoach._findVerifiedBestMove(fenStart, mockMultiEval);
+    assert(verifiedMove, "Verified move must be returned");
+    assert.strictEqual(verifiedMove.san, 'd4', "Candidate 1 (e4) was refuted, candidate 2 (d4) must be selected as verified move");
+    assert.strictEqual(verifiedMove.verified, true, "Move must be marked verified");
+
+    // 3. Takeback and replay of coach's suggested move
+    const takebackReplayWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            return {
+                bestMove: 'd2d4',
+                lines: {
+                    1: { cp: 40, pv: ['d2d4'] },
+                    2: { cp: 30, pv: ['g1f3'] }
+                }
+            };
+        }
+    };
+    const takebackCoach = new CoachManager({ personaId: 'pikaru', worker: takebackReplayWorker });
+    // User blunders with f3
+    const blunderRes = await takebackCoach.handleUserMove('f3');
+    // Takeback with suggested move 'd4'
+    const tbOk = takebackCoach.takebackPlayerMove('d4');
+    assert.strictEqual(tbOk, true);
+    assert.strictEqual(takebackCoach.lastSuggestedMove.san, 'd4');
+
+    // Player now executes suggested move 'd4'
+    const replayRes = await takebackCoach.handleUserMove('d4');
+    assert.strictEqual(replayRes.success, true);
+    assert.strictEqual(replayRes.isBlunder, false, "Replaying coach's suggested move must NOT be a blunder");
+    assert.strictEqual(replayRes.quality.uiQuality, 'good move', "Replaying suggested move must be classified as good move");
+    assert.strictEqual(replayRes.quality.wpLoss, 0.0, "Replaying suggested move must have 0 wpLoss");
+    assert(replayRes.dialogue.includes('Great adjustment') || replayRes.dialogue.includes('d4'),
+        `Dialogue should acknowledge player's adjustment, got: ${replayRes.dialogue}`);
+    assert.strictEqual(takebackCoach.lastSuggestedMove, null, "lastSuggestedMove should be cleared after execution");
+
+    // 4. Position Evaluation Cache prevents search variance and swings
+    assert(takebackCoach._positionEvalCache.size > 0, "Position evaluation cache should store analyzed positions");
+
     // Verify index.html Coach Mode Integration
     const fs = require('fs');
     const indexContent = fs.readFileSync('./index.html', 'utf8');
