@@ -579,6 +579,9 @@
             this.pendingChallenge = null; // Active blunder challenge object
             this.pliesSinceBlunder = 0;
             this.isGameOver = false;
+            this.gameResult = null;
+            this.resigned = false;
+            this.resignedColor = null;
             this.lastMoveQuality = null;
             this.announcedOpening = false;
             this.lastSuggestedMove = null; // Track coach suggestion for takeback follow-up { fen, san, uci }
@@ -713,6 +716,9 @@
             this.pendingChallenge = null;
             this.pliesSinceBlunder = 0;
             this.isGameOver = false;
+            this.gameResult = null;
+            this.resigned = false;
+            this.resignedColor = null;
             this.lastMoveQuality = null;
             this.announcedOpening = false;
             this.lastSuggestedMove = null;
@@ -723,6 +729,30 @@
                 ? "Make your opening move to get started!"
                 : "I'll make the first move. Let's see what you've got!";
             this.currentDialogue = `${this.persona.voice.intro} ${this.currentBubble2}`;
+        }
+
+        /**
+         * Player or coach resigns the sparring game.
+         * @param {string|null} [resignedColor=null] - 'w' or 'b' (defaults to playerColor)
+         * @returns {object} Result summary
+         */
+        resign(resignedColor = null) {
+            this.isGameOver = true;
+            this.resigned = true;
+            this.resignedColor = resignedColor || this.playerColor;
+            this.gameResult = (this.resignedColor === this.playerColor) ? 'loss' : 'win';
+            this.currentBubble1 = "You resigned. No worries, every game is a learning opportunity!";
+            this.currentBubble2 = "Click 'New Game' or the Flag button whenever you're ready to play again.";
+            this.currentDialogue = `${this.currentBubble1} ${this.currentBubble2}`;
+            return {
+                isGameOver: true,
+                gameResult: this.gameResult,
+                resigned: true,
+                resignedColor: this.resignedColor,
+                bubble1: this.currentBubble1,
+                bubble2: this.currentBubble2,
+                dialogue: this.currentDialogue
+            };
         }
 
         /**
@@ -1894,6 +1924,9 @@
                 return false;
             }
             this.isGameOver = false;
+            this.gameResult = null;
+            this.resigned = false;
+            this.resignedColor = null;
 
             const currentFen = this.chess.fen();
             const posKey = this._normalizeFen(currentFen);
@@ -1941,6 +1974,9 @@
 
             this.pendingChallenge = null;
             this.isGameOver = false;
+            this.gameResult = null;
+            this.resigned = false;
+            this.resignedColor = null;
 
             const currentFen = this.chess.fen();
             const posKey = this._normalizeFen(currentFen);
@@ -1971,6 +2007,11 @@
         }
 
         _getGameOverMessage() {
+            if (this.resigned) {
+                return (this.resignedColor === this.playerColor)
+                    ? "You resigned. No worries, every game is a learning opportunity!"
+                    : "Coach resigned! Outstanding play!";
+            }
             if (this.chess.in_checkmate()) {
                 return (this.chess.turn() === this.playerColor)
                     ? "Checkmate! Good game! Don't worry, every loss is a lesson."

@@ -5340,16 +5340,18 @@
                 badges.forEach(badge => badge.remove());
             }
 
-            function updateKingCheckmateBadges(chessInstance) {
+            function updateKingCheckmateBadges(chessInstance, options = {}) {
                 clearKingCheckmateBadges();
-                if (!chessInstance || typeof chessInstance.in_checkmate !== 'function') return;
+                if (!chessInstance) return;
                 if (!boardContainer) return;
 
-                const isCheckmate = chessInstance.in_checkmate();
+                const isCheckmate = typeof chessInstance.in_checkmate === 'function' && chessInstance.in_checkmate();
                 const isStalemate = (typeof chessInstance.in_stalemate === 'function') && chessInstance.in_stalemate();
                 const isDraw = (typeof chessInstance.in_draw === 'function') && chessInstance.in_draw();
+                const isResigned = Boolean(options.resigned || (typeof coachManager !== 'undefined' && coachManager && coachManager.isGameOver && coachManager.resigned));
+                const resignedColor = options.resignedColor || (typeof coachManager !== 'undefined' && coachManager && coachManager.resignedColor) || (typeof coachManager !== 'undefined' && coachManager && coachManager.playerColor) || 'w';
 
-                if (!isCheckmate && !isStalemate && !isDraw) return;
+                if (!isCheckmate && !isStalemate && !isDraw && !isResigned) return;
 
                 let whiteKingSq = null;
                 let blackKingSq = null;
@@ -5403,6 +5405,14 @@
 
                     if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Checkmate)');
                     if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Checkmated');
+                } else if (isResigned) {
+                    const loserColor = resignedColor;
+                    const winnerColor = (loserColor === 'w') ? 'b' : 'w';
+                    const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
+                    const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
+
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Opponent Resigned)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Resigned');
                 } else if (isStalemate) {
                     if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '½', 'Stalemate (Draw)');
                     if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '½', 'Stalemate (Draw)');
@@ -6665,7 +6675,38 @@
                 if (!coachManager || !bubble) return;
 
                 if (coachManager.isGameOver) {
-                    bubble.innerHTML = `<div class="coach-game-over-text fw-bold">${escapeHtml(coachManager.getDialogue())}</div>`;
+                    const result = coachManager.gameResult;
+                    const isResigned = Boolean(coachManager.resigned);
+                    const isMate = coachManager.chess && typeof coachManager.chess.in_checkmate === 'function' && coachManager.chess.in_checkmate();
+                    const isStale = coachManager.chess && typeof coachManager.chess.in_stalemate === 'function' && coachManager.chess.in_stalemate();
+
+                    let badgeHtml = '';
+                    let mainMsg = coachManager.currentBubble1 || (typeof coachManager._getGameOverMessage === 'function' ? coachManager._getGameOverMessage() : "Game over!");
+                    let subMsg = coachManager.currentBubble2 || "Click 'New Game' or the Flag button whenever you're ready to play again.";
+
+                    if (isResigned) {
+                        badgeHtml = '<span class="badge bg-danger text-white me-1"><i class="bi bi-flag-fill me-1"></i> Resigned</span>';
+                    } else if (result === 'win' || (isMate && coachManager.chess.turn() !== coachManager.playerColor)) {
+                        badgeHtml = '<span class="badge bg-warning text-dark me-1"><i class="bi bi-trophy-fill me-1"></i> Victory (Checkmate)</span>';
+                    } else if (result === 'loss' || (isMate && coachManager.chess.turn() === coachManager.playerColor)) {
+                        badgeHtml = '<span class="badge bg-danger text-white me-1"><i class="bi bi-x-circle-fill me-1"></i> Defeat (Checkmate)</span>';
+                    } else if (isStale) {
+                        badgeHtml = '<span class="badge bg-secondary text-white me-1"><i class="bi bi-dash-circle me-1"></i> Stalemate</span>';
+                    } else {
+                        badgeHtml = '<span class="badge bg-secondary text-white me-1"><i class="bi bi-handshake me-1"></i> Draw</span>';
+                    }
+
+                    bubble.innerHTML = `
+                        <div class="coach-game-over-card">
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                ${badgeHtml}
+                                <span class="fw-bold text-dark">${escapeHtml(mainMsg)}</span>
+                            </div>
+                            <div class="coach-reply-text small text-muted">
+                                ${escapeHtml(subMsg)}
+                            </div>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -6776,14 +6817,19 @@
                 }
 
                 // Turn dots
-                const turn = coachManager.chess.turn();
                 if (topPlayerTurn && bottomPlayerTurn) {
-                    if (turn === (isPlayerWhite ? 'b' : 'w')) {
-                        topPlayerTurn.classList.add('active');
+                    if (coachManager.isGameOver) {
+                        topPlayerTurn.classList.remove('active');
                         bottomPlayerTurn.classList.remove('active');
                     } else {
-                        topPlayerTurn.classList.remove('active');
-                        bottomPlayerTurn.classList.add('active');
+                        const turn = coachManager.chess.turn();
+                        if (turn === (isPlayerWhite ? 'b' : 'w')) {
+                            topPlayerTurn.classList.add('active');
+                            bottomPlayerTurn.classList.remove('active');
+                        } else {
+                            topPlayerTurn.classList.remove('active');
+                            bottomPlayerTurn.classList.add('active');
+                        }
                     }
                 }
 
@@ -7247,10 +7293,12 @@
                         return;
                     }
                     if (confirm("Resign this game and start a new sparring round?")) {
-                        coachManager.isGameOver = true;
-                        coachManager.currentBubble1 = "You resigned. No worries, every game is a learning opportunity!";
-                        coachManager.currentBubble2 = "Click 'New Game' or the Flag button whenever you're ready to play again.";
+                        coachManager.resign(coachManager.playerColor);
+                        clearArrows();
+                        clearSquareAnnotations();
                         renderCoachDialogue();
+                        updateCoachPlayerBars();
+                        updateKingCheckmateBadges(coachManager.chess, { resigned: true, resignedColor: coachManager.playerColor });
                     }
                 });
             }

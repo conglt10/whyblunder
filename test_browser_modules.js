@@ -1406,12 +1406,14 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(mateChess.turn(), 'b', "Black is checkmated (turn is 'b')");
 
     // Test king badge calculation simulation
-    function simulateKingBadges(chessInstance, isFlipped = false) {
+    function simulateKingBadges(chessInstance, isFlipped = false, options = {}) {
         if (!chessInstance) return [];
         const isCheckmate = chessInstance.in_checkmate && chessInstance.in_checkmate();
         const isStalemate = chessInstance.in_stalemate && chessInstance.in_stalemate();
         const isDraw = chessInstance.in_draw && chessInstance.in_draw();
-        if (!isCheckmate && !isStalemate && !isDraw) return [];
+        const isResigned = Boolean(options.resigned);
+        const resignedColor = options.resignedColor || 'w';
+        if (!isCheckmate && !isStalemate && !isDraw && !isResigned) return [];
 
         let whiteKingSq = null;
         let blackKingSq = null;
@@ -1434,6 +1436,22 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
             const winnerColor = loserColor === 'w' ? 'b' : 'w';
             const winnerSq = winnerColor === 'w' ? whiteKingSq : blackKingSq;
             const loserSq = loserColor === 'w' ? whiteKingSq : blackKingSq;
+
+            if (winnerSq) {
+                const file = isFlipped ? 7 - (winnerSq.charCodeAt(0) - 97) : (winnerSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(winnerSq.charAt(1)) - 1 : 8 - parseInt(winnerSq.charAt(1));
+                badges.push({ type: 'winner', emoji: '⭑', square: winnerSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
+            if (loserSq) {
+                const file = isFlipped ? 7 - (loserSq.charCodeAt(0) - 97) : (loserSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(loserSq.charAt(1)) - 1 : 8 - parseInt(loserSq.charAt(1));
+                badges.push({ type: 'loser', emoji: '×', square: loserSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
+        } else if (isResigned) {
+            const loserColor = resignedColor;
+            const winnerColor = (loserColor === 'w') ? 'b' : 'w';
+            const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
+            const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
             if (winnerSq) {
                 const file = isFlipped ? 7 - (winnerSq.charCodeAt(0) - 97) : (winnerSq.charCodeAt(0) - 97);
@@ -1491,7 +1509,34 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(stalemateBadges[1].emoji, '½');
     assert.strictEqual(stalemateBadges[1].square, 'a8'); // Black king
 
-    // Non-checkmate/non-stalemate position should return no badges
+    // Unit test logic for Resignation badges
+    const resignChess = new Chess();
+    // Case 1: White resigns (resignedColor = 'w')
+    const whiteResignBadges = simulateKingBadges(resignChess, false, { resigned: true, resignedColor: 'w' });
+    assert.strictEqual(whiteResignBadges.length, 2, "Must produce 2 badges on resignation");
+    const whiteResignWinner = whiteResignBadges.find(b => b.type === 'winner');
+    const whiteResignLoser = whiteResignBadges.find(b => b.type === 'loser');
+    assert(whiteResignWinner && whiteResignWinner.square === 'e8', "Winner badge must be on Black King (e8)");
+    assert.strictEqual(whiteResignWinner.emoji, '⭑');
+    assert(whiteResignLoser && whiteResignLoser.square === 'e1', "Loser badge must be on White King (e1)");
+    assert.strictEqual(whiteResignLoser.emoji, '×');
+
+    // Case 2: Black resigns (resignedColor = 'b')
+    const blackResignBadges = simulateKingBadges(resignChess, false, { resigned: true, resignedColor: 'b' });
+    assert.strictEqual(blackResignBadges.length, 2, "Must produce 2 badges on resignation");
+    const blackResignWinner = blackResignBadges.find(b => b.type === 'winner');
+    const blackResignLoser = blackResignBadges.find(b => b.type === 'loser');
+    assert(blackResignWinner && blackResignWinner.square === 'e1', "Winner badge must be on White King (e1)");
+    assert(blackResignLoser && blackResignLoser.square === 'e8', "Loser badge must be on Black King (e8)");
+
+    // Case 3: Resignation with flipped orientation
+    const flippedResignBadges = simulateKingBadges(resignChess, true, { resigned: true, resignedColor: 'w' });
+    const flippedWinner = flippedResignBadges.find(b => b.type === 'winner');
+    const flippedLoser = flippedResignBadges.find(b => b.type === 'loser');
+    assert.strictEqual(flippedWinner.top, '87.5%', "Black king e8 is at bottom 87.5% when flipped");
+    assert.strictEqual(flippedLoser.top, '0%', "White king e1 is at top 0% when flipped");
+
+    // Non-checkmate/non-stalemate/non-resigned position should return no badges
     const nonMateChess = new Chess();
     assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Initial position must produce 0 badges");
 
@@ -1685,6 +1730,70 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert(indexHtml.includes("case 'best': return 'quality-best';"), "index.html getMoveQualityClass must handle 'best'");
     assert(indexHtml.includes('renderCoachThinking(userResult);'), "index.html must pass userResult to renderCoachThinking");
 
+    // 9. Coach Resignation & Game Over Status Tests
+    console.log("Testing Coach Resignation & Game Over Status...");
+    // A. Player resigns as White
+    const resignCoachW = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    const resignResW = resignCoachW.resign('w');
+    assert.strictEqual(resignCoachW.isGameOver, true);
+    assert.strictEqual(resignCoachW.resigned, true);
+    assert.strictEqual(resignCoachW.resignedColor, 'w');
+    assert.strictEqual(resignCoachW.gameResult, 'loss');
+    assert.strictEqual(resignResW.isGameOver, true);
+    assert.strictEqual(resignResW.resigned, true);
+    assert.strictEqual(resignResW.resignedColor, 'w');
+    assert.strictEqual(resignResW.gameResult, 'loss');
+    assert(resignCoachW._getGameOverMessage().includes('You resigned'));
+    assert(resignCoachW.getPgn().includes('[Result "0-1"]'));
+
+    // B. Player resigns as Black
+    const resignCoachB = new CoachManager({ personaId: 'pikaru', playerColor: 'b' });
+    const resignResB = resignCoachB.resign('b');
+    assert.strictEqual(resignCoachB.isGameOver, true);
+    assert.strictEqual(resignCoachB.resigned, true);
+    assert.strictEqual(resignCoachB.resignedColor, 'b');
+    assert.strictEqual(resignCoachB.gameResult, 'loss');
+    assert(resignCoachB.getPgn().includes('[Result "1-0"]'));
+
+    // C. Default resignation color is playerColor
+    const resignCoachDef = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    resignCoachDef.resign();
+    assert.strictEqual(resignCoachDef.resignedColor, 'w');
+
+    // D. Coach resigns (opponent resignation)
+    const coachResigns = new CoachManager({ personaId: 'mcmarty', playerColor: 'w' });
+    coachResigns.resign('b'); // Coach resigns
+    assert.strictEqual(coachResigns.isGameOver, true);
+    assert.strictEqual(coachResigns.resigned, true);
+    assert.strictEqual(coachResigns.resignedColor, 'b');
+    assert.strictEqual(coachResigns.gameResult, 'win');
+    assert(coachResigns._getGameOverMessage().includes('Coach resigned'));
+    assert(coachResigns.getPgn().includes('[Result "1-0"]'));
+
+    // E. Takeback after resignation resets game over and resignation state
+    const takebackResignCoach = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    takebackResignCoach.chess.move('e4');
+    takebackResignCoach.moveHistory.push({ san: 'e4', isPlayer: true });
+    takebackResignCoach.resign('w');
+    assert.strictEqual(takebackResignCoach.isGameOver, true);
+    assert.strictEqual(takebackResignCoach.resigned, true);
+    const tbResignOk = takebackResignCoach.takeback();
+    assert.strictEqual(tbResignOk, true);
+    assert.strictEqual(takebackResignCoach.isGameOver, false);
+    assert.strictEqual(takebackResignCoach.resigned, false);
+    assert.strictEqual(takebackResignCoach.resignedColor, null);
+    assert.strictEqual(takebackResignCoach.gameResult, null);
+
+    // F. index.html resignation wiring checks
+    const updatedIndexHtml = fs.readFileSync('./index.html', 'utf8');
+    assert(updatedIndexHtml.includes('coachManager.resign(coachManager.playerColor)'), "index.html must invoke coachManager.resign(coachManager.playerColor)");
+    assert(updatedIndexHtml.includes('isResigned = Boolean(options.resigned'), "index.html updateKingCheckmateBadges must detect isResigned");
+    assert(updatedIndexHtml.includes('Winner (Opponent Resigned)'), "index.html must set badge tooltip for resignation winner");
+    assert(updatedIndexHtml.includes("topPlayerTurn.classList.remove('active')"), "index.html must clear topPlayerTurn on game over");
+    assert(updatedIndexHtml.includes("bottomPlayerTurn.classList.remove('active')"), "index.html must clear bottomPlayerTurn on game over");
+    assert(updatedIndexHtml.includes('<i class="bi bi-flag-fill me-1"></i> Resigned'), "index.html renderCoachDialogue must show Resigned badge");
+
+    console.log("✓ Coach Resignation & Game Over Status tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
