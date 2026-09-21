@@ -907,6 +907,38 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert.strictEqual(coach.getPersona().id, 'mangoose');
     assert.strictEqual(coach.getPersona().elo, 2200);
 
+    // Test Single-move Player Takeback (takebackPlayerMove)
+    const tbPlayerCoach = new CoachManager({ personaId: 'sophy' });
+    assert.strictEqual(tbPlayerCoach.moveHistory.length, 0);
+    await tbPlayerCoach.handleUserMove('e4');
+    assert.strictEqual(tbPlayerCoach.moveHistory.length, 1);
+    assert.strictEqual(tbPlayerCoach.chess.history().length, 1);
+    const tbSingleOk = tbPlayerCoach.takebackPlayerMove('d4');
+    assert.strictEqual(tbSingleOk, true);
+    assert.strictEqual(tbPlayerCoach.moveHistory.length, 0);
+    assert.strictEqual(tbPlayerCoach.chess.history().length, 0);
+    assert.strictEqual(tbPlayerCoach.isPlayerTurn(), true);
+    assert(tbPlayerCoach.currentBubble1.includes('Good instinct'), "Bubble 1 should give positive takeback feedback");
+    assert(tbPlayerCoach.currentBubble2.includes('d4'), "Bubble 2 should suggest d4");
+
+    // Test Persona voice enrichment categories across all personas
+    const { COACH_PERSONAS } = require('./js/coach-manager.js');
+    const requiredVoiceKeys = [
+        'thinking', 'passedPawn', 'castle', 'fork', 'pin', 'attackQueen',
+        'attackRook', 'openFile', 'outpost', 'centerStrike', 'check', 'capture',
+        'develop', 'genericMove', 'challengeOnlyMove', 'challengeBlunderBait',
+        'praiseSpotBlunder', 'missedBlunder', 'playerBlunder', 'playerGoodMove',
+        'challengeDevelopment', 'challengeCenter', 'challengePinDefense',
+        'challengeEndgame', 'challengeGeneric'
+    ];
+    for (const pid of ['pikaru', 'mcmarty', 'sophy', 'mangoose']) {
+        const p = COACH_PERSONAS[pid];
+        assert(p, `Persona ${pid} must exist`);
+        for (const key of requiredVoiceKeys) {
+            assert(p.voice[key] !== undefined, `Persona ${pid} must have voice key ${key}`);
+        }
+    }
+
     // Verify index.html Coach Mode Integration
     const fs = require('fs');
     const indexContent = fs.readFileSync('./index.html', 'utf8');
@@ -915,6 +947,10 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('id="colCoach"'), "index.html must contain #colCoach");
     assert(indexContent.includes('id="coachBubble1"'), "index.html must contain #coachBubble1");
     assert(indexContent.includes('id="coachBubble2"'), "index.html must contain #coachBubble2");
+    assert(indexContent.includes('id="coachBlunderCard"'), "index.html must contain #coachBlunderCard");
+    assert(indexContent.includes('id="coachBlunderText"'), "index.html must contain #coachBlunderText");
+    assert(indexContent.includes('id="btnCoachRetryMove"'), "index.html must contain #btnCoachRetryMove");
+    assert(indexContent.includes('id="btnCoachContinueAnyway"'), "index.html must contain #btnCoachContinueAnyway");
     assert(indexContent.includes('id="btnCoachHint"'), "index.html must contain #btnCoachHint");
     assert(indexContent.includes('id="btnCoachTakeback"'), "index.html must contain #btnCoachTakeback");
     assert(indexContent.includes('id="btnCoachResign"'), "index.html must contain #btnCoachResign");
@@ -923,10 +959,16 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('function switchAppMode('), "index.html must define switchAppMode");
     assert(indexContent.includes('function startNewCoachGame('), "index.html must define startNewCoachGame");
     assert(indexContent.includes('function executeCoachUserMove('), "index.html must define executeCoachUserMove");
+    assert(indexContent.includes('function renderCoachThinking('), "index.html must define renderCoachThinking");
+    assert(indexContent.includes('function triggerCoachResponse('), "index.html must define triggerCoachResponse");
+    assert(indexContent.includes('function showBlunderTakebackCard('), "index.html must define showBlunderTakebackCard");
+    assert(indexContent.includes('function hideBlunderTakebackCard('), "index.html must define hideBlunderTakebackCard");
     assert(indexContent.includes('function handleCoachSquareClick('), "index.html must define handleCoachSquareClick for click-to-move");
     assert(indexContent.includes('function selectCoachSquare('), "index.html must define selectCoachSquare for highlighting legal squares");
     assert(indexContent.includes('.highlight-selected'), "index.html must define .highlight-selected CSS");
     assert(indexContent.includes('.highlight-dest'), "index.html must define .highlight-dest CSS");
+    assert(indexContent.includes('.coach-blunder-card'), "index.html must define .coach-blunder-card CSS");
+    assert(indexContent.includes('.pulse-takeback'), "index.html must define .pulse-takeback CSS");
     assert(!indexContent.includes('renderMaterialDisplay('), "index.html must not call undefined renderMaterialDisplay");
 
     console.log("✓ CoachManager passed!");

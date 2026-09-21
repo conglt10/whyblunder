@@ -2265,6 +2265,89 @@
             border-left: 3px solid var(--lic-blue);
         }
 
+        /* Blunder / Takeback Alert Card */
+        .coach-blunder-card {
+            background: rgba(204, 51, 51, 0.12);
+            border: 1px solid rgba(204, 51, 51, 0.35);
+            border-left: 4px solid var(--lic-red);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: fadeInBlunder 0.25s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes fadeInBlunder {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .coach-blunder-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #e04444;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .coach-blunder-explanation {
+            font-size: 0.82rem;
+            color: #f1f5f9;
+            line-height: 1.45;
+        }
+        .coach-blunder-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .btn-coach-blunder-retry {
+            flex: 1;
+            background: var(--lic-red);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .btn-coach-blunder-retry:hover {
+            background: var(--lic-red-hover);
+            transform: translateY(-1px);
+        }
+        .btn-coach-blunder-continue {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--lic-text-secondary);
+            border: 1px solid var(--lic-border);
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .btn-coach-blunder-continue:hover {
+            background: rgba(255, 255, 255, 0.16);
+            color: var(--lic-text-bright);
+        }
+        .pulse-takeback {
+            animation: pulseTb 1.6s infinite;
+        }
+        @keyframes pulseTb {
+            0% { box-shadow: 0 0 0 0 rgba(204, 51, 51, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(204, 51, 51, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(204, 51, 51, 0); }
+        }
+
         /* Opening Bar */
         .coach-opening-bar {
             display: flex;
@@ -2826,6 +2909,23 @@
                             <!-- Bubble 2: Interactive Challenge / Turn Prompt -->
                             <div class="coach-speech-bubble bubble-challenge" id="coachBubble2">
                                 Make your opening move to get started!
+                            </div>
+                            <!-- Blunder Analysis & Takeback Card -->
+                            <div class="coach-blunder-card d-none" id="coachBlunderCard">
+                                <div class="coach-blunder-title">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Tactical Oversight
+                                </div>
+                                <div class="coach-blunder-explanation" id="coachBlunderText">
+                                    That move allows an immediate counter-attack.
+                                </div>
+                                <div class="coach-blunder-actions">
+                                    <button type="button" id="btnCoachRetryMove" class="btn-coach-blunder-retry pulse-takeback" title="Take back and find a better move">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Take Back & Try Again
+                                    </button>
+                                    <button type="button" id="btnCoachContinueAnyway" class="btn-coach-blunder-continue" title="Continue playing this position anyway">
+                                        Play On <i class="bi bi-play-fill"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6165,6 +6265,14 @@
                         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.28);
                         osc.start(ctx.currentTime);
                         osc.stop(ctx.currentTime + 0.28);
+                    } else if (type === 'blunder') {
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(220, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.15);
+                        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.15);
                     } else { // normal move
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(280, ctx.currentTime);
@@ -6285,6 +6393,51 @@
                 }
             }
 
+            function renderCoachThinking() {
+                const bubble2 = document.getElementById('coachBubble2');
+                if (bubble2 && coachManager) {
+                    const thinkingPhrase = coachManager.persona.voice.thinking || "Thinking...";
+                    bubble2.innerHTML = `<span class="spinner-grow spinner-grow-sm text-primary me-1" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span> ${thinkingPhrase}`;
+                }
+            }
+
+            async function triggerCoachResponse() {
+                if (currentAppMode !== 'coach' || !coachManager || coachManager.isGameOver) return;
+                const coachRes = await coachManager.computeCoachMove();
+                if (coachRes && coachRes.success && coachRes.move) {
+                    board.position(coachManager.chess.fen());
+                    highlightLastMove(coachRes.move.from, coachRes.move.to);
+                    if (coachRes.isChallenge) {
+                        playChessSound('challenge');
+                    } else {
+                        playChessSound(coachRes.move.captured ? 'capture' : 'move');
+                    }
+                    renderCoachDialogue();
+                    renderCoachMoveSheet();
+                    updateCoachPlayerBars();
+                    updateCoachOpening();
+                }
+            }
+
+            function showBlunderTakebackCard(userResult) {
+                const card = document.getElementById('coachBlunderCard');
+                const textEl = document.getElementById('coachBlunderText');
+                if (!card) return;
+
+                const explanation = userResult.blunderAnalysis || 
+                    (userResult.bestSan 
+                        ? `That concedes material or tactical leverage. A stronger alternative was ${userResult.bestSan}.`
+                        : "That move gives away a significant advantage. Look for a safer alternative!");
+                if (textEl) textEl.textContent = explanation;
+
+                card.classList.remove('d-none');
+            }
+
+            function hideBlunderTakebackCard() {
+                const card = document.getElementById('coachBlunderCard');
+                if (card) card.classList.add('d-none');
+            }
+
             async function executeCoachUserMove(moveInput) {
                 if (!coachManager || coachManager.isGameOver) return;
                 clearHintHighlights();
@@ -6307,36 +6460,30 @@
                 updateCoachOpening();
 
                 if (coachManager.isGameOver) {
+                    hideBlunderTakebackCard();
                     renderCoachDialogue();
                     return;
                 }
 
-                const bubble2 = document.getElementById('coachBubble2');
-                if (bubble2) bubble2.textContent = "Thinking...";
+                if (userResult.isBlunder) {
+                    playChessSound('blunder');
+                    showBlunderTakebackCard(userResult);
+                    return;
+                }
 
-                const delay = Math.floor(Math.random() * 250) + 400; // 400-650ms natural delay
+                hideBlunderTakebackCard();
+                renderCoachThinking();
+
+                const delay = Math.floor(Math.random() * 300) + 1000; // 1000-1300ms natural delay
                 setTimeout(async () => {
-                    if (currentAppMode !== 'coach' || coachManager.isGameOver) return;
-                    const coachRes = await coachManager.computeCoachMove();
-                    if (coachRes && coachRes.success && coachRes.move) {
-                        board.position(coachManager.chess.fen());
-                        highlightLastMove(coachRes.move.from, coachRes.move.to);
-                        if (coachRes.isChallenge) {
-                            playChessSound('challenge');
-                        } else {
-                            playChessSound(coachRes.move.captured ? 'capture' : 'move');
-                        }
-                        renderCoachDialogue();
-                        renderCoachMoveSheet();
-                        updateCoachPlayerBars();
-                        updateCoachOpening();
-                    }
+                    await triggerCoachResponse();
                 }, delay);
             }
 
             function startNewCoachGame(personaId = 'pikaru', playerColor = 'w') {
                 selectedCoachPersona = personaId;
                 selectedCoachColor = playerColor;
+                hideBlunderTakebackCard();
 
                 if (!coachWorker) {
                     if (typeof BrowserWhyBlunder !== 'undefined' && BrowserWhyBlunder.StockfishWorker) {
@@ -6387,26 +6534,17 @@
 
                 // If player is Black, Coach makes move 1!
                 if (playerColor === 'b') {
-                    const bubble2 = document.getElementById('coachBubble2');
-                    if (bubble2) bubble2.textContent = "Thinking...";
+                    renderCoachThinking();
                     setTimeout(async () => {
-                        const coachRes = await coachManager.computeCoachMove();
-                        if (coachRes && coachRes.success && coachRes.move) {
-                            board.position(coachManager.chess.fen());
-                            highlightLastMove(coachRes.move.from, coachRes.move.to);
-                            playChessSound(coachRes.move.captured ? 'capture' : 'move');
-                            renderCoachDialogue();
-                            renderCoachMoveSheet();
-                            updateCoachPlayerBars();
-                            updateCoachOpening();
-                        }
-                    }, 500);
+                        await triggerCoachResponse();
+                    }, 900);
                 }
             }
 
             function switchAppMode(mode) {
                 if (mode === currentAppMode) return;
                 currentAppMode = mode;
+                hideBlunderTakebackCard();
 
                 const btnAnalysis = document.getElementById('tabModeAnalysis');
                 const btnCoach = document.getElementById('tabModeCoach');
@@ -6516,10 +6654,14 @@
             if (btnCoachTakeback) {
                 btnCoachTakeback.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
+                    hideBlunderTakebackCard();
                     const ok = coachManager.takeback();
                     if (ok) {
                         board.position(coachManager.chess.fen());
                         clearHintHighlights();
+                        if (typeof clearClickMoveHighlights === 'function') {
+                            clearClickMoveHighlights();
+                        }
                         highlightLastMove(null, null);
                         renderCoachDialogue();
                         renderCoachMoveSheet();
@@ -6529,10 +6671,60 @@
                 });
             }
 
+            // Blunder takeback & continue buttons
+            const btnCoachRetryMove = document.getElementById('btnCoachRetryMove');
+            if (btnCoachRetryMove) {
+                btnCoachRetryMove.addEventListener('click', () => {
+                    if (!coachManager || currentAppMode !== 'coach') return;
+                    const lastMoveRecord = coachManager.moveHistory[coachManager.moveHistory.length - 1];
+                    const suggestedSan = (lastMoveRecord && lastMoveRecord.bestSan) || null;
+                    const ok = coachManager.takebackPlayerMove(suggestedSan);
+                    if (ok) {
+                        board.position(coachManager.chess.fen());
+                        clearHintHighlights();
+                        if (typeof clearClickMoveHighlights === 'function') {
+                            clearClickMoveHighlights();
+                        }
+                        highlightLastMove(null, null);
+                        hideBlunderTakebackCard();
+                        renderCoachDialogue();
+                        renderCoachMoveSheet();
+                        updateCoachPlayerBars();
+                        updateCoachOpening();
+
+                        if (suggestedSan) {
+                            try {
+                                const tempBoard = new coachManager.Chess(coachManager.chess.fen());
+                                const testM = tempBoard.move(suggestedSan);
+                                if (testM) {
+                                    const fromSq = document.querySelector(`#board .square-${testM.from}`);
+                                    if (fromSq) fromSq.classList.add('highlight-hint');
+                                    setTimeout(clearHintHighlights, 3000);
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            const btnCoachContinueAnyway = document.getElementById('btnCoachContinueAnyway');
+            if (btnCoachContinueAnyway) {
+                btnCoachContinueAnyway.addEventListener('click', () => {
+                    if (!coachManager || currentAppMode !== 'coach' || coachManager.isGameOver) return;
+                    hideBlunderTakebackCard();
+                    renderCoachThinking();
+                    const delay = Math.floor(Math.random() * 300) + 900;
+                    setTimeout(async () => {
+                        await triggerCoachResponse();
+                    }, delay);
+                });
+            }
+
             const btnCoachResign = document.getElementById('btnCoachResign');
             if (btnCoachResign) {
                 btnCoachResign.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
+                    hideBlunderTakebackCard();
                     if (coachManager.isGameOver) {
                         startNewCoachGame(selectedCoachPersona, selectedCoachColor);
                         return;
@@ -6634,6 +6826,9 @@
 
             window.switchAppMode = switchAppMode;
             window.startNewCoachGame = startNewCoachGame;
+            window.executeCoachUserMove = executeCoachUserMove;
+            window.showBlunderTakebackCard = showBlunderTakebackCard;
+            window.hideBlunderTakebackCard = hideBlunderTakebackCard;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
 

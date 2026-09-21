@@ -46,7 +46,7 @@
         }
     }
 
-    function getDetector() {
+    function getOpeningDetector() {
         if (typeof OpeningDetector !== 'undefined') return OpeningDetector;
         if (typeof window !== 'undefined' && window.OpeningDetector) return window.OpeningDetector;
         try {
@@ -70,6 +70,7 @@
             skillLevel: 14,
             voice: {
                 intro: "Hey! Ready to play? I love passed pawns and fast play—let's do this!",
+                thinking: "Calculating my fastest counter-attack...",
                 passedPawn: [
                     "Passed pawn! I'm hoping my new passed pawn will become a queen one day.",
                     "Passed pawn! That pawn is on a one-way trip to the 8th rank.",
@@ -82,6 +83,30 @@
                 fork: [
                     "Fork! Double attack! How are you going to save both?",
                     "A nice little fork right there. Classic tactics!"
+                ],
+                pin: [
+                    "Pinned! That piece is glued to the square.",
+                    "Nice pin right along the line. Moving it would be disastrous!"
+                ],
+                attackQueen: [
+                    "Watch out! My piece is eyeing your Queen!",
+                    "Heavy piece on the run! Where's your Queen heading?"
+                ],
+                attackRook: [
+                    "Threatening your rook! You'll need to deal with that pressure.",
+                    "Direct fire on your rook. How do you defend?"
+                ],
+                openFile: [
+                    "Rook on the open file! Taking the highway straight into your position.",
+                    "Open files belong to rooks. Let's see you contest this!"
+                ],
+                outpost: [
+                    "Outpost secured! That knight cannot be kicked by pawns.",
+                    "Boom! Central outpost. Try removing this monster!"
+                ],
+                centerStrike: [
+                    "Striking right at the center! That's where the real fight is.",
+                    "Center blast! Let's see who controls the middle."
                 ],
                 check: [
                     "Check! Keeping the initiative going.",
@@ -120,14 +145,30 @@
                     "Whew, I was sweating for a second! You let me escape."
                 ],
                 playerBlunder: [
-                    "Wait, are you sure? That leaves your piece vulnerable! Want to take it back?",
-                    "Whoa, be careful! That might run into some tactical trouble.",
-                    "Careful! Check what's aiming at that square before committing."
+                    "Wait, hold up! Look at the board—I think that might be a blunder!",
+                    "Whoa, be careful! That leaves your position wide open!",
+                    "Hold on! Check what's aiming at that square before committing."
                 ],
                 playerGoodMove: [
                     "Nice move! Very clean and active.",
                     "Strong reply! You're keeping the pressure on.",
                     "Good piece placement! I like that idea."
+                ],
+                challengeDevelopment: [
+                    "Challenge: You still have pieces asleep on the back rank. Can you mobilize them?",
+                    "Challenge: Bringing your minor pieces into play is top priority. Which piece will you develop next?"
+                ],
+                challengeCenter: [
+                    "Challenge: Who will command the center? Look for moves that stake a claim.",
+                    "Challenge: The center is up for grabs! Can you seize space?"
+                ],
+                challengePinDefense: [
+                    "Challenge: One of your pieces is pinned. Can you break the pin or defend it?",
+                    "Challenge: Don't let my pin paralyze your position!"
+                ],
+                challengeEndgame: [
+                    "Challenge: In the endgame, the active king is worth a minor piece. Time to march!",
+                    "Challenge: Precision matters in the endgame. Look ahead a few moves before deciding!"
                 ],
                 challengeGeneric: [
                     "Your turn! What's your plan here?",
@@ -146,6 +187,7 @@
             skillLevel: 5,
             voice: {
                 intro: "Hi friend! I'm learning chess too! Let's have a great game together!",
+                thinking: "Thinking... let me make sure I don't hang my rook!",
                 passedPawn: [
                     "Yay, my pawn is moving forward! Go little buddy!",
                     "Is this a passed pawn? I think it wants to be a queen!"
@@ -157,6 +199,30 @@
                 fork: [
                     "Look at me, attacking two things at once!",
                     "Fork! Did I just do a tactic?"
+                ],
+                pin: [
+                    "I think I pinned something! Don't move it or something bad happens!",
+                    "Freezed! You can't move that piece!"
+                ],
+                attackQueen: [
+                    "Oh boy! I'm pointing at your Queen! Is that allowed?!",
+                    "Watch out Queenie, here I come!"
+                ],
+                attackRook: [
+                    "Aiming at your rook! Hope you don't take my piece!",
+                    "Look out in the corner! My piece is visiting your rook."
+                ],
+                openFile: [
+                    "Beep beep! Rook driving down the open road!",
+                    "I love putting rooks where there are no pawns!"
+                ],
+                outpost: [
+                    "My horsey has a nice little nest here. Looks comfortable!",
+                    "Look at my knight sitting pretty!"
+                ],
+                centerStrike: [
+                    "Charging into the middle! Hope I don't regret this!",
+                    "Pawn forward! Center battle!"
                 ],
                 check: [
                     "Check! Did I startle you? Be honest!",
@@ -180,19 +246,19 @@
                     "Forced move! Let's see you do it."
                 ],
                 challengeBlunderBait: [
-                    "Oops! Did I leave something hanging? Don't look too closely!",
-                    "Wait, is my piece unprotected? Can you spot what I did wrong?",
-                    "Uh oh... I might have made a big oopsie. Do you see it?"
+                    "Wait, did I just do something really silly? Take a peek...",
+                    "Uh oh! I might have left something hanging! Can you find it?",
+                    "Did I make an oopsie? Spot my mistake if you can!"
                 ],
                 praiseSpotBlunder: [
-                    "Aw man, you got me! You found my hanging piece!",
-                    "You're too good! You caught my blunder right away!",
-                    "Ouch! Nice eye, you totally punished that!"
+                    "Aww shucks, you got me! Good eye!",
+                    "You found it! I knew I shouldn't have moved there!",
+                    "Nice catch! You're really good at this!"
                 ],
                 missedBlunder: [
-                    "Yay, you didn't take my free piece! Thank you!",
-                    "Phew! I thought I was doomed there!",
-                    "Haha, you missed my mistake! Lucky me!"
+                    "Phew! You didn't take my piece! That was close!",
+                    "Yay, I survived! You missed my blunder, don't tell anyone!",
+                    "Whew, I got lucky there! Keep your eyes peeled!"
                 ],
                 playerBlunder: [
                     "Oh no! Did you mean to put that there? You can take it back if you want!",
@@ -204,10 +270,26 @@
                     "Nice! That looks super tricky for me.",
                     "Great move! I need to think carefully now."
                 ],
+                challengeDevelopment: [
+                    "Challenge: Don't leave your knights and bishops sleeping in bed! Bring 'em out!",
+                    "Challenge: Let's see you get all your pieces off the back rank!"
+                ],
+                challengeCenter: [
+                    "Challenge: The middle of the board is where the party is! Jump in!",
+                    "Challenge: Can your pawns challenge my pawns in the middle?"
+                ],
+                challengePinDefense: [
+                    "Challenge: Uh oh, I pinned you! Can you unpin yourself?",
+                    "Challenge: Be careful with pinned pieces!"
+                ],
+                challengeEndgame: [
+                    "Challenge: We're in the endgame! Bring out your King!",
+                    "Challenge: Pawns are like gold now. Which one are you pushing?"
+                ],
                 challengeGeneric: [
-                    "Your turn! Show me what you've learned!",
-                    "What's your master plan?",
-                    "Take your time, you've got this!"
+                    "Your turn, my friend! Show me your best!",
+                    "What are you gonna do next? I'm excited to see!",
+                    "Tick tock! Well, take your time really!"
                 ]
             }
         },
@@ -221,6 +303,7 @@
             skillLevel: 10,
             voice: {
                 intro: "Welcome to class! Let's focus on piece harmony, solid defense, and tactical awareness.",
+                thinking: "Assessing positional dynamics and king safety...",
                 passedPawn: [
                     "Passed pawn! A passed pawn increases in value as the board clears.",
                     "Advancing the passed pawn to tie down your defensive pieces."
@@ -232,6 +315,30 @@
                 fork: [
                     "A tactical fork! Notice how the attacker cannot be easily challenged.",
                     "Forking two targets. Always check candidate forcing moves."
+                ],
+                pin: [
+                    "Notice the pin? Absolute or relative, it restricts your piece's mobility.",
+                    "A classic pin. How do you break the tension?"
+                ],
+                attackQueen: [
+                    "Tension on your most valuable piece. Finding the right retreat square is key.",
+                    "Threatening your Queen. Keep her active, don't just hide!"
+                ],
+                attackRook: [
+                    "Applying pressure to your rook. Defense or counter-attack?",
+                    "Rooks on open lines are prime targets. Be alert!"
+                ],
+                openFile: [
+                    "Controlling the open file is a fundamental tenet of rook play.",
+                    "Rooks demand open files. Will you contest or close it?"
+                ],
+                outpost: [
+                    "A strong knight on an advanced outpost exerts influence on key squares.",
+                    "An anchored outpost is worth more than a static rook."
+                ],
+                centerStrike: [
+                    "A classical strike for central space. Control the center, control the game.",
+                    "Challenging your central pawns. Do you trade or advance?"
                 ],
                 check: [
                     "Check! Forcing your king to respond.",
@@ -270,7 +377,7 @@
                     "A slight oversight—you had a tactical shot to gain an advantage."
                 ],
                 playerBlunder: [
-                    "Caution: that square leaves your piece without adequate protection. Would you like to take it back?",
+                    "Caution: that square leaves your piece without adequate protection. Let's examine what happened.",
                     "Be mindful of loose pieces. 'Loose pieces drop off' as the saying goes.",
                     "That move concedes tactical leverage. Consider trying a safer alternative."
                 ],
@@ -278,6 +385,22 @@
                     "Very sound move! Solid piece harmony.",
                     "Well played. That controls critical central outposts.",
                     "Strong move! You're applying good principles."
+                ],
+                challengeDevelopment: [
+                    "Challenge: Complete your development! Knights and bishops belong on active squares.",
+                    "Challenge: King safety and piece development—which piece should move next?"
+                ],
+                challengeCenter: [
+                    "Challenge: The center is the heart of the board. How will you contest it?",
+                    "Challenge: Evaluate the central pawn tension. Trade, push, or hold?"
+                ],
+                challengePinDefense: [
+                    "Challenge: You have a pinned piece. Find a way to unpin or add a defender.",
+                    "Challenge: Pins can be dangerous. Alleviate the pin with proper technique."
+                ],
+                challengeEndgame: [
+                    "Challenge: In the endgame, the active king is worth a full minor piece. How will you coordinate?",
+                    "Challenge: Calculate pawn races carefully. Precision is everything in endgames."
                 ],
                 challengeGeneric: [
                     "Your turn. What is your strategic plan here?",
@@ -296,6 +419,7 @@
             skillLevel: 20,
             voice: {
                 intro: "Let's play. Keep it clean, don't rush, and let's see how deep your endgame understanding goes.",
+                thinking: "Calculating... seeing deep into the endgame.",
                 passedPawn: [
                     "Passed pawn! In the endgame, passed pawns must be pushed.",
                     "Creating a passed pawn. Now the endgame conversion begins.",
@@ -308,6 +432,30 @@
                 fork: [
                     "Fork. Inescapable pressure on your key pieces.",
                     "Classic double attack. The math is simple."
+                ],
+                pin: [
+                    "Pinned to the king. Structural paralysis.",
+                    "That piece is going nowhere."
+                ],
+                attackQueen: [
+                    "Your queen is under fire. Handle with precision.",
+                    "Tempo on the queen. Where does she go?"
+                ],
+                attackRook: [
+                    "Targeting the rook. Defense requires absolute accuracy.",
+                    "Putting heat on the heavy artillery."
+                ],
+                openFile: [
+                    "The open file is mine. Infiltration next.",
+                    "Rook dominates the file."
+                ],
+                outpost: [
+                    "Permanent outpost. You'll suffer trying to dislodge it.",
+                    "A thorn in your side."
+                ],
+                centerStrike: [
+                    "Central tension favors the better-prepared side.",
+                    "Disrupting your central grip."
                 ],
                 check: [
                     "Check. Precision is required.",
@@ -348,12 +496,28 @@
                 playerBlunder: [
                     "That move is fatally compromised. I'll give you a chance to take it back.",
                     "A tactical oversight like that won't survive against high-level play.",
-                    "That creates an immediate losing weakness. Want to rethink that?"
+                    "That creates an immediate losing weakness. See why?"
                 ],
                 playerGoodMove: [
                     "Good move. Accurate and ambitious.",
                     "Sharp play! You found the best engine response.",
                     "High level technique right there. I like it."
+                ],
+                challengeDevelopment: [
+                    "Challenge: Undeveloped pieces in the opening are liabilities. Coordinate your army.",
+                    "Challenge: Efficiency is everything. Develop with purpose."
+                ],
+                challengeCenter: [
+                    "Challenge: The center dictates the wings. Can you maintain stability?",
+                    "Challenge: Every central pawn move has consequences. Calculate carefully."
+                ],
+                challengePinDefense: [
+                    "Challenge: That pin is suffocating your mobility. Break the bind.",
+                    "Challenge: Passive defense fails against pins. Find an active solution."
+                ],
+                challengeEndgame: [
+                    "Challenge: The endgame is where games are won or lost. Activate your king!",
+                    "Challenge: King activity and passed pawns—that is the essence of chess."
                 ],
                 challengeGeneric: [
                     "Your turn. Calculate carefully.",
@@ -396,6 +560,7 @@
             this.pliesSinceBlunder = 0;
             this.isGameOver = false;
             this.lastMoveQuality = null;
+            this.announcedOpening = false;
 
             // Current speech bubbles
             this.currentBubble1 = this.persona.voice.intro;
@@ -454,6 +619,7 @@
             this.pliesSinceBlunder = 0;
             this.isGameOver = false;
             this.lastMoveQuality = null;
+            this.announcedOpening = false;
 
             this.currentBubble1 = this.persona.voice.intro;
             this.currentBubble2 = (this.playerColor === 'w')
@@ -472,7 +638,7 @@
         /**
          * Handle move played by user on the board.
          * @param {object|string} moveInput - e.g. { from: 'e2', to: 'e4' } or 'e4'
-         * @returns {Promise<object>} Result with { success, move, bubble1, bubble2, quality, challengeResolved }
+         * @returns {Promise<object>} Result with { success, move, bubble1, bubble2, quality, isBlunder, blunderAnalysis, bestSan }
          */
         async handleUserMove(moveInput) {
             if (this.isGameOver) {
@@ -516,7 +682,14 @@
 
             // 2. Quick evaluation of user move quality (if worker available)
             let classification = { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 };
+            let isBlunder = false;
+            let blunderAnalysis = null;
+            let bestSan = null;
+
             const Evaluator = getEvaluator();
+            const Recognizer = getRecognizer();
+            const Detector = getOpeningDetector();
+
             if (this.worker && Evaluator) {
                 try {
                     const evalBefore = await this._evaluatePosition(fenBefore, 8, 2);
@@ -526,11 +699,90 @@
                     const bestCp = evalBefore.lines[1]?.cp || 0;
                     const wpBefore = Evaluator.cpToWinProb(bestCp);
 
-                    const evalAfter = await this._evaluatePosition(fenAfter, 8, 1);
-                    const playedCp = -(evalAfter.lines[1]?.cp || 0);
-                    const wpAfter = Evaluator.cpToWinProb(playedCp);
+                    // Check opening book to avoid false positive opening blunders
+                    const historySans = this.moveHistory.map(m => m.san).concat([legalMove.san]);
+                    const isBook = (ply <= 12 && Detector && Detector.isBookMove) ? Detector.isBookMove(historySans, ply) : false;
 
-                    classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest });
+                    let playedCp = 0;
+                    let wpAfter = wpBefore;
+                    let evalAfter = null;
+
+                    if (playedIsBest || isBook) {
+                        playedCp = bestCp;
+                        wpAfter = wpBefore;
+                    } else if (evalBefore.lines[2]?.pv && evalBefore.lines[2].pv[0] === playedUci) {
+                        playedCp = evalBefore.lines[2].cp || 0;
+                        wpAfter = Evaluator.cpToWinProb(playedCp);
+                    } else {
+                        evalAfter = await this._evaluatePosition(fenAfter, 8, 1);
+                        playedCp = -(evalAfter.lines[1]?.cp || 0);
+                        wpAfter = Evaluator.cpToWinProb(playedCp);
+                    }
+
+                    classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
+
+                    // Compute best SAN for advice
+                    if (bestUci && bestUci.length >= 4) {
+                        const tempChess = new this.Chess(fenBefore);
+                        const bMove = tempChess.move({
+                            from: bestUci.slice(0, 2),
+                            to: bestUci.slice(2, 4),
+                            promotion: bestUci[4]
+                        });
+                        if (bMove) bestSan = bMove.san;
+                    }
+
+                    if (!isBook && (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.wpLoss > 0.15)) {
+                        isBlunder = true;
+                        if (!evalAfter) {
+                            evalAfter = await this._evaluatePosition(fenAfter, 8, 1);
+                        }
+                        if (Recognizer && Recognizer.explainBlunderOrMistake) {
+                            const boardBefore = new this.Chess(fenBefore);
+                            const boardAfter = new this.Chess(fenAfter);
+                            const refUci = (evalAfter.lines[1]?.pv && evalAfter.lines[1].pv[0]) || '';
+                            let refMoveObj = null;
+                            let sanRef = null;
+                            if (refUci && refUci.length >= 4) {
+                                const refBoard = new this.Chess(fenAfter);
+                                const rm = refBoard.move({
+                                    from: refUci.slice(0, 2),
+                                    to: refUci.slice(2, 4),
+                                    promotion: refUci[4]
+                                });
+                                if (rm) {
+                                    refMoveObj = rm;
+                                    sanRef = rm.san;
+                                }
+                            }
+
+                            const bestMoveObj = (bestUci && bestUci.length >= 4) ? {
+                                from: bestUci.slice(0, 2),
+                                to: bestUci.slice(2, 4),
+                                promotion: bestUci[4]
+                            } : null;
+
+                            const diag = Recognizer.explainBlunderOrMistake({
+                                boardBefore,
+                                boardAfter,
+                                playedMove: legalMove,
+                                bestMove: bestMoveObj,
+                                refutationMove: refMoveObj,
+                                sanPlayed: legalMove.san,
+                                sanBest: bestSan || 'a better move',
+                                sanRef: sanRef,
+                                bestScore: { cp: bestCp },
+                                playedScore: { cp: playedCp },
+                                bestPv: evalBefore.lines[1]?.pv || [],
+                                refPv: evalAfter.lines[1]?.pv || [],
+                                quality: classification.uiQuality,
+                                detailedQuality: classification.detailedQuality,
+                                wpLoss: classification.wpLoss,
+                                ply
+                            });
+                            blunderAnalysis = diag ? diag.explanation : null;
+                        }
+                    }
                 } catch (e) {
                     // Fallback to default quality
                 }
@@ -546,16 +798,17 @@
 
             if (challengeFeedback) {
                 bubble1 = challengeFeedback.text;
-            } else if (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake') {
+                bubble2 = "Let me calculate my response...";
+            } else if (isBlunder) {
                 bubble1 = pickRandom(this.persona.voice.playerBlunder);
+                bubble2 = blunderAnalysis || "That move might be a mistake. Would you like to take it back and try again?";
             } else {
                 bubble1 = pickRandom(this.persona.voice.playerGoodMove);
+                bubble2 = this.persona.voice.thinking || "Calculating my response...";
             }
 
             if (this.isGameOver) {
                 bubble2 = this._getGameOverMessage();
-            } else {
-                bubble2 = "My turn. Let me calculate my response...";
             }
 
             this.currentBubble1 = bubble1;
@@ -570,7 +823,10 @@
                 isPlayer: true,
                 bubble1,
                 bubble2,
-                quality: classification.detailedQuality
+                quality: classification.detailedQuality,
+                isBlunder,
+                blunderAnalysis,
+                bestSan
             };
             this.moveHistory.push(record);
 
@@ -580,6 +836,9 @@
                 bubble1,
                 bubble2,
                 quality: classification,
+                isBlunder,
+                blunderAnalysis,
+                bestSan,
                 isGameOver: this.isGameOver
             };
         }
@@ -797,29 +1056,64 @@
         }
 
         /**
-         * Generates the dual speech bubbles matching the screenshot.
+         * Generates the dual speech bubbles with rich response types and contextual challenges.
          */
         _generateCoachBubbles(boardBefore, boardAfter, move, isChallenge, challengeData) {
             const Recognizer = getRecognizer();
+            const Detector = getOpeningDetector();
             let bubble1 = "";
             let bubble2 = "";
 
-            // --- BUBBLE 1: Coach's Own Move Thought / Observation ---
-            let detectedConcept = null;
-
-            if (Recognizer) {
-                // Check if coach advanced a passed pawn
-                if (Recognizer.detectPassedPawn(boardAfter, move)) {
-                    detectedConcept = 'passedPawn';
+            // 1. Opening recognition (within first 10 plies)
+            if (this.moveHistory.length <= 10 && Detector && Detector.identifyOpening && !this.announcedOpening) {
+                const historySans = this.moveHistory.map(m => m.san).concat([move.san]);
+                const op = Detector.identifyOpening(historySans);
+                if (op && op.name && op.name !== 'Standard Game') {
+                    this.announcedOpening = true;
+                    const opDialogue = this._getOpeningDialogue(op);
+                    if (opDialogue) {
+                        return opDialogue;
+                    }
                 }
             }
 
+            // 2. Tactical & Positional Concept Detection for Bubble 1
+            let detectedConcept = null;
+
+            if (move.san === 'O-O' || move.san === 'O-O-O') {
+                detectedConcept = 'castle';
+            } else if (move.san.includes('+')) {
+                detectedConcept = 'check';
+            } else if (Recognizer) {
+                // Check if coach attacked player's Queen or Rook
+                try {
+                    const attackedSquares = Recognizer.getPieceAttacks(boardAfter, move.to);
+                    const attackedPieces = attackedSquares
+                        .map(sq => ({ sq, p: boardAfter.get(sq) }))
+                        .filter(x => x.p && x.p.color === this.playerColor);
+                    const attacksQueen = attackedPieces.some(x => x.p.type === 'q');
+                    const attacksRook = attackedPieces.some(x => x.p.type === 'r');
+
+                    if (attacksQueen) {
+                        detectedConcept = 'attackQueen';
+                    } else if (attacksRook) {
+                        detectedConcept = 'attackRook';
+                    } else if (Recognizer.detectPin && Recognizer.detectPin(boardAfter, move)) {
+                        detectedConcept = 'pin';
+                    } else if (Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
+                        detectedConcept = 'passedPawn';
+                    } else if (Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
+                        detectedConcept = 'openFile';
+                    } else if (Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
+                        detectedConcept = 'outpost';
+                    } else if (Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
+                        detectedConcept = 'centerStrike';
+                    }
+                } catch (e) {}
+            }
+
             if (!detectedConcept) {
-                if (move.san === 'O-O' || move.san === 'O-O-O') {
-                    detectedConcept = 'castle';
-                } else if (move.san.includes('+')) {
-                    detectedConcept = 'check';
-                } else if (move.captured) {
+                if (move.captured) {
                     detectedConcept = 'capture';
                 } else if (move.piece === 'n' || move.piece === 'b') {
                     const startRank = (this.coachColor === 'w') ? 0 : 7;
@@ -836,24 +1130,129 @@
                 bubble1 = pickRandom(this.persona.voice.genericMove);
             }
 
-            // --- BUBBLE 2: Challenge / Prompt for the User's Turn ---
+            // 3. Bubble 2: Contextual Challenge / Prompt for the User's Turn
             if (this.isGameOver) {
                 bubble2 = this._getGameOverMessage();
             } else if (isChallenge) {
                 bubble2 = pickRandom(this.persona.voice.challengeBlunderBait);
             } else {
-                // Check if user has only 1 legal move
                 const legalMovesCount = this.chess.moves().length;
                 if (legalMovesCount === 1) {
                     bubble2 = pickRandom(this.persona.voice.challengeOnlyMove);
                 } else if (boardAfter.in_check()) {
-                    bubble2 = "Check! Where is your king running to?";
+                    bubble2 = "Check! Can you find the cleanest escape or block?";
+                } else if (detectedConcept === 'attackQueen') {
+                    bubble2 = "Your Queen is under attack! Where will she escape to maintain activity?";
+                } else if (detectedConcept === 'pin') {
+                    bubble2 = pickRandom(this.persona.voice.challengePinDefense || [
+                        "Challenge: One of your pieces is pinned. Can you break the pin or defend?"
+                    ]);
                 } else {
-                    bubble2 = pickRandom(this.persona.voice.challengeGeneric);
+                    bubble2 = this._getContextualChallenge(boardAfter);
                 }
             }
 
             return { bubble1, bubble2 };
+        }
+
+        _getOpeningDialogue(op) {
+            const name = op.name.toLowerCase();
+            const eco = op.eco || '';
+
+            if (name.includes('sicilian') || eco.startsWith('B2') || eco.startsWith('B3') || eco.startsWith('B4') || eco.startsWith('B5') || eco.startsWith('B6') || eco.startsWith('B7') || eco.startsWith('B8') || eco.startsWith('B9')) {
+                return {
+                    bubble1: "The Sicilian Defense! A sharp, combative opening with rich counter-attacking potential.",
+                    bubble2: "Challenge: How will you develop your kingside and challenge my pawn on e4?"
+                };
+            }
+            if (name.includes('french') || eco.startsWith('C0') || eco.startsWith('C1')) {
+                return {
+                    bubble1: "The French Defense! Building a rock-solid central pawn chain.",
+                    bubble2: "Challenge: Watch that light-squared bishop! How do you plan to activate it?"
+                };
+            }
+            if (name.includes('italian') || eco === 'C50' || eco === 'C53' || eco === 'C54' || eco === 'C55') {
+                return {
+                    bubble1: "The Italian Game! Classical open piece play targeting the vulnerable f7 square.",
+                    bubble2: "Challenge: Can you neutralize my bishop and fight for central control?"
+                };
+            }
+            if (name.includes('caro-kann') || eco.startsWith('B1')) {
+                return {
+                    bubble1: "The Caro-Kann! Renowned for pawn structure solidity and endgame resilience.",
+                    bubble2: "Challenge: Are you preparing to strike at the center with ...d5?"
+                };
+            }
+            if (name.includes('ruy lopez') || name.includes('spanish') || eco.startsWith('C6') || eco.startsWith('C7') || eco.startsWith('C8') || eco.startsWith('C9')) {
+                return {
+                    bubble1: "The Spanish Game! Deep, classical positional maneuvering from move 3.",
+                    bubble2: "Challenge: Can you maintain piece harmony under central pressure?"
+                };
+            }
+            if (name.includes("queen's gambit") || eco.startsWith('D0') || eco.startsWith('D1') || eco.startsWith('D2') || eco.startsWith('D3') || eco.startsWith('D4') || eco.startsWith('D5') || eco.startsWith('D6')) {
+                return {
+                    bubble1: "The Queen's Gambit! A battle of will and central space from move 2.",
+                    bubble2: "Challenge: Do you take the gambit pawn or stand firm in the center?"
+                };
+            }
+            if (name.includes("king's indian") || eco.startsWith('E6') || eco.startsWith('E7') || eco.startsWith('E8') || eco.startsWith('E9')) {
+                return {
+                    bubble1: "The King's Indian! You're letting me claim space to prepare a kingside storm.",
+                    bubble2: "Challenge: How do you plan to challenge my central pawn chain?"
+                };
+            }
+            if (name.includes('scandinavian') || eco === 'B01') {
+                return {
+                    bubble1: "The Scandinavian! An immediate strike against e4 right on move 1.",
+                    bubble2: "Challenge: Developing your queen early can be risky. Keep her safe!"
+                };
+            }
+            return {
+                bubble1: `Entering the ${op.name}! Let's see who controls the key squares.`,
+                bubble2: "Challenge: What is your primary strategic plan in this opening?"
+            };
+        }
+
+        _getContextualChallenge(boardAfter) {
+            const playerColor = this.playerColor;
+            const homeRank = (playerColor === 'w') ? 0 : 7;
+
+            // Check if player has back-rank sleeping knights or bishops
+            let sleepingMinors = 0;
+            const files = ['b', 'c', 'f', 'g'];
+            files.forEach(f => {
+                const sq = f + (homeRank + 1);
+                const piece = boardAfter.get(sq);
+                if (piece && piece.color === playerColor && (piece.type === 'n' || piece.type === 'b')) {
+                    sleepingMinors++;
+                }
+            });
+
+            if (sleepingMinors >= 2 && this.moveHistory.length < 16) {
+                return pickRandom(this.persona.voice.challengeDevelopment || [
+                    "Challenge: You still have pieces asleep on the back rank. Can you mobilize them?",
+                    "Challenge: Bringing your minor pieces into play is top priority. Which piece will you develop next?"
+                ]);
+            }
+
+            // Check if queens are traded (endgame)
+            let queensCount = 0;
+            for (let f = 0; f < 8; f++) {
+                for (let r = 1; r <= 8; r++) {
+                    const sq = String.fromCharCode(97 + f) + r;
+                    const p = boardAfter.get(sq);
+                    if (p && p.type === 'q') queensCount++;
+                }
+            }
+
+            if (queensCount === 0 && this.moveHistory.length >= 16) {
+                return pickRandom(this.persona.voice.challengeEndgame || [
+                    "Challenge: In the endgame, the active king is worth a minor piece. Time to march!",
+                    "Challenge: Precision matters in the endgame. Look ahead a few moves before deciding!"
+                ]);
+            }
+
+            return pickRandom(this.persona.voice.challengeGeneric);
         }
 
         /**
@@ -905,6 +1304,36 @@
                 hintText: `Coach Hint: Take your time. Inspect candidate squares for your ${first.piece ? first.piece.toUpperCase() : 'pieces'}.`,
                 highlightSquares: [first.from]
             };
+        }
+
+        /**
+         * Take back only the player's last move (e.g. after a blunder).
+         * @param {string|null} suggestedSan - Suggested alternative move
+         * @returns {boolean} Success
+         */
+        takebackPlayerMove(suggestedSan = null) {
+            if (this.moveHistory.length === 0) return false;
+            const lastMove = this.moveHistory[this.moveHistory.length - 1];
+            if (lastMove && lastMove.isPlayer) {
+                this.chess.undo();
+                this.moveHistory.pop();
+            } else if (lastMove && !lastMove.isPlayer) {
+                this.chess.undo();
+                this.moveHistory.pop();
+                if (this.moveHistory.length > 0 && this.moveHistory[this.moveHistory.length - 1].isPlayer) {
+                    this.chess.undo();
+                    this.moveHistory.pop();
+                }
+            } else {
+                return false;
+            }
+            this.isGameOver = false;
+
+            this.currentBubble1 = "Good instinct to take that back!";
+            this.currentBubble2 = suggestedSan
+                ? `Take another look at the position. Consider moves like ${suggestedSan} instead!`
+                : "Take your time and search for a safer, more active continuation!";
+            return true;
         }
 
         /**
