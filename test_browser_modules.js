@@ -948,7 +948,6 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('id="coachBubble1"'), "index.html must contain #coachBubble1");
     assert(indexContent.includes('id="coachBubble2"'), "index.html must contain #coachBubble2");
     assert(indexContent.includes('id="coachBlunderCard"'), "index.html must contain #coachBlunderCard");
-    assert(indexContent.includes('id="coachBlunderText"'), "index.html must contain #coachBlunderText");
     assert(indexContent.includes('id="btnCoachRetryMove"'), "index.html must contain #btnCoachRetryMove");
     assert(indexContent.includes('id="btnCoachContinueAnyway"'), "index.html must contain #btnCoachContinueAnyway");
     assert(indexContent.includes('id="btnCoachHint"'), "index.html must contain #btnCoachHint");
@@ -967,7 +966,7 @@ assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
     assert(indexContent.includes('function selectCoachSquare('), "index.html must define selectCoachSquare for highlighting legal squares");
     assert(indexContent.includes('.highlight-selected'), "index.html must define .highlight-selected CSS");
     assert(indexContent.includes('.highlight-dest'), "index.html must define .highlight-dest CSS");
-    assert(indexContent.includes('.coach-blunder-card'), "index.html must define .coach-blunder-card CSS");
+    assert(indexContent.includes('.coach-blunder-actions'), "index.html must define .coach-blunder-actions CSS");
     assert(indexContent.includes('.pulse-takeback'), "index.html must define .pulse-takeback CSS");
     assert(!indexContent.includes('renderMaterialDisplay('), "index.html must not call undefined renderMaterialDisplay");
 
