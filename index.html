@@ -1097,6 +1097,14 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
+        .king-badge-stalemate .king-badge-icon,
+        .king-badge-draw .king-badge-icon {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%);
+            border: 2px solid #e0f2fe;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+        }
+
         @media (max-width: 768px) {
             .king-badge-icon {
                 width: 1.75rem;
@@ -5281,14 +5289,16 @@
             function updateKingCheckmateBadges(chessInstance) {
                 clearKingCheckmateBadges();
                 if (!chessInstance || typeof chessInstance.in_checkmate !== 'function') return;
-                if (!chessInstance.in_checkmate()) return;
                 if (!boardContainer) return;
 
-                const loserColor = chessInstance.turn();
-                const winnerColor = loserColor === 'w' ? 'b' : 'w';
+                const isCheckmate = chessInstance.in_checkmate();
+                const isStalemate = (typeof chessInstance.in_stalemate === 'function') && chessInstance.in_stalemate();
+                const isDraw = (typeof chessInstance.in_draw === 'function') && chessInstance.in_draw();
 
-                let winnerKingSq = null;
-                let loserKingSq = null;
+                if (!isCheckmate && !isStalemate && !isDraw) return;
+
+                let whiteKingSq = null;
+                let blackKingSq = null;
                 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
                 for (let r = 1; r <= 8; r++) {
@@ -5296,8 +5306,8 @@
                         const sq = files[f] + r;
                         const piece = chessInstance.get(sq);
                         if (piece && piece.type === 'k') {
-                            if (piece.color === winnerColor) winnerKingSq = sq;
-                            if (piece.color === loserColor) loserKingSq = sq;
+                            if (piece.color === 'w') whiteKingSq = sq;
+                            if (piece.color === 'b') blackKingSq = sq;
                         }
                     }
                 }
@@ -5306,7 +5316,7 @@
                     ? (board.orientation() === 'black') 
                     : false;
 
-                function addKingBadge(sq, type, emoji) {
+                function addKingBadge(sq, type, emoji, titleText = '') {
                     if (!sq) return;
                     const file = isFlipped ? 7 - (sq.charCodeAt(0) - 97) : (sq.charCodeAt(0) - 97);
                     const rank = isFlipped ? parseInt(sq.charAt(1)) - 1 : 8 - parseInt(sq.charAt(1));
@@ -5315,20 +5325,31 @@
                     badgeEl.className = `king-checkmate-badge king-badge-${type}`;
                     badgeEl.style.left = `${file * 12.5}%`;
                     badgeEl.style.top = `${rank * 12.5}%`;
+                    if (titleText) badgeEl.title = titleText;
 
                     const iconEl = document.createElement('div');
                     iconEl.className = 'king-badge-icon';
                     iconEl.textContent = emoji;
+                    if (titleText) iconEl.title = titleText;
                     badgeEl.appendChild(iconEl);
 
                     boardContainer.appendChild(badgeEl);
                 }
 
-                if (winnerKingSq) {
-                    addKingBadge(winnerKingSq, 'winner', '👑');
-                }
-                if (loserKingSq) {
-                    addKingBadge(loserKingSq, 'loser', '💀');
+                if (isCheckmate) {
+                    const loserColor = chessInstance.turn();
+                    const winnerColor = loserColor === 'w' ? 'b' : 'w';
+                    const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
+                    const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
+
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', '👑', 'Winner (Checkmate)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', '💀', 'Checkmated');
+                } else if (isStalemate) {
+                    if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '🤝', 'Stalemate (Draw)');
+                    if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '🤝', 'Stalemate (Draw)');
+                } else if (isDraw) {
+                    if (whiteKingSq) addKingBadge(whiteKingSq, 'draw', '🤝', 'Draw');
+                    if (blackKingSq) addKingBadge(blackKingSq, 'draw', '🤝', 'Draw');
                 }
             }
 

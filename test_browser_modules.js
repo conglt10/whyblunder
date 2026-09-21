@@ -1348,11 +1348,12 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     console.log("✓ Coach Selection State Machine passed!");
     console.log("✓ Coach Move Feedback & Explanatory Arrows passed!");
 
-    // 7. Test King Checkmate Badges (Winner 👑 & Loser 💀)
-    console.log("Testing King Checkmate Badges (Winner 👑 & Loser 💀)...");
+    // 7. Test King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝)
+    console.log("Testing King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝)...");
     assert(indexContent.includes('.king-checkmate-badge'), "index.html must include .king-checkmate-badge CSS");
     assert(indexContent.includes('.king-badge-winner'), "index.html must include .king-badge-winner CSS");
     assert(indexContent.includes('.king-badge-loser'), "index.html must include .king-badge-loser CSS");
+    assert(indexContent.includes('.king-badge-stalemate'), "index.html must include .king-badge-stalemate CSS");
     assert(indexContent.includes('.king-badge-icon'), "index.html must include .king-badge-icon CSS");
     assert(indexContent.includes('updateKingCheckmateBadges'), "index.html must define updateKingCheckmateBadges");
     assert(indexContent.includes('clearKingCheckmateBadges'), "index.html must define clearKingCheckmateBadges");
@@ -1373,12 +1374,14 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
 
     // Test king badge calculation simulation
     function simulateKingBadges(chessInstance, isFlipped = false) {
-        if (!chessInstance || !chessInstance.in_checkmate()) return [];
-        const loserColor = chessInstance.turn();
-        const winnerColor = loserColor === 'w' ? 'b' : 'w';
+        if (!chessInstance) return [];
+        const isCheckmate = chessInstance.in_checkmate && chessInstance.in_checkmate();
+        const isStalemate = chessInstance.in_stalemate && chessInstance.in_stalemate();
+        const isDraw = chessInstance.in_draw && chessInstance.in_draw();
+        if (!isCheckmate && !isStalemate && !isDraw) return [];
 
-        let winnerKingSq = null;
-        let loserKingSq = null;
+        let whiteKingSq = null;
+        let blackKingSq = null;
         const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
         for (let r = 1; r <= 8; r++) {
@@ -1386,22 +1389,40 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
                 const sq = files[f] + r;
                 const piece = chessInstance.get(sq);
                 if (piece && piece.type === 'k') {
-                    if (piece.color === winnerColor) winnerKingSq = sq;
-                    if (piece.color === loserColor) loserKingSq = sq;
+                    if (piece.color === 'w') whiteKingSq = sq;
+                    if (piece.color === 'b') blackKingSq = sq;
                 }
             }
         }
 
         const badges = [];
-        if (winnerKingSq) {
-            const file = isFlipped ? 7 - (winnerKingSq.charCodeAt(0) - 97) : (winnerKingSq.charCodeAt(0) - 97);
-            const rank = isFlipped ? parseInt(winnerKingSq.charAt(1)) - 1 : 8 - parseInt(winnerKingSq.charAt(1));
-            badges.push({ type: 'winner', emoji: '👑', square: winnerKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
-        }
-        if (loserKingSq) {
-            const file = isFlipped ? 7 - (loserKingSq.charCodeAt(0) - 97) : (loserKingSq.charCodeAt(0) - 97);
-            const rank = isFlipped ? parseInt(loserKingSq.charAt(1)) - 1 : 8 - parseInt(loserKingSq.charAt(1));
-            badges.push({ type: 'loser', emoji: '💀', square: loserKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+        if (isCheckmate) {
+            const loserColor = chessInstance.turn();
+            const winnerColor = loserColor === 'w' ? 'b' : 'w';
+            const winnerSq = winnerColor === 'w' ? whiteKingSq : blackKingSq;
+            const loserSq = loserColor === 'w' ? whiteKingSq : blackKingSq;
+
+            if (winnerSq) {
+                const file = isFlipped ? 7 - (winnerSq.charCodeAt(0) - 97) : (winnerSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(winnerSq.charAt(1)) - 1 : 8 - parseInt(winnerSq.charAt(1));
+                badges.push({ type: 'winner', emoji: '👑', square: winnerSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
+            if (loserSq) {
+                const file = isFlipped ? 7 - (loserSq.charCodeAt(0) - 97) : (loserSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(loserSq.charAt(1)) - 1 : 8 - parseInt(loserSq.charAt(1));
+                badges.push({ type: 'loser', emoji: '💀', square: loserSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
+        } else if (isStalemate) {
+            if (whiteKingSq) {
+                const file = isFlipped ? 7 - (whiteKingSq.charCodeAt(0) - 97) : (whiteKingSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(whiteKingSq.charAt(1)) - 1 : 8 - parseInt(whiteKingSq.charAt(1));
+                badges.push({ type: 'stalemate', emoji: '🤝', square: whiteKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
+            if (blackKingSq) {
+                const file = isFlipped ? 7 - (blackKingSq.charCodeAt(0) - 97) : (blackKingSq.charCodeAt(0) - 97);
+                const rank = isFlipped ? parseInt(blackKingSq.charAt(1)) - 1 : 8 - parseInt(blackKingSq.charAt(1));
+                badges.push({ type: 'stalemate', emoji: '🤝', square: blackKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+            }
         }
         return badges;
     }
@@ -1425,11 +1446,23 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(badgesFlipped[0].top, '0%'); // e1 becomes top 0% when flipped
     assert.strictEqual(badgesFlipped[1].top, '87.5%'); // e8 becomes top 87.5% when flipped
 
-    // Non-checkmate position should return no badges
-    const nonMateChess = new Chess();
-    assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Non-checkmate position must produce 0 badges");
+    // Unit test logic for Stalemate badges
+    const stalemateChess = new Chess('k7/8/K7/8/8/8/8/1Q6 b - - 0 1');
+    assert.strictEqual(stalemateChess.in_stalemate(), true, "Position must be stalemate");
+    const stalemateBadges = simulateKingBadges(stalemateChess, false);
+    assert.strictEqual(stalemateBadges.length, 2, "Must produce 2 stalemate badges on stalemate");
+    assert.strictEqual(stalemateBadges[0].type, 'stalemate');
+    assert.strictEqual(stalemateBadges[0].emoji, '🤝');
+    assert.strictEqual(stalemateBadges[0].square, 'a6'); // White king
+    assert.strictEqual(stalemateBadges[1].type, 'stalemate');
+    assert.strictEqual(stalemateBadges[1].emoji, '🤝');
+    assert.strictEqual(stalemateBadges[1].square, 'a8'); // Black king
 
-    console.log("✓ King Checkmate Badges (Winner 👑 & Loser 💀) passed!");
+    // Non-checkmate/non-stalemate position should return no badges
+    const nonMateChess = new Chess();
+    assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Initial position must produce 0 badges");
+
+    console.log("✓ King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝) passed!");
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
 })().catch(err => {
