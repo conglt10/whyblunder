@@ -130,6 +130,27 @@
                 return Promise.reject(new Error('Worker not initialized'));
             }
 
+            // Immediate terminal check to prevent 20s worker timeout on positions with 0 legal moves
+            const ChessCtor = (typeof Chess !== 'undefined' ? Chess : (typeof window !== 'undefined' ? window.Chess : null));
+            if (ChessCtor && fen) {
+                try {
+                    const testChess = new ChessCtor(fen);
+                    if (testChess.game_over && testChess.game_over()) {
+                        const isMate = testChess.in_checkmate && testChess.in_checkmate();
+                        return Promise.resolve({
+                            bestMove: '',
+                            lines: {
+                                1: {
+                                    cp: isMate ? -10000 : 0,
+                                    mate: isMate ? -1 : undefined,
+                                    pv: []
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {}
+            }
+
             return new Promise((resolve, reject) => {
                 this.currentResolve = resolve;
                 this.currentReject = reject;

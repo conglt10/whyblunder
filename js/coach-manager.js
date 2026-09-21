@@ -707,6 +707,60 @@
             const fenAfter = this.chess.fen();
             const ply = this.moveHistory.length + 1;
 
+            // Immediate check for game termination (Checkmate, Stalemate, Draw)
+            this._checkGameTermination();
+            if (this.isGameOver) {
+                const gameOverText = this._getGameOverMessage();
+                const isCheckmateWin = this.chess.in_checkmate() && this.gameResult === 'win';
+                const classification = {
+                    uiQuality: isCheckmateWin ? 'good move' : 'good move',
+                    detailedQuality: isCheckmateWin ? 'best' : 'good',
+                    wpLoss: 0.0
+                };
+                this.lastMoveQuality = classification;
+                this.currentBubble1 = gameOverText;
+                this.currentBubble2 = gameOverText;
+                this.currentDialogue = gameOverText;
+
+                const record = {
+                    ply,
+                    san: legalMove.san,
+                    from: legalMove.from,
+                    to: legalMove.to,
+                    moveObj: legalMove,
+                    isPlayer: true,
+                    bubble1: gameOverText,
+                    bubble2: gameOverText,
+                    dialogue: gameOverText,
+                    quality: classification.detailedQuality,
+                    detailedQuality: classification.detailedQuality,
+                    uiQuality: classification.uiQuality,
+                    isBlunder: false,
+                    blunderAnalysis: null,
+                    bestSan: null,
+                    bestMoveObj: null,
+                    refMoveObj: null
+                };
+                this.moveHistory.push(record);
+
+                return {
+                    success: true,
+                    move: legalMove,
+                    bubble1: gameOverText,
+                    bubble2: gameOverText,
+                    dialogue: gameOverText,
+                    quality: classification,
+                    detailedQuality: classification.detailedQuality,
+                    uiQuality: classification.uiQuality,
+                    isBlunder: false,
+                    blunderAnalysis: null,
+                    bestSan: null,
+                    bestMoveObj: null,
+                    refMoveObj: null,
+                    isGameOver: true
+                };
+            }
+
             // 1. Check if user is resolving an active intentional blunder challenge
             let challengeFeedback = null;
             if (this.pendingChallenge) {
@@ -1349,10 +1403,25 @@
             return legalMoves.length > 0 ? legalMoves[0] : null;
         }
 
-        /**
-         * Evaluate position using worker.
-         */
         _evaluatePosition(fen, depth = 8, multipv = 1) {
+            if (!fen) return Promise.resolve({ bestMove: '', lines: {} });
+            try {
+                const tempB = new this.Chess(fen);
+                if (tempB.game_over && tempB.game_over()) {
+                    const isMate = tempB.in_checkmate && tempB.in_checkmate();
+                    return Promise.resolve({
+                        bestMove: '',
+                        lines: {
+                            1: {
+                                cp: isMate ? -10000 : 0,
+                                mate: isMate ? -1 : undefined,
+                                pv: []
+                            }
+                        }
+                    });
+                }
+            } catch (e) {}
+
             if (this.worker && typeof this.worker.evaluate === 'function') {
                 return this.worker.evaluate(fen, depth, multipv);
             }

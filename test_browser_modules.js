@@ -1144,6 +1144,39 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -'
     );
 
+    // 9. Immediate Checkmate Move Execution (Instant termination without engine delay)
+    let workerCalledOnTerminal = false;
+    const terminalWorker = {
+        options: {},
+        setOption: function() {},
+        evaluate: async () => {
+            workerCalledOnTerminal = true;
+            return { bestMove: '', lines: {} };
+        }
+    };
+    const mateTestCoach = new CoachManager({ personaId: 'pikaru', worker: terminalWorker });
+    // Set up Scholar's mate position: White to play Qxf7#
+    mateTestCoach.chess.load('r1bqkb1r/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4');
+    const mateRes = await mateTestCoach.handleUserMove('Qxf7#');
+    assert.strictEqual(mateRes.success, true);
+    assert.strictEqual(mateRes.isGameOver, true);
+    assert.strictEqual(mateTestCoach.isGameOver, true);
+    assert.strictEqual(mateTestCoach.gameResult, 'win');
+    assert(mateRes.dialogue.includes('Checkmate'), `Dialogue must declare Checkmate, got: ${mateRes.dialogue}`);
+    assert.strictEqual(workerCalledOnTerminal, false, "Stockfish worker must NOT be called on terminal checkmate move");
+
+    // 10. Immediate Stalemate Move Execution (Instant termination without engine delay)
+    const stalemateTestCoach = new CoachManager({ personaId: 'pikaru', worker: terminalWorker });
+    // White: Ka1, Qb1; Black: Ka8. Move: Qb1-b6 (stalemate)
+    stalemateTestCoach.chess.load('k7/8/8/8/8/8/8/KQ6 w - - 0 1');
+    const staleRes = await stalemateTestCoach.handleUserMove('Qb6');
+    assert.strictEqual(staleRes.success, true);
+    assert.strictEqual(staleRes.isGameOver, true);
+    assert.strictEqual(stalemateTestCoach.isGameOver, true);
+    assert.strictEqual(stalemateTestCoach.gameResult, 'draw');
+    assert(staleRes.dialogue.includes('Stalemate'), `Dialogue must declare Stalemate, got: ${staleRes.dialogue}`);
+    assert.strictEqual(workerCalledOnTerminal, false, "Stockfish worker must NOT be called on terminal stalemate move");
+
     // Verify index.html Coach Mode Integration
     const fs = require('fs');
     const indexContent = fs.readFileSync('./index.html', 'utf8');
