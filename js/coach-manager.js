@@ -598,6 +598,11 @@
             }
         }
 
+        _normalizeFen(fen) {
+            if (!fen) return '';
+            return fen.split(' ').slice(0, 4).join(' ');
+        }
+
         _configureWorkerElo() {
             if (!this.worker) return;
             if (typeof this.worker.setOption === 'function') {
@@ -725,29 +730,62 @@
                 this.pendingChallenge = null;
             }
 
-            // 2. Evaluation of user move quality (with swing limitation & coach suggestion memory)
+            // 2. Evaluation of user move quality (with deterministic caching & coach suggestion memory)
+            const posKey = this._normalizeFen(fenBefore);
+            const playedUci = legalMove.from + legalMove.to + (legalMove.promotion || '');
+            const playedFrom = legalMove.from;
+            const playedTo = legalMove.to;
+            const playedSan = legalMove.san;
+
+            let cachedEntry = this._positionEvalCache.get(posKey);
+
+            // Check if played move matches lastSuggestedMove
+            let wasSuggested = false;
+            if (this.lastSuggestedMove) {
+                const matchFen = this.lastSuggestedMove.posKey
+                    ? (this.lastSuggestedMove.posKey === posKey)
+                    : (this._normalizeFen(this.lastSuggestedMove.fen) === posKey);
+                if (matchFen) {
+                    const matchUci = Boolean(this.lastSuggestedMove.uci && (this.lastSuggestedMove.uci === playedUci));
+                    const matchSan = Boolean(this.lastSuggestedMove.san && (
+                        this.lastSuggestedMove.san === playedSan ||
+                        this.lastSuggestedMove.san.replace(/[+#]/g, '') === playedSan.replace(/[+#]/g, '')
+                    ));
+                    const matchSquares = Boolean(this.lastSuggestedMove.from && this.lastSuggestedMove.to &&
+                        (this.lastSuggestedMove.from === playedFrom && this.lastSuggestedMove.to === playedTo));
+                    if (matchUci || matchSan || matchSquares) {
+                        wasSuggested = true;
+                    }
+                }
+            }
+
+            // Check if move matches cached verified best move
+            if (!wasSuggested && cachedEntry && cachedEntry.verifiedBestMove) {
+                const vm = cachedEntry.verifiedBestMove;
+                const matchUci = Boolean(vm.uci && (vm.uci === playedUci));
+                const matchSan = Boolean(vm.san && (
+                    vm.san === playedSan ||
+                    vm.san.replace(/[+#]/g, '') === playedSan.replace(/[+#]/g, '')
+                ));
+                const matchSquares = Boolean(vm.from && vm.to && (vm.from === playedFrom && vm.to === playedTo));
+                if (matchUci || matchSan || matchSquares) {
+                    wasSuggested = true;
+                }
+            }
+
             let classification = { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 };
             let isBlunder = false;
             let blunderAnalysis = null;
             let bestSan = null;
-
-            const playedUci = legalMove.from + legalMove.to + (legalMove.promotion || '');
-            const wasSuggested = Boolean(
-                this.lastSuggestedMove &&
-                this.lastSuggestedMove.fen === fenBefore &&
-                (this.lastSuggestedMove.san === legalMove.san ||
-                 this.lastSuggestedMove.uci === playedUci)
-            );
+            let bestMoveObj = null;
+            let refMoveObj = null;
 
             const Evaluator = getEvaluator();
             const Recognizer = getRecognizer();
             const Detector = getOpeningDetector();
 
-            let refMoveObj = null;
-            let bestMoveObj = null;
-
             if (wasSuggested) {
-                // User played the exact move the coach recommended after a blunder takeback!
+                // User played the exact move the coach recommended or the position's verified best move!
                 classification = { uiQuality: 'good move', detailedQuality: 'best', wpLoss: 0.0 };
                 isBlunder = false;
                 this.lastSuggestedMove = null;
@@ -755,30 +793,46 @@
                 try {
                     this._setWorkerAnalysisMode();
 
-                    // Check position evaluation cache to prevent search variance / evaluation swing
-                    let evalBefore = this._positionEvalCache.get(fenBefore);
-                    if (!evalBefore) {
-                        evalBefore = await this._evaluatePosition(fenBefore, 12, 3);
+                    // Check or compute position evaluation cache to prevent search variance / evaluation swing
+                    if (!cachedEntry || !cachedEntry.evalBefore) {
+                        const evalBefore = await this._evaluatePosition(fenBefore, 12, 3);
                         if (evalBefore && evalBefore.lines) {
-                            this._positionEvalCache.set(fenBefore, evalBefore);
-                            if (this._positionEvalCache.size > 30) {
+                            const verifiedBest = await this._findVerifiedBestMove(fenBefore, evalBefore);
+                            cachedEntry = {
+                                evalBefore,
+                                bestMove: (verifiedBest && verifiedBest.uci) || evalBefore.bestMove || (evalBefore.lines[1]?.pv && evalBefore.lines[1].pv[0]) || '',
+                                bestSan: verifiedBest ? verifiedBest.san : null,
+                                bestMoveObj: verifiedBest ? verifiedBest.moveObj : null,
+                                verifiedBestMove: verifiedBest,
+                                cp: verifiedBest ? verifiedBest.cp : (evalBefore.lines[1]?.cp || 0)
+                            };
+                            this._positionEvalCache.set(posKey, cachedEntry);
+                            if (this._positionEvalCache.size > 50) {
                                 const firstKey = this._positionEvalCache.keys().next().value;
                                 this._positionEvalCache.delete(firstKey);
                             }
                         }
                     }
 
-                    const bestUci = evalBefore.bestMove || (evalBefore.lines[1]?.pv && evalBefore.lines[1].pv[0]) || '';
-                    const playedIsBest = (playedUci === bestUci);
-                    const bestCp = evalBefore.lines[1]?.cp || 0;
+                    const evalBefore = cachedEntry ? cachedEntry.evalBefore : null;
+                    const verifiedBest = cachedEntry ? cachedEntry.verifiedBestMove : null;
+                    const bestUci = (verifiedBest && verifiedBest.uci) || (cachedEntry && cachedEntry.bestMove) || (evalBefore?.lines?.[1]?.pv && evalBefore.lines[1].pv[0]) || '';
+                    const playedIsBest = (playedUci === bestUci) || Boolean(verifiedBest && verifiedBest.san === playedSan);
+                    const bestCp = (verifiedBest && verifiedBest.cp !== undefined) ? verifiedBest.cp : (evalBefore?.lines?.[1]?.cp || 0);
                     const wpBefore = Evaluator.cpToWinProb(bestCp);
 
-                    if (bestUci && bestUci.length >= 4) {
+                    if (verifiedBest && verifiedBest.moveObj) {
+                        bestMoveObj = verifiedBest.moveObj;
+                        bestSan = verifiedBest.san;
+                    } else if (bestUci && bestUci.length >= 4) {
                         bestMoveObj = {
                             from: bestUci.slice(0, 2),
                             to: bestUci.slice(2, 4),
                             promotion: bestUci[4]
                         };
+                        const tempChess = new this.Chess(fenBefore);
+                        const bMove = tempChess.move(bestMoveObj);
+                        if (bMove) bestSan = bMove.san;
                     }
 
                     // Check opening book to avoid false positive opening blunders
@@ -793,14 +847,16 @@
                         playedCp = bestCp;
                         wpAfter = wpBefore;
                     } else {
-                        // Check if played move is in MultiPV lines (2 or 3) from the same root search
+                        // Check if played move is in MultiPV lines from root search
                         let foundInMultipv = false;
-                        for (let m = 2; m <= 3; m++) {
-                            if (evalBefore.lines[m]?.pv && evalBefore.lines[m].pv[0] === playedUci) {
-                                playedCp = evalBefore.lines[m].cp || 0;
-                                wpAfter = Evaluator.cpToWinProb(playedCp);
-                                foundInMultipv = true;
-                                break;
+                        if (evalBefore && evalBefore.lines) {
+                            for (let m = 1; m <= 5; m++) {
+                                if (evalBefore.lines[m]?.pv && evalBefore.lines[m].pv[0] === playedUci) {
+                                    playedCp = evalBefore.lines[m].cp || 0;
+                                    wpAfter = Evaluator.cpToWinProb(playedCp);
+                                    foundInMultipv = true;
+                                    break;
+                                }
                             }
                         }
                         if (!foundInMultipv) {
@@ -812,20 +868,21 @@
 
                     classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
 
-                    // Find and verify best alternative move for advice if blunder or mistake
-                    if (!isBook && (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.wpLoss > 0.15)) {
+                    // Trigger blunder advice and takeback prompt for blunders and mistakes
+                    const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.wpLoss >= 0.15);
+                    if (!isBook && isBlunderOrMistake) {
                         isBlunder = true;
-                        const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
-                        if (verified && verified.san) {
-                            bestSan = verified.san;
-                        } else if (bestUci && bestUci.length >= 4) {
-                            const tempChess = new this.Chess(fenBefore);
-                            const bMove = tempChess.move({
-                                from: bestUci.slice(0, 2),
-                                to: bestUci.slice(2, 4),
-                                promotion: bestUci[4]
-                            });
-                            if (bMove) bestSan = bMove.san;
+                        if (!verifiedBest) {
+                            const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
+                            if (verified) {
+                                bestSan = verified.san;
+                                bestMoveObj = verified.moveObj;
+                                if (cachedEntry) {
+                                    cachedEntry.verifiedBestMove = verified;
+                                    cachedEntry.bestSan = verified.san;
+                                    cachedEntry.bestMoveObj = verified.moveObj;
+                                }
+                            }
                         }
 
                         if (!evalAfter) {
@@ -860,8 +917,8 @@
                                 sanRef: sanRef,
                                 bestScore: { cp: bestCp },
                                 playedScore: { cp: playedCp },
-                                bestPv: evalBefore.lines[1]?.pv || [],
-                                refPv: evalAfter.lines[1]?.pv || [],
+                                bestPv: evalBefore?.lines?.[1]?.pv || [],
+                                refPv: evalAfter?.lines?.[1]?.pv || [],
                                 quality: classification.uiQuality,
                                 detailedQuality: classification.detailedQuality,
                                 wpLoss: classification.wpLoss,
@@ -1173,12 +1230,14 @@
             const boardBefore = new this.Chess(fenBefore);
             const candidates = [];
 
-            // 1. Gather candidates from MultiPV lines (up to 3)
-            for (let m = 1; m <= 3; m++) {
-                const line = evalBefore?.lines?.[m];
-                const uci = (line && line.pv && line.pv[0]) || (m === 1 ? evalBefore?.bestMove : null);
-                if (uci && uci.length >= 4 && !candidates.some(c => c.uci === uci)) {
-                    candidates.push({ uci, cp: line?.cp ?? 0 });
+            // 1. Gather candidates from MultiPV lines (up to 5)
+            if (evalBefore?.lines) {
+                for (let m = 1; m <= 5; m++) {
+                    const line = evalBefore.lines[m];
+                    const uci = (line && line.pv && line.pv[0]) || (m === 1 ? evalBefore.bestMove : null);
+                    if (uci && uci.length >= 4 && !candidates.some(c => c.uci === uci)) {
+                        candidates.push({ uci, cp: line?.cp ?? 0 });
+                    }
                 }
             }
 
@@ -1187,7 +1246,8 @@
             }
 
             const bestCp = evalBefore?.lines?.[1]?.cp ?? 0;
-            let fallback = null;
+            let bestFallback = null;
+            let maxFallbackCp = -Infinity;
 
             for (const cand of candidates) {
                 const uci = cand.uci;
@@ -1199,8 +1259,20 @@
                 });
                 if (!moveObj) continue;
 
-                if (!fallback) {
-                    fallback = { uci, san: moveObj.san, moveObj, cp: cand.cp, verified: false };
+                const candEntry = {
+                    uci,
+                    from: moveObj.from,
+                    to: moveObj.to,
+                    promotion: moveObj.promotion,
+                    san: moveObj.san,
+                    moveObj,
+                    cp: cand.cp,
+                    verified: false
+                };
+
+                if (!bestFallback || cand.cp > maxFallbackCp) {
+                    bestFallback = candEntry;
+                    maxFallbackCp = cand.cp;
                 }
 
                 // Check A: Does candidate move hang an undefended piece?
@@ -1225,14 +1297,17 @@
                         continue;
                     }
 
-                    // Check score drop: if candidate score drops by > 120cp compared to root bestCp
-                    if (candPlayerCp < bestCp - 120) {
+                    // Check score drop: if candidate score drops by > 80cp compared to root bestCp
+                    if (candPlayerCp < bestCp - 80) {
                         continue;
                     }
 
                     // Candidate passed verification!
                     return {
                         uci,
+                        from: moveObj.from,
+                        to: moveObj.to,
+                        promotion: moveObj.promotion,
                         san: moveObj.san,
                         moveObj,
                         cp: candPlayerCp,
@@ -1243,7 +1318,7 @@
                 }
             }
 
-            return fallback;
+            return bestFallback;
         }
 
         /**
@@ -1587,7 +1662,8 @@
 
             // If coach just suggested a move after takeback, align hint directly with that move
             const currentFen = this.chess.fen();
-            if (this.lastSuggestedMove && this.lastSuggestedMove.fen === currentFen && this.lastSuggestedMove.san) {
+            const posKey = this._normalizeFen(currentFen);
+            if (this.lastSuggestedMove && (this.lastSuggestedMove.posKey === posKey || this._normalizeFen(this.lastSuggestedMove.fen) === posKey) && this.lastSuggestedMove.san) {
                 const tempB = new this.Chess(currentFen);
                 const sm = tempB.move(this.lastSuggestedMove.san);
                 if (sm) {
@@ -1600,14 +1676,15 @@
             }
 
             // If a verified best move is cached for current FEN, use its piece
-            const cached = this._positionEvalCache.get(currentFen);
-            if (cached && cached.bestSan) {
+            const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(currentFen);
+            const verifiedSan = (cached && (cached.bestSan || (cached.verifiedBestMove && cached.verifiedBestMove.san)));
+            if (verifiedSan) {
                 const tempB = new this.Chess(currentFen);
-                const cm = tempB.move(cached.bestSan);
+                const cm = tempB.move(verifiedSan);
                 if (cm) {
                     const pName = PIECE_NAMES[cm.piece] || 'piece';
                     return {
-                        hintText: `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName}.`,
+                        hintText: `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName} toward ${cm.to}.`,
                         highlightSquares: [cm.from]
                     };
                 }
@@ -1639,14 +1716,17 @@
          */
         takebackPlayerMove(suggestedSan = null) {
             if (this.moveHistory.length === 0) return false;
+            let undonePlayerMove = null;
             const lastMove = this.moveHistory[this.moveHistory.length - 1];
             if (lastMove && lastMove.isPlayer) {
+                undonePlayerMove = lastMove;
                 this.chess.undo();
                 this.moveHistory.pop();
             } else if (lastMove && !lastMove.isPlayer) {
                 this.chess.undo();
                 this.moveHistory.pop();
                 if (this.moveHistory.length > 0 && this.moveHistory[this.moveHistory.length - 1].isPlayer) {
+                    undonePlayerMove = this.moveHistory[this.moveHistory.length - 1];
                     this.chess.undo();
                     this.moveHistory.pop();
                 }
@@ -1655,21 +1735,47 @@
             }
             this.isGameOver = false;
 
-            if (suggestedSan) {
+            const currentFen = this.chess.fen();
+            const posKey = this._normalizeFen(currentFen);
+
+            const effectiveSan = suggestedSan || (undonePlayerMove && undonePlayerMove.bestSan) || null;
+            if (effectiveSan) {
+                let resolvedUci = null;
+                let resolvedFrom = null;
+                let resolvedTo = null;
+                let resolvedPromotion = null;
+                let resolvedSan = effectiveSan;
+                try {
+                    const tempB = new this.Chess(currentFen);
+                    const sm = tempB.move(effectiveSan);
+                    if (sm) {
+                        resolvedSan = sm.san;
+                        resolvedFrom = sm.from;
+                        resolvedTo = sm.to;
+                        resolvedPromotion = sm.promotion || null;
+                        resolvedUci = sm.from + sm.to + (sm.promotion || '');
+                    }
+                } catch (e) {}
+
                 this.lastSuggestedMove = {
-                    fen: this.chess.fen(),
-                    san: suggestedSan
+                    fen: currentFen,
+                    posKey: posKey,
+                    san: resolvedSan,
+                    uci: resolvedUci,
+                    from: resolvedFrom,
+                    to: resolvedTo,
+                    promotion: resolvedPromotion
                 };
             } else {
                 this.lastSuggestedMove = null;
             }
 
             this.currentBubble1 = "Good instinct to take that back!";
-            this.currentBubble2 = suggestedSan
-                ? `Take another look at the position. Consider moves like ${suggestedSan} instead!`
+            this.currentBubble2 = effectiveSan
+                ? `Take another look at the position. Consider moves like ${effectiveSan} instead!`
                 : "Take your time and search for a safer, more active continuation!";
-            this.currentDialogue = suggestedSan
-                ? `Good instinct to take that back! Consider moves like ${suggestedSan} instead.`
+            this.currentDialogue = effectiveSan
+                ? `Good instinct to take that back! Consider moves like ${effectiveSan} instead.`
                 : "Good instinct to take that back! Take your time and search for a safer, more active continuation!";
             return true;
         }
@@ -1680,31 +1786,73 @@
          */
         takeback() {
             if (this.moveHistory.length === 0) return false;
+            let undonePlayerMove = null;
 
             // If it's player's turn, undo Coach move then Player move
             if (this.isPlayerTurn()) {
                 if (this.moveHistory.length >= 2) {
                     this.chess.undo(); // Undo Coach move
+                    undonePlayerMove = this.moveHistory[this.moveHistory.length - 2];
                     this.chess.undo(); // Undo User move
                     this.moveHistory.pop();
                     this.moveHistory.pop();
                 } else if (this.moveHistory.length === 1) {
+                    undonePlayerMove = this.moveHistory[this.moveHistory.length - 1];
                     this.chess.undo();
                     this.moveHistory.pop();
                 }
             } else {
                 // Undo User move
+                undonePlayerMove = this.moveHistory[this.moveHistory.length - 1];
                 this.chess.undo();
                 this.moveHistory.pop();
             }
 
             this.pendingChallenge = null;
-            this.lastSuggestedMove = null;
             this.isGameOver = false;
 
+            const currentFen = this.chess.fen();
+            const posKey = this._normalizeFen(currentFen);
+
+            // If undone move had a suggested best move or if cache has verified best move, restore suggestion!
+            const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(currentFen);
+            const suggestedSan = (undonePlayerMove && undonePlayerMove.bestSan) || (cached && cached.bestSan) || (cached && cached.verifiedBestMove && cached.verifiedBestMove.san) || null;
+
+            if (suggestedSan) {
+                let resolvedUci = null;
+                let resolvedFrom = null;
+                let resolvedTo = null;
+                let resolvedSan = suggestedSan;
+                try {
+                    const tempB = new this.Chess(currentFen);
+                    const sm = tempB.move(suggestedSan);
+                    if (sm) {
+                        resolvedSan = sm.san;
+                        resolvedFrom = sm.from;
+                        resolvedTo = sm.to;
+                        resolvedUci = sm.from + sm.to + (sm.promotion || '');
+                    }
+                } catch (e) {}
+
+                this.lastSuggestedMove = {
+                    fen: currentFen,
+                    posKey: posKey,
+                    san: resolvedSan,
+                    uci: resolvedUci,
+                    from: resolvedFrom,
+                    to: resolvedTo
+                };
+            } else {
+                this.lastSuggestedMove = null;
+            }
+
             this.currentBubble1 = "Takeback granted! Let's try that position again.";
-            this.currentBubble2 = "Take your time and look for the strongest continuation!";
-            this.currentDialogue = "Takeback granted! Let's try that position again. Take your time and look for the strongest continuation!";
+            this.currentBubble2 = suggestedSan
+                ? `Take your time! Consider moves like ${suggestedSan} instead.`
+                : "Take your time and look for the strongest continuation!";
+            this.currentDialogue = suggestedSan
+                ? `Takeback granted! Consider moves like ${suggestedSan} instead.`
+                : "Takeback granted! Let's try that position again. Take your time and look for the strongest continuation!";
             return true;
         }
 

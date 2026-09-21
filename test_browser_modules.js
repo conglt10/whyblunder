@@ -1043,6 +1043,107 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     // 4. Position Evaluation Cache prevents search variance and swings
     assert(takebackCoach._positionEvalCache.size > 0, "Position evaluation cache should store analyzed positions");
 
+    // 5. Toolbar takeback() preserves suggested move and replay succeeds with 0 wpLoss
+    const tbToolbarWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            return {
+                bestMove: 'e2e4',
+                lines: {
+                    1: { cp: 50, pv: ['e2e4'] },
+                    2: { cp: 45, pv: ['d2d4'] }
+                }
+            };
+        }
+    };
+    const tbToolbarCoach = new CoachManager({ personaId: 'pikaru', worker: tbToolbarWorker });
+    // User blunders with h4
+    const blunderRes2 = await tbToolbarCoach.handleUserMove('h4');
+    assert.strictEqual(blunderRes2.isBlunder, true);
+    assert.strictEqual(blunderRes2.bestSan, 'e4');
+    assert.strictEqual(blunderRes2.bestMoveObj.from, 'e2');
+    assert.strictEqual(blunderRes2.bestMoveObj.to, 'e4');
+
+    // User uses toolbar takeback button
+    const tbToolbarOk = tbToolbarCoach.takeback();
+    assert.strictEqual(tbToolbarOk, true);
+    assert(tbToolbarCoach.lastSuggestedMove, "Toolbar takeback should preserve suggested move for the restored position");
+    assert.strictEqual(tbToolbarCoach.lastSuggestedMove.san, 'e4');
+    assert.strictEqual(tbToolbarCoach.lastSuggestedMove.from, 'e2');
+    assert.strictEqual(tbToolbarCoach.lastSuggestedMove.to, 'e4');
+
+    // Hint should align with the suggested move
+    const hintRes = tbToolbarCoach.generateHint();
+    assert(hintRes.hintText.includes('e4'), `Hint should suggest e4, got: ${hintRes.hintText}`);
+    assert.deepStrictEqual(hintRes.highlightSquares, ['e2']);
+
+    // Player now executes suggested move 'e4' via object format { from: 'e2', to: 'e4' }
+    const replayRes2 = await tbToolbarCoach.handleUserMove({ from: 'e2', to: 'e4' });
+    assert.strictEqual(replayRes2.success, true);
+    assert.strictEqual(replayRes2.isBlunder, false, "Replaying suggested move via toolbar takeback must NOT be a blunder");
+    assert.strictEqual(replayRes2.quality.uiQuality, 'good move');
+    assert.strictEqual(replayRes2.quality.wpLoss, 0.0);
+    assert.strictEqual(tbToolbarCoach.lastSuggestedMove, null);
+
+    // 6. Arrow / Dialogue / MoveObj synchronization when Candidate 2 is verified
+    const syncWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            // e4 candidate is refuted by opponent (-200cp), candidate 2 (d4) is solid (+30cp)
+            if (fen.includes('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR')) {
+                return { bestMove: 'e7e5', lines: { 1: { cp: 200, pv: ['e7e5'] } } };
+            }
+            if (fen.includes('rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR')) {
+                return { bestMove: 'd7d5', lines: { 1: { cp: -30, pv: ['d7d5'] } } };
+            }
+            return {
+                bestMove: 'e2e4',
+                lines: {
+                    1: { cp: 60, pv: ['e2e4'] },
+                    2: { cp: 30, pv: ['d2d4'] }
+                }
+            };
+        }
+    };
+    const syncCoach = new CoachManager({ personaId: 'sophy', worker: syncWorker });
+    const syncBlunderRes = await syncCoach.handleUserMove('g4');
+    assert.strictEqual(syncBlunderRes.isBlunder, true);
+    // Candidate 1 (e4) was refuted, so Candidate 2 (d4) must be selected
+    assert.strictEqual(syncBlunderRes.bestSan, 'd4');
+    assert.strictEqual(syncBlunderRes.bestMoveObj.from, 'd2');
+    assert.strictEqual(syncBlunderRes.bestMoveObj.to, 'd4');
+    assert.strictEqual(syncCoach.moveHistory[syncCoach.moveHistory.length - 1].bestSan, 'd4');
+
+    // 7. MultiPV Sound Alternative Move Acceptance (No false-alarm blunder loops)
+    const multiAltWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            return {
+                bestMove: 'e2e4',
+                lines: {
+                    1: { cp: 40, pv: ['e2e4'] },
+                    2: { cp: 35, pv: ['d2d4'] },
+                    3: { cp: 30, pv: ['g1f3'] }
+                }
+            };
+        }
+    };
+    const multiAltCoach = new CoachManager({ personaId: 'pikaru', worker: multiAltWorker });
+    // User plays candidate 3 (Nf3) from opening position
+    const nf3Res = await multiAltCoach.handleUserMove({ from: 'g1', to: 'f3' });
+    assert.strictEqual(nf3Res.success, true);
+    assert.strictEqual(nf3Res.isBlunder, false, "Candidate 3 (Nf3) from MultiPV lines must NOT be flagged as blunder");
+    assert.strictEqual(nf3Res.quality.uiQuality, 'good move');
+
+    // 8. FEN Normalization helper
+    assert.strictEqual(
+        multiAltCoach._normalizeFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -'
+    );
+
     // Verify index.html Coach Mode Integration
     const fs = require('fs');
     const indexContent = fs.readFileSync('./index.html', 'utf8');
