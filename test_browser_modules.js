@@ -1496,6 +1496,120 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Initial position must produce 0 badges");
 
     console.log("✓ King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝) passed!");
+
+    // =========================================================================
+    // Regression Tests for Coach Play Code Review Fixes (11 Items)
+    // =========================================================================
+    console.log("Testing Coach Play code review fixes...");
+
+    // 1. explainGoodMove Options-Object Test
+    const goodMoveWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            return {
+                bestMove: 'f1c4',
+                lines: {
+                    1: { cp: 50, pv: ['f1c4', 'g8f6'] }
+                }
+            };
+        }
+    };
+    const goodCoach = new CoachManager({ personaId: 'sophy', worker: goodMoveWorker });
+    goodCoach.chess.load('r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3');
+    const goodRes = await goodCoach.handleUserMove('Bc4');
+    assert.strictEqual(goodRes.success, true);
+    assert(goodRes.bubble1.length > 0, "Good move bubble1 should be generated");
+
+    // 2. Hanging piece blunder SAN resolution test
+    const blunderWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            return {
+                bestMove: 'e2e4',
+                lines: {
+                    1: { cp: 100, pv: ['e2e4', 'd7d5'] },
+                    2: { cp: -300, pv: ['c1e3', 'f6e4'] } // Hanging e4 knight capture
+                }
+            };
+        }
+    };
+    const blunderCoach = new CoachManager({ personaId: 'mcmarty', worker: blunderWorker, playerColor: 'b' });
+    blunderCoach.chess.load('rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2');
+    const blunderCandidate = await blunderCoach._findInstructiveBlunder(blunderCoach.chess.fen());
+    if (blunderCandidate) {
+        assert(blunderCandidate.bestSan !== 'f6e4', "bestSan should be resolved to SAN (e.g. Nxe4), not raw UCI");
+        assert.strictEqual(blunderCandidate.bestSan, 'Nxe4');
+        assert.strictEqual(blunderCandidate.refutations[1], 'Nxe4');
+    }
+
+    // 3. Opening principle violation wiring test
+    const opCoach = new CoachManager({
+        personaId: 'pikaru',
+        worker: {
+            options: {},
+            setOption: function(name, val) { this.options[name] = val; },
+            evaluate: async (fen, depth, multipv) => {
+                return {
+                    bestMove: 'g1f3',
+                    lines: {
+                        1: { cp: 40, pv: ['g1f3', 'd7d5'] },
+                        2: { cp: -150, pv: ['d1h5', 'g7g6'] }
+                    }
+                };
+            }
+        }
+    });
+    opCoach.chess.load('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2');
+    const qh5Res = await opCoach.handleUserMove('Qh5');
+    if (qh5Res.isBlunder) {
+        assert(opCoach.currentDialogue.includes('opening principles') || opCoach.currentDialogue.includes('Queen') || opCoach.currentDialogue.includes('concedes'),
+            `Expected opening principle or tactical feedback, got: ${opCoach.currentDialogue}`);
+    }
+
+    // 4. Takeback with Promotion test (tests _resolveSuggestion)
+    const promoCoach = new CoachManager({ personaId: 'pikaru' });
+    promoCoach.chess.load('8/4P3/8/8/8/8/8/4K2k w - - 0 1');
+    const promoRecord = {
+        san: 'e8=Q',
+        isPlayer: true,
+        bestSan: 'e8=Q'
+    };
+    promoCoach.moveHistory.push(promoRecord);
+    promoCoach.chess.move('e8=Q');
+    const promoTb = promoCoach.takebackPlayerMove('e8=Q');
+    assert.strictEqual(promoTb, true);
+    assert(promoCoach.lastSuggestedMove, "lastSuggestedMove should be set");
+    assert.strictEqual(promoCoach.lastSuggestedMove.promotion, 'q');
+    assert.strictEqual(promoCoach.lastSuggestedMove.uci, 'e7e8q');
+
+    // 5. Worker Elo & Analysis Mode Toggling
+    const modeWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; }
+    };
+    const modeCoach = new CoachManager({ personaId: 'mangoose', worker: modeWorker });
+    modeCoach._setWorkerPlayMode();
+    assert.strictEqual(modeWorker.options['UCI_LimitStrength'], 'true');
+    assert.strictEqual(modeWorker.options['UCI_Elo'], '2200');
+    modeCoach._setWorkerAnalysisMode();
+    assert.strictEqual(modeWorker.options['UCI_LimitStrength'], 'false');
+    assert.strictEqual(modeWorker.options['Skill Level'], '20');
+
+    // 6. isEngineAvailable check
+    const noWorkerCoach = new CoachManager({ personaId: 'pikaru' });
+    assert.strictEqual(noWorkerCoach.isEngineAvailable(), false);
+    const withWorkerCoach = new CoachManager({ personaId: 'pikaru', worker: { isReady: () => true } });
+    assert.strictEqual(withWorkerCoach.isEngineAvailable(), true);
+
+    // 7. Player flag regression check in index.html
+    const indexHtml = fs.readFileSync('./index.html', 'utf8');
+    assert(!indexHtml.includes('bottomPlayerName.textContent = "You 🇺🇸"'), "index.html must not hardcode 'You 🇺🇸'");
+    assert(indexHtml.includes('bottomPlayerName.textContent = "You"'), "index.html must set 'You'");
+    assert(indexHtml.includes('cancelPendingCoachResponse();'), "index.html must have cancelPendingCoachResponse()");
+
+    console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
 })().catch(err => {

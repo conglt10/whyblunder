@@ -6662,10 +6662,10 @@
                 if (isPlayerWhite) {
                     topPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
                     topPlayerMeta.textContent = p.title;
-                    bottomPlayerName.textContent = "You 🇺🇸";
+                    bottomPlayerName.textContent = "You";
                     bottomPlayerMeta.textContent = "Sparring Player";
                 } else {
-                    topPlayerName.textContent = "You 🇺🇸";
+                    topPlayerName.textContent = "You";
                     topPlayerMeta.textContent = "Sparring Player";
                     bottomPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
                     bottomPlayerMeta.textContent = p.title;
@@ -6709,9 +6709,31 @@
                 }
             }
 
-            async function triggerCoachResponse() {
+            let coachGameGeneration = 0;
+            let coachResponseTimeoutId = null;
+
+            function cancelPendingCoachResponse() {
+                if (coachResponseTimeoutId !== null) {
+                    clearTimeout(coachResponseTimeoutId);
+                    coachResponseTimeoutId = null;
+                }
+            }
+
+            function scheduleCoachResponse(delayMs) {
+                cancelPendingCoachResponse();
+                const currentGen = coachGameGeneration;
+                coachResponseTimeoutId = setTimeout(async () => {
+                    coachResponseTimeoutId = null;
+                    if (coachGameGeneration !== currentGen) return;
+                    await triggerCoachResponse(currentGen);
+                }, delayMs);
+            }
+
+            async function triggerCoachResponse(generation) {
+                if (generation !== undefined && generation !== coachGameGeneration) return;
                 if (currentAppMode !== 'coach' || !coachManager || coachManager.isGameOver) return;
                 const coachRes = await coachManager.computeCoachMove();
+                if (generation !== undefined && generation !== coachGameGeneration) return;
                 if (coachRes && coachRes.success && coachRes.move) {
                     board.position(coachManager.chess.fen(), true);
                     highlightLastMove(coachRes.move.from, coachRes.move.to);
@@ -6773,6 +6795,7 @@
                 updateKingCheckmateBadges(coachManager.chess);
 
                 if (coachManager.isGameOver) {
+                    cancelPendingCoachResponse();
                     hideBlunderTakebackCard();
                     clearArrows();
                     renderCoachDialogue();
@@ -6780,6 +6803,7 @@
                 }
 
                 if (userResult.isBlunder) {
+                    cancelPendingCoachResponse();
                     playChessSound('blunder');
                     showBlunderTakebackCard(userResult);
 
@@ -6801,12 +6825,12 @@
                 renderCoachThinking();
 
                 const delay = Math.floor(Math.random() * 300) + 1000; // 1000-1300ms natural delay
-                setTimeout(async () => {
-                    await triggerCoachResponse();
-                }, delay);
+                scheduleCoachResponse(delay);
             }
 
             function startNewCoachGame(personaId = 'pikaru', playerColor = 'w') {
+                coachGameGeneration++;
+                cancelPendingCoachResponse();
                 selectedCoachPersona = personaId;
                 selectedCoachColor = playerColor;
                 hideBlunderTakebackCard();
@@ -6819,7 +6843,9 @@
                     if (typeof BrowserWhyBlunder !== 'undefined' && BrowserWhyBlunder.StockfishWorker) {
                         try {
                             coachWorker = new BrowserWhyBlunder.StockfishWorker(888);
-                        } catch (e) {}
+                        } catch (e) {
+                            console.debug?.('[coach] StockfishWorker instantiation error:', e);
+                        }
                     }
                 }
 
@@ -6838,7 +6864,15 @@
                 if (coachWorker && typeof coachWorker.init === 'function') {
                     coachWorker.init().then(() => {
                         coachManager._configureWorkerElo();
-                    }).catch(() => {});
+                    }).catch((err) => {
+                        console.warn("[coach] Engine failed to initialize, playing in casual mode:", err);
+                        const bubble = document.getElementById('coachBubble');
+                        if (bubble) {
+                            bubble.innerHTML = `<span class="badge bg-warning text-dark me-1">Offline</span> Playing in casual mode (engine unavailable).`;
+                        }
+                    });
+                } else if (!coachWorker) {
+                    console.warn("[coach] Stockfish worker not available, playing in casual mode");
                 }
 
                 board.orientation(playerColor === 'w' ? 'white' : 'black');
@@ -6865,15 +6899,14 @@
                 // If player is Black, Coach makes move 1!
                 if (playerColor === 'b') {
                     renderCoachThinking();
-                    setTimeout(async () => {
-                        await triggerCoachResponse();
-                    }, 900);
+                    scheduleCoachResponse(900);
                 }
             }
 
             function switchAppMode(mode) {
                 if (mode === currentAppMode) return;
                 currentAppMode = mode;
+                cancelPendingCoachResponse();
                 hideBlunderTakebackCard();
                 clearKingCheckmateBadges();
 
@@ -6991,6 +7024,7 @@
             if (btnCoachTakeback) {
                 btnCoachTakeback.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
+                    cancelPendingCoachResponse();
                     hideBlunderTakebackCard();
                     clearArrows();
                     clearSquareAnnotations();
@@ -7017,6 +7051,7 @@
             if (btnCoachRetryMove) {
                 btnCoachRetryMove.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
+                    cancelPendingCoachResponse();
                     const lastMoveRecord = coachManager.moveHistory[coachManager.moveHistory.length - 1];
                     const suggestedSan = (lastMoveRecord && lastMoveRecord.bestSan) || null;
                     const ok = coachManager.takebackPlayerMove(suggestedSan);
@@ -7066,9 +7101,7 @@
                     hideBlunderTakebackCard();
                     renderCoachThinking();
                     const delay = Math.floor(Math.random() * 300) + 900;
-                    setTimeout(async () => {
-                        await triggerCoachResponse();
-                    }, delay);
+                    scheduleCoachResponse(delay);
                 });
             }
 
@@ -7076,6 +7109,7 @@
             if (btnCoachResign) {
                 btnCoachResign.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
+                    cancelPendingCoachResponse();
                     hideBlunderTakebackCard();
                     if (coachManager.isGameOver) {
                         startNewCoachGame(selectedCoachPersona, selectedCoachColor);

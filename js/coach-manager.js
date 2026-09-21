@@ -598,9 +598,46 @@
             }
         }
 
+        isEngineAvailable() {
+            return !!(this.worker && (typeof this.worker.isReady === 'function' ? this.worker.isReady() : true));
+        }
+
         _normalizeFen(fen) {
             if (!fen) return '';
             return fen.split(' ').slice(0, 4).join(' ');
+        }
+
+        _resolveSuggestion(fen, suggestedSan) {
+            if (!suggestedSan) return null;
+            const posKey = this._normalizeFen(fen);
+            let resolvedUci = null;
+            let resolvedFrom = null;
+            let resolvedTo = null;
+            let resolvedPromotion = null;
+            let resolvedSan = suggestedSan;
+            try {
+                const tempB = new this.Chess(fen);
+                const sm = tempB.move(suggestedSan);
+                if (sm) {
+                    resolvedSan = sm.san;
+                    resolvedFrom = sm.from;
+                    resolvedTo = sm.to;
+                    resolvedPromotion = sm.promotion || null;
+                    resolvedUci = sm.from + sm.to + (sm.promotion || '');
+                }
+            } catch (e) {
+                console.debug?.('[coach] _resolveSuggestion error:', e);
+            }
+
+            return {
+                fen,
+                posKey,
+                san: resolvedSan,
+                uci: resolvedUci,
+                from: resolvedFrom,
+                to: resolvedTo,
+                promotion: resolvedPromotion
+            };
         }
 
         _configureWorkerElo() {
@@ -615,7 +652,7 @@
                     this.worker.worker.postMessage(`setoption name UCI_Elo value ${this.persona.elo}`);
                     this.worker.worker.postMessage(`setoption name Skill Level value ${this.persona.skillLevel || 10}`);
                 } catch (e) {
-                    // Ignore postMessage failure in test environments
+                    console.debug?.('[coach] worker postMessage setoption error:', e);
                 }
             }
         }
@@ -632,7 +669,9 @@
                 try {
                     this.worker.worker.postMessage('setoption name UCI_LimitStrength value false');
                     this.worker.worker.postMessage('setoption name Skill Level value 20');
-                } catch (e) {}
+                } catch (e) {
+                    console.debug?.('[coach] worker postMessage analysis mode error:', e);
+                }
             }
         }
 
@@ -640,18 +679,7 @@
          * Switch worker to persona-tuned Elo rating for in-game AI moves.
          */
         _setWorkerPlayMode() {
-            if (!this.worker) return;
-            if (typeof this.worker.setOption === 'function') {
-                this.worker.setOption('UCI_LimitStrength', 'true');
-                this.worker.setOption('UCI_Elo', `${this.persona.elo}`);
-                this.worker.setOption('Skill Level', `${this.persona.skillLevel || 10}`);
-            } else if (this.worker.worker) {
-                try {
-                    this.worker.worker.postMessage('setoption name UCI_LimitStrength value true');
-                    this.worker.worker.postMessage(`setoption name UCI_Elo value ${this.persona.elo}`);
-                    this.worker.worker.postMessage(`setoption name Skill Level value ${this.persona.skillLevel || 10}`);
-                } catch (e) {}
-            }
+            this._configureWorkerElo();
         }
 
         /**
@@ -923,7 +951,7 @@
                     classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
 
                     // Trigger blunder advice and takeback prompt for blunders and mistakes
-                    const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.wpLoss >= 0.15);
+                    const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake');
                     if (!isBook && isBlunderOrMistake) {
                         isBlunder = true;
                         if (!verifiedBest) {
@@ -960,6 +988,15 @@
                                 }
                             }
 
+                            let opViolation = null;
+                            if (Detector && typeof Detector.detectOpeningPrincipleViolation === 'function') {
+                                try {
+                                    opViolation = Detector.detectOpeningPrincipleViolation(boardBefore, legalMove, ply);
+                                } catch (e) {
+                                    console.debug?.('[coach] detectOpeningPrincipleViolation error:', e);
+                                }
+                            }
+
                             const diag = Recognizer.explainBlunderOrMistake({
                                 boardBefore,
                                 boardAfter,
@@ -976,13 +1013,14 @@
                                 quality: classification.uiQuality,
                                 detailedQuality: classification.detailedQuality,
                                 wpLoss: classification.wpLoss,
-                                ply
+                                ply,
+                                openingPrincipleViolation: opViolation
                             });
                             blunderAnalysis = diag ? diag.explanation : null;
                         }
                     }
                 } catch (e) {
-                    // Fallback to default quality
+                    console.debug?.('[coach] handleUserMove eval error:', e);
                 }
             }
             this.lastMoveQuality = classification;
@@ -1012,11 +1050,19 @@
                         const boardBefore = new this.Chess(fenBefore);
                         const boardAfter = new this.Chess(fenAfter);
                         const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
-                        const goodDiag = Recognizer.explainGoodMove(boardBefore, boardAfter, legalMove, isBest);
+                        const goodDiag = Recognizer.explainGoodMove({
+                            boardBefore,
+                            boardAfter,
+                            move: legalMove,
+                            san: legalMove.san,
+                            isBest
+                        });
                         if (goodDiag && goodDiag.explanation) {
                             goodReason = goodDiag.explanation;
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.debug?.('[coach] explainGoodMove error:', e);
+                    }
                 }
 
                 if (goodReason) {
@@ -1191,6 +1237,10 @@
             if (!Recognizer || !this.worker) return null;
 
             try {
+                // Explicitly switch worker to full analysis strength so candidate moves and tactical refutations
+                // are accurately evaluated at GM depth before blunder injection.
+                this._setWorkerAnalysisMode();
+
                 // Search MultiPV=5
                 const multiEval = await this._evaluatePosition(fen, 8, 5);
                 const boardBefore = new this.Chess(fen);
@@ -1211,7 +1261,16 @@
                     if (!moveExecuted) continue;
 
                     const refUci = line.pv[1] || '';
-                    const refSan = line.pv[1] || '';
+                    let refSan = refUci;
+                    let repEx = null;
+                    if (refUci.length >= 4) {
+                        const replyMove = { from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] };
+                        const replyBoard = new this.Chess(testBoard.fen());
+                        repEx = replyBoard.move(replyMove);
+                        if (repEx) {
+                            refSan = repEx.san;
+                        }
+                    }
 
                     // 1. Hanging Piece Blunder
                     const hanging = Recognizer.detectHangingPieceBlunder(boardBefore, testBoard, moveExecuted);
@@ -1227,47 +1286,41 @@
                     }
 
                     // 2. Walking into a tactical fork
-                    if (refUci.length >= 4) {
-                        const replyMove = { from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] };
+                    if (repEx) {
                         const replyBoard = new this.Chess(testBoard.fen());
-                        const repEx = replyBoard.move(replyMove);
-                        if (repEx) {
-                            const fork = Recognizer.detectFork(replyBoard, repEx);
-                            if (fork) {
-                                return {
-                                    move: candMove,
-                                    san: moveExecuted.san,
-                                    motif: 'Tactical Fork',
-                                    refutations: [refUci, repEx.san],
-                                    bestSan: repEx.san,
-                                    type: 'fork'
-                                };
-                            }
+                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                        const fork = Recognizer.detectFork(replyBoard, repEx);
+                        if (fork) {
+                            return {
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Tactical Fork',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'fork'
+                            };
                         }
                     }
 
                     // 3. Walking into a pin
-                    if (refUci.length >= 4) {
-                        const replyMove = { from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] };
+                    if (repEx) {
                         const replyBoard = new this.Chess(testBoard.fen());
-                        const repEx = replyBoard.move(replyMove);
-                        if (repEx) {
-                            const pin = Recognizer.detectPin(replyBoard, repEx);
-                            if (pin) {
-                                return {
-                                    move: candMove,
-                                    san: moveExecuted.san,
-                                    motif: 'Pin',
-                                    refutations: [refUci, repEx.san],
-                                    bestSan: repEx.san,
-                                    type: 'pin'
-                                };
-                            }
+                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                        const pin = Recognizer.detectPin(replyBoard, repEx);
+                        if (pin) {
+                            return {
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Pin',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'pin'
+                            };
                         }
                     }
                 }
             } catch (e) {
-                // If anything fails in blunder search, return null
+                console.debug?.('[coach] _findInstructiveBlunder error:', e);
             }
             return null;
         }
@@ -1368,7 +1421,7 @@
                         verified: true
                     };
                 } catch (e) {
-                    // Verification evaluation error; keep trying or use fallback
+                    console.debug?.('[coach] _findVerifiedBestMove iteration error:', e);
                 }
             }
 
@@ -1396,7 +1449,7 @@
                     };
                 }
             } catch (e) {
-                // Fall back to legal move
+                console.debug?.('[coach] _getEngineMove error:', e);
             }
 
             const legalMoves = this.chess.moves({ verbose: true });
@@ -1420,7 +1473,9 @@
                         }
                     });
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.debug?.('[coach] _evaluatePosition chess error:', e);
+            }
 
             if (this.worker && typeof this.worker.evaluate === 'function') {
                 return this.worker.evaluate(fen, depth, multipv);
@@ -1519,23 +1574,17 @@
                             coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the ${isSemi ? 'semi-open' : 'open'} file.`;
                             challengeText = "How will you contest control of this file?";
                         }
-                    } else if (move.piece === 'q') {
-                        if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) {
-                            coachMoveDesc = `Centralizing my Queen on ${move.to} (${move.san}) to dominate key squares and diagonals.`;
-                            challengeText = "A centralized Queen commands huge diagonal and vertical influence. How will you challenge her?";
-                        } else {
-                            coachMoveDesc = `Activating my Queen on ${move.to} (${move.san}) to create active threats.`;
-                            challengeText = "Watch out for my Queen's range across the board! What is your best defense?";
-                        }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.debug?.('[coach] motif detection error:', e);
+                }
             }
 
             // 2. Opening recognition (within first 10 plies)
             if (!coachMoveDesc && this.moveHistory.length <= 10 && Detector && Detector.identifyOpening && !this.announcedOpening) {
                 const historySans = this.moveHistory.map(m => m.san).concat([move.san]);
                 const op = Detector.identifyOpening(historySans);
-                if (op && op.name && op.name !== 'Standard Game') {
+                if (op && op.name && op.name !== 'Standard Game' && op.name !== 'Irregular Opening') {
                     this.announcedOpening = true;
                     const opDialogue = this._getOpeningDialogue(op);
                     if (opDialogue) {
@@ -1808,36 +1857,7 @@
             const posKey = this._normalizeFen(currentFen);
 
             const effectiveSan = suggestedSan || (undonePlayerMove && undonePlayerMove.bestSan) || null;
-            if (effectiveSan) {
-                let resolvedUci = null;
-                let resolvedFrom = null;
-                let resolvedTo = null;
-                let resolvedPromotion = null;
-                let resolvedSan = effectiveSan;
-                try {
-                    const tempB = new this.Chess(currentFen);
-                    const sm = tempB.move(effectiveSan);
-                    if (sm) {
-                        resolvedSan = sm.san;
-                        resolvedFrom = sm.from;
-                        resolvedTo = sm.to;
-                        resolvedPromotion = sm.promotion || null;
-                        resolvedUci = sm.from + sm.to + (sm.promotion || '');
-                    }
-                } catch (e) {}
-
-                this.lastSuggestedMove = {
-                    fen: currentFen,
-                    posKey: posKey,
-                    san: resolvedSan,
-                    uci: resolvedUci,
-                    from: resolvedFrom,
-                    to: resolvedTo,
-                    promotion: resolvedPromotion
-                };
-            } else {
-                this.lastSuggestedMove = null;
-            }
+            this.lastSuggestedMove = this._resolveSuggestion(currentFen, effectiveSan);
 
             this.currentBubble1 = "Good instinct to take that back!";
             this.currentBubble2 = effectiveSan
@@ -1886,34 +1906,7 @@
             // If undone move had a suggested best move or if cache has verified best move, restore suggestion!
             const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(currentFen);
             const suggestedSan = (undonePlayerMove && undonePlayerMove.bestSan) || (cached && cached.bestSan) || (cached && cached.verifiedBestMove && cached.verifiedBestMove.san) || null;
-
-            if (suggestedSan) {
-                let resolvedUci = null;
-                let resolvedFrom = null;
-                let resolvedTo = null;
-                let resolvedSan = suggestedSan;
-                try {
-                    const tempB = new this.Chess(currentFen);
-                    const sm = tempB.move(suggestedSan);
-                    if (sm) {
-                        resolvedSan = sm.san;
-                        resolvedFrom = sm.from;
-                        resolvedTo = sm.to;
-                        resolvedUci = sm.from + sm.to + (sm.promotion || '');
-                    }
-                } catch (e) {}
-
-                this.lastSuggestedMove = {
-                    fen: currentFen,
-                    posKey: posKey,
-                    san: resolvedSan,
-                    uci: resolvedUci,
-                    from: resolvedFrom,
-                    to: resolvedTo
-                };
-            } else {
-                this.lastSuggestedMove = null;
-            }
+            this.lastSuggestedMove = this._resolveSuggestion(currentFen, suggestedSan);
 
             this.currentBubble1 = "Takeback granted! Let's try that position again.";
             this.currentBubble2 = suggestedSan
