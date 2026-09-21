@@ -798,13 +798,30 @@
 
             if (challengeFeedback) {
                 bubble1 = challengeFeedback.text;
-                bubble2 = "Let me calculate my response...";
+                bubble2 = "Calculating response...";
             } else if (isBlunder) {
                 bubble1 = pickRandom(this.persona.voice.playerBlunder);
-                bubble2 = blunderAnalysis || "That move might be a mistake. Would you like to take it back and try again?";
+                bubble2 = blunderAnalysis || "That move might be a mistake. Review the tactical oversight card below!";
             } else {
-                bubble1 = pickRandom(this.persona.voice.playerGoodMove);
-                bubble2 = this.persona.voice.thinking || "Calculating my response...";
+                let goodReason = "";
+                if (Recognizer && Recognizer.explainGoodMove) {
+                    try {
+                        const boardBefore = new this.Chess(fenBefore);
+                        const boardAfter = new this.Chess(fenAfter);
+                        const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
+                        const goodDiag = Recognizer.explainGoodMove(boardBefore, boardAfter, legalMove, isBest);
+                        if (goodDiag && goodDiag.explanation) {
+                            goodReason = goodDiag.explanation;
+                        }
+                    } catch (e) {}
+                }
+
+                if (goodReason) {
+                    bubble1 = goodReason;
+                } else {
+                    bubble1 = pickRandom(this.persona.voice.playerGoodMove);
+                }
+                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             }
 
             if (this.isGameOver) {
@@ -903,7 +920,19 @@
 
             // C. Generate Dual Speech Bubbles
             const bubbles = this._generateCoachBubbles(boardBefore, boardAfter, executed, isChallenge, challengeData);
-            this.currentBubble1 = bubbles.bubble1;
+            
+            // PRESERVE Bubble 1 from the player's last move so the user's feedback is not wiped!
+            if (this.moveHistory.length > 0) {
+                const lastPlayerRecord = [...this.moveHistory].reverse().find(m => m.isPlayer);
+                if (lastPlayerRecord && lastPlayerRecord.bubble1) {
+                    this.currentBubble1 = lastPlayerRecord.bubble1;
+                } else {
+                    this.currentBubble1 = bubbles.bubble1;
+                }
+            } else {
+                this.currentBubble1 = bubbles.bubble1;
+            }
+
             this.currentBubble2 = bubbles.bubble2;
 
             const record = {
@@ -913,8 +942,8 @@
                 to: executed.to,
                 moveObj: executed,
                 isPlayer: false,
-                bubble1: bubbles.bubble1,
-                bubble2: bubbles.bubble2,
+                bubble1: this.currentBubble1,
+                bubble2: this.currentBubble2,
                 isChallenge
             };
             this.moveHistory.push(record);
@@ -922,9 +951,10 @@
             return {
                 success: true,
                 move: executed,
-                bubble1: bubbles.bubble1,
-                bubble2: bubbles.bubble2,
+                bubble1: this.currentBubble1,
+                bubble2: this.currentBubble2,
                 isChallenge,
+                challengeData,
                 isGameOver: this.isGameOver
             };
         }
@@ -1061,98 +1091,125 @@
         _generateCoachBubbles(boardBefore, boardAfter, move, isChallenge, challengeData) {
             const Recognizer = getRecognizer();
             const Detector = getOpeningDetector();
-            let bubble1 = "";
-            let bubble2 = "";
+            const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+            const pName = PIECE_NAMES[move.piece] || 'piece';
 
-            // 1. Opening recognition (within first 10 plies)
-            if (this.moveHistory.length <= 10 && Detector && Detector.identifyOpening && !this.announcedOpening) {
+            let coachMoveDesc = "";
+            let challengeText = "";
+
+            if (this.isGameOver) {
+                return {
+                    bubble1: this._getGameOverMessage(),
+                    bubble2: "Click 'New Game' or the Flag button whenever you're ready to play again."
+                };
+            }
+
+            if (isChallenge) {
+                coachMoveDesc = `I played ${move.san}...`;
+                challengeText = `Wait, take a close look at the board! ${pickRandom(this.persona.voice.challengeBlunderBait)}`;
+                return {
+                    bubble1: `I played ${move.san}. Spot the tactical punish!`,
+                    bubble2: `${coachMoveDesc} ${challengeText}`
+                };
+            }
+
+            // Check if player has only 1 legal reply
+            const legalMovesCount = this.chess.moves().length;
+            if (legalMovesCount === 1) {
+                coachMoveDesc = `I play ${move.san}.`;
+                challengeText = pickRandom(this.persona.voice.challengeOnlyMove || ["Only one legal move for you here—let's see it!"]);
+                return {
+                    bubble1: coachMoveDesc,
+                    bubble2: `${coachMoveDesc} ${challengeText}`
+                };
+            }
+
+            // 1. Detect tactical & positional motif of coach move
+            if (move.san === 'O-O' || move.san === 'O-O-O') {
+                coachMoveDesc = `I castle ${move.san} to tuck my king away safely and activate the rook.`;
+                challengeText = "Challenge: Coordinate your pieces and make sure your own king is safe!";
+            } else if (move.san.includes('+')) {
+                coachMoveDesc = `Check! My ${pName} on ${move.to} (${move.san}) attacks your king.`;
+                challengeText = "Challenge: Find the cleanest escape square or interposition.";
+            } else if (move.captured) {
+                const capName = PIECE_NAMES[move.captured] || 'piece';
+                coachMoveDesc = `I play ${move.san}, capturing your ${capName} on ${move.to}.`;
+                challengeText = "Challenge: How do you plan to recapture or counter-attack?";
+            } else if (Recognizer) {
+                try {
+                    const attackedSquares = Recognizer.getPieceAttacks(boardAfter, move.to);
+                    const attackedPieces = attackedSquares
+                        .map(sq => ({ sq, p: boardAfter.get(sq) }))
+                        .filter(x => x.p && x.p.color === this.playerColor);
+                    const attackedQueen = attackedPieces.find(x => x.p.type === 'q');
+                    const attackedRook = attackedPieces.find(x => x.p.type === 'r');
+
+                    if (attackedQueen) {
+                        coachMoveDesc = `I play ${move.san}, putting pressure on your Queen on ${attackedQueen.sq}!`;
+                        challengeText = "Challenge: Where will your Queen move to maintain active pressure?";
+                    } else if (attackedRook) {
+                        coachMoveDesc = `I play ${move.san}, taking aim at your rook on ${attackedRook.sq}.`;
+                        challengeText = "Challenge: How will you defend or counter the threat?";
+                    } else if (Recognizer.detectPin && Recognizer.detectPin(boardAfter, move)) {
+                        coachMoveDesc = `I play ${move.san}, creating an annoying pin against your piece.`;
+                        challengeText = pickRandom(this.persona.voice.challengePinDefense || [
+                            "Challenge: Can you unpin or reinforce the defended square?"
+                        ]);
+                    } else if (Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
+                        coachMoveDesc = `I strike at the center with ${move.san}!`;
+                        challengeText = pickRandom(this.persona.voice.challengeCenter || [
+                            "Challenge: Central tension! Will you capture, push, or support the center?"
+                        ]);
+                    } else if (Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
+                        coachMoveDesc = `Pushing my passed pawn to ${move.to} (${move.san}).`;
+                        challengeText = "Challenge: Can you blockade or target the advancing pawn?";
+                    } else if (Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
+                        coachMoveDesc = `Anchoring my ${pName} on ${move.to} (${move.san}) as an active outpost.`;
+                        challengeText = "Challenge: How will you challenge this well-placed piece?";
+                    } else if (Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
+                        coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the open file.`;
+                        challengeText = "Challenge: How will you contest control of this file?";
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Opening recognition (within first 10 plies)
+            if (!coachMoveDesc && this.moveHistory.length <= 10 && Detector && Detector.identifyOpening && !this.announcedOpening) {
                 const historySans = this.moveHistory.map(m => m.san).concat([move.san]);
                 const op = Detector.identifyOpening(historySans);
                 if (op && op.name && op.name !== 'Standard Game') {
                     this.announcedOpening = true;
                     const opDialogue = this._getOpeningDialogue(op);
                     if (opDialogue) {
-                        return opDialogue;
+                        coachMoveDesc = `I play ${move.san} in the ${op.name}.`;
+                        challengeText = opDialogue.bubble2;
                     }
                 }
             }
 
-            // 2. Tactical & Positional Concept Detection for Bubble 1
-            let detectedConcept = null;
-
-            if (move.san === 'O-O' || move.san === 'O-O-O') {
-                detectedConcept = 'castle';
-            } else if (move.san.includes('+')) {
-                detectedConcept = 'check';
-            } else if (Recognizer) {
-                // Check if coach attacked player's Queen or Rook
-                try {
-                    const attackedSquares = Recognizer.getPieceAttacks(boardAfter, move.to);
-                    const attackedPieces = attackedSquares
-                        .map(sq => ({ sq, p: boardAfter.get(sq) }))
-                        .filter(x => x.p && x.p.color === this.playerColor);
-                    const attacksQueen = attackedPieces.some(x => x.p.type === 'q');
-                    const attacksRook = attackedPieces.some(x => x.p.type === 'r');
-
-                    if (attacksQueen) {
-                        detectedConcept = 'attackQueen';
-                    } else if (attacksRook) {
-                        detectedConcept = 'attackRook';
-                    } else if (Recognizer.detectPin && Recognizer.detectPin(boardAfter, move)) {
-                        detectedConcept = 'pin';
-                    } else if (Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
-                        detectedConcept = 'passedPawn';
-                    } else if (Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
-                        detectedConcept = 'openFile';
-                    } else if (Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
-                        detectedConcept = 'outpost';
-                    } else if (Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
-                        detectedConcept = 'centerStrike';
-                    }
-                } catch (e) {}
-            }
-
-            if (!detectedConcept) {
-                if (move.captured) {
-                    detectedConcept = 'capture';
-                } else if (move.piece === 'n' || move.piece === 'b') {
-                    const startRank = (this.coachColor === 'w') ? 0 : 7;
-                    const fromRank = parseInt(move.from[1], 10) - 1;
-                    if (fromRank === startRank) {
-                        detectedConcept = 'develop';
-                    }
-                }
-            }
-
-            if (detectedConcept && this.persona.voice[detectedConcept]) {
-                bubble1 = pickRandom(this.persona.voice[detectedConcept]);
-            } else {
-                bubble1 = pickRandom(this.persona.voice.genericMove);
-            }
-
-            // 3. Bubble 2: Contextual Challenge / Prompt for the User's Turn
-            if (this.isGameOver) {
-                bubble2 = this._getGameOverMessage();
-            } else if (isChallenge) {
-                bubble2 = pickRandom(this.persona.voice.challengeBlunderBait);
-            } else {
-                const legalMovesCount = this.chess.moves().length;
-                if (legalMovesCount === 1) {
-                    bubble2 = pickRandom(this.persona.voice.challengeOnlyMove);
-                } else if (boardAfter.in_check()) {
-                    bubble2 = "Check! Can you find the cleanest escape or block?";
-                } else if (detectedConcept === 'attackQueen') {
-                    bubble2 = "Your Queen is under attack! Where will she escape to maintain activity?";
-                } else if (detectedConcept === 'pin') {
-                    bubble2 = pickRandom(this.persona.voice.challengePinDefense || [
-                        "Challenge: One of your pieces is pinned. Can you break the pin or defend?"
+            // 3. Piece development or central advance
+            if (!coachMoveDesc) {
+                if (move.piece === 'n' || move.piece === 'b') {
+                    coachMoveDesc = `Developing my ${pName} to ${move.to} (${move.san}) to contest key squares.`;
+                    challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
+                        "Challenge: Which piece will you mobilize next to complete your development?"
+                    ]);
+                } else if (move.piece === 'p' && (move.to === 'e4' || move.to === 'd4' || move.to === 'e5' || move.to === 'd5' || move.to === 'c4' || move.to === 'c5')) {
+                    coachMoveDesc = `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`;
+                    challengeText = pickRandom(this.persona.voice.challengeCenter || [
+                        "Challenge: How will you stake your claim in the center?"
                     ]);
                 } else {
-                    bubble2 = this._getContextualChallenge(boardAfter);
+                    coachMoveDesc = `I play ${move.san} to improve piece activity.`;
+                    challengeText = this._getContextualChallenge(boardAfter);
                 }
             }
 
-            return { bubble1, bubble2 };
+            const combinedBubble2 = `${coachMoveDesc} ${challengeText}`;
+            return {
+                bubble1: coachMoveDesc, // Used as fallback if no player history exists
+                bubble2: combinedBubble2
+            };
         }
 
         _getOpeningDialogue(op) {
