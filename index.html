@@ -2136,8 +2136,12 @@
         body.coach-mode #boardToolbar {
             display: none !important;
         }
-        body.coach-mode #evalGauge {
+        body.coach-mode #evalGauge,
+        body.coach-mode #mobileEvalBar {
             display: none !important;
+        }
+        body.coach-mode .board-with-eval {
+            gap: 0 !important;
         }
         body.coach-mode .variation-preview-bar {
             display: none !important;
@@ -2145,20 +2149,94 @@
         body.coach-mode #variationBanner {
             display: none !important;
         }
+        body.coach-mode .coach-moves-sheet {
+            display: none !important;
+        }
+        body.coach-mode #mobileMoveTicker {
+            display: none !important;
+        }
 
+        /* Mobile Header Hidden State & Fullscreen Space */
         @media (max-width: 991.98px) {
+            body.mobile-header-hidden .lic-header {
+                display: none !important;
+            }
+            body.mobile-header-hidden .studio-container {
+                padding-top: 2px !important;
+            }
+            .btn-restore-mobile-header {
+                position: fixed;
+                top: 6px;
+                right: 8px;
+                z-index: 1050;
+                background: rgba(38, 36, 33, 0.88);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                color: var(--lic-text-secondary);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 16px;
+                padding: 3px 10px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+                transition: all 0.2s ease;
+            }
+            .btn-restore-mobile-header:hover, .btn-restore-mobile-header:active {
+                color: #ffffff;
+                background: rgba(45, 42, 38, 0.98);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+
             body.coach-mode .studio-grid {
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
+                gap: 8px;
             }
             body.coach-mode .col-board {
                 order: 1;
                 width: 100%;
             }
+            body.coach-mode .board-container-card {
+                max-width: min(100%, calc(100dvh - 240px));
+            }
+            body.coach-mode.mobile-header-hidden .board-container-card {
+                max-width: min(100%, calc(100dvh - 190px));
+            }
             body.coach-mode .col-coach {
                 order: 2;
                 width: 100%;
+                overflow-y: auto;
+            }
+            body.coach-mode .coach-dialogue-card {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+            body.coach-mode .coach-avatar-wrapper {
+                width: 44px;
+                height: 44px;
+                font-size: 24px;
+            }
+            body.coach-mode .coach-action-bar {
+                padding: 8px 12px;
+            }
+            body.coach-mode .btn-coach-resign,
+            body.coach-mode .btn-coach-takeback {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+            body.coach-mode .btn-coach-hint {
+                height: 38px;
+                font-size: 1rem;
+            }
+        }
+        @media (min-width: 992px) {
+            .btn-restore-mobile-header {
+                display: none !important;
             }
         }
 
@@ -2563,6 +2641,11 @@
     </style>
 </head>
 <body>
+    <!-- Floating Restore Header Button (shown on mobile when header is collapsed) -->
+    <button type="button" id="btnRestoreMobileHeader" class="btn-restore-mobile-header d-none" title="Show Header Menu">
+        <i class="bi bi-chevron-bar-down"></i> <span>Menu</span>
+    </button>
+
     <!-- Lichess Dark Header -->
     <header class="lic-header">
         <div class="d-flex align-items-center gap-3">
@@ -2609,6 +2692,11 @@
                     <li><button type="button" class="dropdown-item" data-action="import-source" data-source="pgn"><i class="bi bi-file-earmark-text me-2 text-info"></i>Raw PGN Text</button></li>
                 </ul>
             </div>
+
+            <!-- Mobile Header Collapse Button -->
+            <button type="button" id="btnToggleMobileHeader" class="lic-btn d-lg-none px-2" title="Hide Header for extra screen space">
+                <i class="bi bi-chevron-bar-up"></i>
+            </button>
         </div>
     </header>
 
@@ -2943,13 +3031,6 @@
                         </div>
                     </div>
 
-                    <!-- Live Moves Notation Sheet -->
-                    <div class="coach-moves-sheet" id="coachMovesSheet">
-                        <div class="coach-moves-table" id="coachMovesTable">
-                            <div class="text-center text-muted py-4 small">Game ready. Make a move on the board!</div>
-                        </div>
-                    </div>
-
                     <!-- Action Bar Matching Screenshot -->
                     <div class="coach-action-bar">
                         <button type="button" id="btnCoachResign" class="coach-action-btn btn-coach-resign" title="Resign / New Game">
@@ -2970,6 +3051,9 @@
                         </button>
                         <button type="button" id="btnCoachDownloadPgn" class="coach-icon-btn" title="Download PGN">
                             <i class="bi bi-download"></i>
+                        </button>
+                        <button type="button" id="btnCoachToggleHeader" class="coach-icon-btn d-lg-none" title="Toggle Header / Fullscreen View">
+                            <i class="bi bi-arrows-fullscreen"></i>
                         </button>
                         <button type="button" class="coach-icon-btn" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="Change Coach">
                             <i class="bi bi-person-gear"></i>
@@ -6798,6 +6882,54 @@
                 });
             }
 
+            // Mobile Header Collapse & Space Optimizer
+            function setMobileHeaderHidden(hidden) {
+                const isHidden = !!hidden;
+                document.body.classList.toggle('mobile-header-hidden', isHidden);
+                const restoreBtn = document.getElementById('btnRestoreMobileHeader');
+                if (restoreBtn) {
+                    if (isHidden) {
+                        restoreBtn.classList.remove('d-none');
+                    } else {
+                        restoreBtn.classList.add('d-none');
+                    }
+                }
+                try {
+                    localStorage.setItem('whyblunder_mobile_header_hidden', isHidden ? '1' : '0');
+                } catch (e) {}
+                setTimeout(() => {
+                    if (board && board.resize) board.resize();
+                    if (typeof updateSvgDimensions === 'function') updateSvgDimensions();
+                }, 50);
+            }
+
+            function toggleMobileHeader() {
+                const currentlyHidden = document.body.classList.contains('mobile-header-hidden');
+                setMobileHeaderHidden(!currentlyHidden);
+            }
+
+            const btnToggleMobileHeader = document.getElementById('btnToggleMobileHeader');
+            if (btnToggleMobileHeader) {
+                btnToggleMobileHeader.addEventListener('click', toggleMobileHeader);
+            }
+
+            const btnRestoreMobileHeader = document.getElementById('btnRestoreMobileHeader');
+            if (btnRestoreMobileHeader) {
+                btnRestoreMobileHeader.addEventListener('click', () => setMobileHeaderHidden(false));
+            }
+
+            const btnCoachToggleHeader = document.getElementById('btnCoachToggleHeader');
+            if (btnCoachToggleHeader) {
+                btnCoachToggleHeader.addEventListener('click', toggleMobileHeader);
+            }
+
+            try {
+                const savedHeaderHidden = localStorage.getItem('whyblunder_mobile_header_hidden') === '1';
+                if (savedHeaderHidden && window.innerWidth <= 991) {
+                    setMobileHeaderHidden(true);
+                }
+            } catch (e) {}
+
             // Auto-load game from URL Hash / Search Query / Path
             async function checkUrlForGame() {
                 const searchParam = new URLSearchParams(window.location.search);
@@ -6837,6 +6969,8 @@
             window.executeCoachUserMove = executeCoachUserMove;
             window.showBlunderTakebackCard = showBlunderTakebackCard;
             window.hideBlunderTakebackCard = hideBlunderTakebackCard;
+            window.setMobileHeaderHidden = setMobileHeaderHidden;
+            window.toggleMobileHeader = toggleMobileHeader;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
 
