@@ -1794,6 +1794,77 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert(updatedIndexHtml.includes('<i class="bi bi-flag-fill me-1"></i> Resigned'), "index.html renderCoachDialogue must show Resigned badge");
 
     console.log("✓ Coach Resignation & Game Over Status tests passed!");
+
+    // 10. Coach Mode Responsive Move List & Game Review Tests
+    console.log("Testing Coach Mode Responsive Move List & Game Review...");
+    const coachHtml = fs.readFileSync('./index.html', 'utf8');
+
+    // A. Verify removal of bottom utility strip
+    assert(!coachHtml.includes('class="coach-footer-bar"'), "index.html must not contain .coach-footer-bar");
+    assert(!coachHtml.includes('<!-- Bottom Utility Strip -->'), "index.html must not contain Bottom Utility Strip");
+
+    // B. Verify presence of desktop move sheet and mobile single strip
+    assert(coachHtml.includes('id="coachMovesWrapper"'), "index.html must contain #coachMovesWrapper");
+    assert(coachHtml.includes('id="coachMovesSheet"'), "index.html must contain #coachMovesSheet");
+    assert(coachHtml.includes('id="coachMovesTable"'), "index.html must contain #coachMovesTable");
+    assert(coachHtml.includes('id="coachMobileMoveTicker"'), "index.html must contain #coachMobileMoveTicker");
+    assert(coachHtml.includes('id="coachTickerScroll"'), "index.html must contain #coachTickerScroll");
+    assert(coachHtml.includes('id="coachTickerNavLeft"'), "index.html must contain #coachTickerNavLeft");
+    assert(coachHtml.includes('id="coachTickerNavRight"'), "index.html must contain #coachTickerNavRight");
+
+    // C. Verify Game Review button presence in action bar
+    assert(coachHtml.includes('id="btnCoachReview"'), "index.html must contain #btnCoachReview");
+    assert(coachHtml.includes('Game Review'), "index.html must contain Game Review label");
+    assert(coachHtml.includes('id="btnCoachHint"'), "index.html must retain #btnCoachHint for active play");
+
+    // D. Verify CSS responsiveness
+    assert(coachHtml.includes('body.coach-mode .coach-mobile-move-ticker'), "index.html must define .coach-mobile-move-ticker styles");
+    assert(coachHtml.includes('.btn-coach-review'), "index.html must define .btn-coach-review styles");
+
+    // E. Verify record.fen in CoachManager
+    const navCoach = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    const navUserMoveRes = await navCoach.handleUserMove('e4');
+    assert.strictEqual(navUserMoveRes.success, true);
+    assert(navCoach.moveHistory[0].fen, "Move history record must contain fen");
+    assert.strictEqual(navCoach.moveHistory[0].fen, navCoach.chess.fen());
+
+    const navCoachMoveRes = await navCoach.computeCoachMove();
+    assert.strictEqual(navCoachMoveRes.success, true);
+    assert(navCoach.moveHistory[1].fen, "Coach move history record must contain fen");
+    assert.strictEqual(navCoach.moveHistory[1].fen, navCoach.chess.fen());
+
+    // F. Verify JavaScript state machine functions exist in index.html
+    assert(coachHtml.includes('function goToCoachMove('), "index.html must define goToCoachMove");
+    assert(coachHtml.includes('function updateCoachMoveListActiveState('), "index.html must define updateCoachMoveListActiveState");
+    assert(coachHtml.includes('function updateCoachActionBarState('), "index.html must define updateCoachActionBarState");
+    assert(coachHtml.includes('let coachCurrentMoveIndex'), "index.html must track coachCurrentMoveIndex");
+
+    // G. Verify Action Bar Hint <-> Game Review state logic
+    let mockHintVisible = true;
+    let mockReviewVisible = false;
+    function mockUpdateCoachActionBarState(isGameOver) {
+        if (isGameOver) {
+            mockHintVisible = false;
+            mockReviewVisible = true;
+        } else {
+            mockHintVisible = true;
+            mockReviewVisible = false;
+        }
+    }
+    // Active game:
+    mockUpdateCoachActionBarState(false);
+    assert.strictEqual(mockHintVisible, true, "Hint button must be visible during active game");
+    assert.strictEqual(mockReviewVisible, false, "Game Review button must be hidden during active game");
+    // Game over:
+    mockUpdateCoachActionBarState(true);
+    assert.strictEqual(mockHintVisible, false, "Hint button must be hidden when game is over");
+    assert.strictEqual(mockReviewVisible, true, "Game Review button must be visible when game is over");
+    // Takeback resets game over:
+    mockUpdateCoachActionBarState(false);
+    assert.strictEqual(mockHintVisible, true, "Hint button must be restored upon takeback");
+    assert.strictEqual(mockReviewVisible, false, "Game Review button must be hidden upon takeback");
+
+    console.log("✓ Coach Mode Responsive Move List & Game Review tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");

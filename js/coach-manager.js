@@ -817,7 +817,8 @@
                     blunderAnalysis: null,
                     bestSan: null,
                     bestMoveObj: null,
-                    refMoveObj: null
+                    refMoveObj: null,
+                    fen: this.chess.fen()
                 };
                 this.moveHistory.push(record);
 
@@ -1167,7 +1168,8 @@
                 blunderAnalysis,
                 bestSan,
                 bestMoveObj,
-                refMoveObj
+                refMoveObj,
+                fen: this.chess.fen()
             };
             this.moveHistory.push(record);
 
@@ -1284,7 +1286,8 @@
                 bubble2: this.currentBubble2,
                 dialogue: this.currentDialogue,
                 playerFeedback: playerFeedback || null,
-                isChallenge
+                isChallenge,
+                fen: this.chess.fen()
             };
             this.moveHistory.push(record);
 
