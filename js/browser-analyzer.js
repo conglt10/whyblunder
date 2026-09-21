@@ -172,6 +172,12 @@
             this.isBusy = false;
         }
 
+        setOption(name, value) {
+            if (this.worker) {
+                this.worker.postMessage(`setoption name ${name} value ${value}`);
+            }
+        }
+
         terminate() {
             if (this.evalTimeout) {
                 clearTimeout(this.evalTimeout);

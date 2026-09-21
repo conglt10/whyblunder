@@ -796,7 +796,140 @@ assert(!indexHtml.includes('chesscom_pgn:'), "index.html must NOT include Chess.
 
 console.log("✓ Lichess & PGN Import Integration passed!");
 
-console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
+// 8. CoachManager Tests
+console.log("Testing CoachManager...");
+const CoachModule = require('./js/coach-manager.js');
+const { COACH_PERSONAS, CoachManager } = CoachModule;
+
+assert(COACH_PERSONAS.pikaru, "COACH_PERSONAS must contain Coach Pikaru");
+assert(COACH_PERSONAS.mcmarty, "COACH_PERSONAS must contain Coach McMarty");
+assert(COACH_PERSONAS.sophy, "COACH_PERSONAS must contain Coach Sophy");
+assert(COACH_PERSONAS.mangoose, "COACH_PERSONAS must contain GM Mangoose");
+
+// Verify parody personas have correct ratings and distinct voices
+assert.strictEqual(COACH_PERSONAS.pikaru.elo, 1600);
+assert.strictEqual(COACH_PERSONAS.mcmarty.elo, 800);
+assert.strictEqual(COACH_PERSONAS.sophy.elo, 1200);
+assert.strictEqual(COACH_PERSONAS.mangoose.elo, 2200);
+
+// Instantiate CoachManager with default Pikaru
+const mockWorker = {
+    init: async () => {},
+    options: {},
+    setOption: function(name, val) { this.options[name] = val; },
+    evaluate: async (fen, depth, multipv) => {
+        // Return simple mock eval
+        return {
+            bestMove: 'e7e5',
+            lines: {
+                1: { cp: 20, pv: ['e7e5', 'g1f3'] },
+                2: { cp: -150, pv: ['g8f6', 'e4e5'] }
+            }
+        };
+    }
+};
+
+const coach = new CoachManager({ personaId: 'pikaru', worker: mockWorker });
+assert.strictEqual(coach.getPersona().id, 'pikaru');
+assert.strictEqual(coach.isPlayerTurn(), true);
+
+// Configure worker options
+coach._configureWorkerElo();
+assert.strictEqual(mockWorker.options['UCI_LimitStrength'], 'true');
+assert.strictEqual(mockWorker.options['UCI_Elo'], '1600');
+
+// Test speech bubbles on startup
+assert(coach.currentBubble1.length > 0, "Initial bubble1 should be present");
+assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
+
+// Test Player Move
+(async () => {
+    const resMove = await coach.handleUserMove('e4');
+    assert.strictEqual(resMove.success, true);
+    assert.strictEqual(coach.chess.turn(), 'b');
+    assert.strictEqual(coach.isPlayerTurn(), false);
+    assert.strictEqual(coach.moveHistory.length, 1);
+
+    // Test Illegal Move
+    const resIllegal = await coach.handleUserMove('e5');
+    assert.strictEqual(resIllegal.success, false);
+
+    // Test Coach Response Move
+    const resCoach = await coach.computeCoachMove();
+    assert.strictEqual(resCoach.success, true);
+    assert(resCoach.bubble1.length > 0, "Coach bubble 1 must be non-empty");
+    assert(resCoach.bubble2.length > 0, "Coach bubble 2 must be non-empty");
+    assert.strictEqual(coach.chess.turn(), 'w');
+    assert.strictEqual(coach.isPlayerTurn(), true);
+    assert.strictEqual(coach.moveHistory.length, 2);
+
+    // Test Hint Generation
+    const hint = coach.generateHint();
+    assert(hint.hintText.includes('Coach Hint:'), "Hint text should be prefixed with 'Coach Hint:'");
+    assert(Array.isArray(hint.highlightSquares), "highlightSquares must be an array");
+
+    // Test Intentional Blunder & Spotting Feedback
+    coach.pendingChallenge = {
+        move: { from: 'g8', to: 'f6' },
+        san: 'Nf6',
+        motif: 'Tactical Fork',
+        refutations: ['Nxe5', 'e4e5'],
+        bestSan: 'Nxe5'
+    };
+
+    // User spots the blunder with legal move Nxe5 (or e5)
+    // Let's set up a custom position to test blunder punishment
+    const testCoach = new CoachManager({ personaId: 'pikaru' });
+    testCoach.pendingChallenge = {
+        move: { from: 'd8', to: 'f6' },
+        san: 'Qf6',
+        motif: 'Hanging Queen',
+        refutations: ['Qxf6', 'd1f6'],
+        bestSan: 'Qxf6'
+    };
+    testCoach.chess.load('rnb1kbnr/pppp1ppp/5q2/8/8/8/PPPPQPPP/RNB1KBNR w KQkq - 0 1');
+    const punishRes = await testCoach.handleUserMove({ from: 'e2', to: 'f3' }); // Not the punishment
+    assert(punishRes.bubble1.includes('hook') || punishRes.bubble1.includes('bullet') || punishRes.bubble1.includes('missed') || punishRes.bubble1.includes('escape'),
+        `Expected missed blunder message, got: ${punishRes.bubble1}`);
+
+    // Test Takeback
+    const moveCountBefore = coach.moveHistory.length;
+    const tbRes = coach.takeback();
+    assert.strictEqual(tbRes, true);
+    assert.strictEqual(coach.moveHistory.length, moveCountBefore - 2);
+
+    // Test Persona switching
+    coach.setPersona('mcmarty');
+    assert.strictEqual(coach.getPersona().id, 'mcmarty');
+    assert.strictEqual(coach.getPersona().elo, 800);
+
+    coach.setPersona('mangoose');
+    assert.strictEqual(coach.getPersona().id, 'mangoose');
+    assert.strictEqual(coach.getPersona().elo, 2200);
+
+    // Verify index.html Coach Mode Integration
+    const fs = require('fs');
+    const indexContent = fs.readFileSync('./index.html', 'utf8');
+    assert(indexContent.includes('id="tabModeAnalysis"'), "index.html must contain #tabModeAnalysis");
+    assert(indexContent.includes('id="tabModeCoach"'), "index.html must contain #tabModeCoach");
+    assert(indexContent.includes('id="colCoach"'), "index.html must contain #colCoach");
+    assert(indexContent.includes('id="coachBubble1"'), "index.html must contain #coachBubble1");
+    assert(indexContent.includes('id="coachBubble2"'), "index.html must contain #coachBubble2");
+    assert(indexContent.includes('id="btnCoachHint"'), "index.html must contain #btnCoachHint");
+    assert(indexContent.includes('id="btnCoachTakeback"'), "index.html must contain #btnCoachTakeback");
+    assert(indexContent.includes('id="btnCoachResign"'), "index.html must contain #btnCoachResign");
+    assert(indexContent.includes('id="coachSettingsModal"'), "index.html must contain #coachSettingsModal");
+    assert(indexContent.includes('src="js/coach-manager.js"'), "index.html must link coach-manager.js");
+    assert(indexContent.includes('function switchAppMode('), "index.html must define switchAppMode");
+    assert(indexContent.includes('function startNewCoachGame('), "index.html must define startNewCoachGame");
+    assert(indexContent.includes('function executeCoachUserMove('), "index.html must define executeCoachUserMove");
+
+    console.log("✓ CoachManager passed!");
+    console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
+})().catch(err => {
+    console.error("Test error:", err);
+    process.exit(1);
+});
 
 
 

@@ -2081,6 +2081,367 @@
                 width: 26px;
             }
         }
+
+        /* ==========================================================================
+           PLAY COACH MODE STYLING (Inspired by Chess.com Coach Mode)
+           ========================================================================== */
+        .lic-mode-segmented-control {
+            display: inline-flex;
+            background: var(--lic-bg-canvas);
+            border: 1px solid var(--lic-border);
+            border-radius: 6px;
+            padding: 2px;
+            gap: 2px;
+        }
+        .lic-mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--lic-text-secondary);
+            padding: 3px 10px;
+            font-size: var(--lic-fs-sm);
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .lic-mode-btn:hover {
+            color: var(--lic-text-bright);
+        }
+        .lic-mode-btn.active {
+            background: var(--lic-bg-surface-hover);
+            color: var(--lic-text-bright);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* Coach Mode Active Grid Transformation */
+        body.coach-mode .studio-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        body.coach-mode .col-analysis {
+            display: none !important;
+        }
+        body.coach-mode .col-moves {
+            display: none !important;
+        }
+        body.coach-mode .mobile-nav-toolbar {
+            display: none !important;
+        }
+        body.coach-mode #importGameGroup {
+            display: none !important;
+        }
+        body.coach-mode #boardToolbar {
+            display: none !important;
+        }
+        body.coach-mode #evalGauge {
+            display: none !important;
+        }
+        body.coach-mode .variation-preview-bar {
+            display: none !important;
+        }
+        body.coach-mode #variationBanner {
+            display: none !important;
+        }
+
+        @media (max-width: 991.98px) {
+            body.coach-mode .studio-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            body.coach-mode .col-board {
+                order: 1;
+                width: 100%;
+            }
+            body.coach-mode .col-coach {
+                order: 2;
+                width: 100%;
+            }
+        }
+
+        /* Coach Play Panel */
+        .coach-play-panel {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border-subtle);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .coach-panel-header {
+            background: var(--lic-bg-surface-header);
+            border-bottom: 1px solid var(--lic-border-subtle);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .coach-header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--lic-text-bright);
+            letter-spacing: -0.01em;
+        }
+        .coach-icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--lic-text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .coach-icon-btn:hover {
+            color: var(--lic-text-bright);
+            background: var(--lic-bg-surface-hover);
+        }
+
+        /* Coach Dialogue Card & Dual Speech Bubbles */
+        .coach-dialogue-card {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px;
+            background: var(--lic-bg-surface-subtle);
+            border-bottom: 1px solid var(--lic-border-subtle);
+        }
+        .coach-avatar-wrapper {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #2b2824;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            border: 2px solid var(--lic-border);
+            user-select: none;
+        }
+        .coach-bubbles-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .coach-speech-bubble {
+            background: #ffffff;
+            color: #1a1a1a;
+            border-radius: 12px;
+            padding: 9px 13px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            line-height: 1.42;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+            word-wrap: break-word;
+            transition: all 0.2s ease;
+        }
+        .coach-speech-bubble::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-right: 7px solid #ffffff;
+        }
+        .coach-speech-bubble.bubble-thought {
+            background: #ffffff;
+            color: #181818;
+        }
+        .coach-speech-bubble.bubble-challenge {
+            background: #f8fafc;
+            color: #0f172a;
+            border-left: 3px solid var(--lic-blue);
+        }
+
+        /* Opening Bar */
+        .coach-opening-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 14px;
+            background: var(--lic-bg-surface-header);
+            border-bottom: 1px solid var(--lic-border-subtle);
+            font-size: var(--lic-fs-sm);
+        }
+        .coach-opening-name {
+            font-weight: 600;
+            color: var(--lic-text-primary);
+        }
+        .coach-mini-tool-btn {
+            background: transparent;
+            border: none;
+            color: var(--lic-text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .coach-mini-tool-btn:hover {
+            color: #ffffff;
+        }
+
+        /* Move Notation Sheet */
+        .coach-moves-sheet {
+            height: 240px;
+            overflow-y: auto;
+            padding: 6px 10px;
+            background: var(--lic-bg-canvas);
+        }
+        .coach-moves-table {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .coach-move-row {
+            display: grid;
+            grid-template-columns: 36px 1fr 1fr;
+            align-items: center;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: var(--lic-fs-base);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .coach-move-row:hover {
+            background: var(--lic-bg-surface-hover);
+        }
+        .coach-move-row.active-row {
+            background: rgba(54, 146, 231, 0.1);
+        }
+        .coach-move-num {
+            color: var(--lic-text-muted);
+            font-size: var(--lic-fs-sm);
+        }
+        .coach-move-san {
+            color: var(--lic-text-primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: default;
+        }
+        .coach-move-san.active {
+            background: var(--lic-active-move);
+            color: var(--lic-active-move-text);
+            font-weight: 600;
+        }
+
+        /* Bottom Action Buttons */
+        .coach-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--lic-bg-surface);
+            border-top: 1px solid var(--lic-border-subtle);
+        }
+        .coach-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-coach-resign, .btn-coach-takeback {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #272522;
+            color: #bababa;
+            border: 1px solid var(--lic-border);
+            font-size: 1.1rem;
+        }
+        .btn-coach-resign:hover, .btn-coach-takeback:hover {
+            background: #34312c;
+            color: #ffffff;
+            border-color: var(--lic-border-strong);
+        }
+        .btn-coach-hint {
+            flex-grow: 1;
+            height: 44px;
+            border-radius: 22px;
+            background: #629924;
+            color: #ffffff;
+            font-size: 1.2rem;
+            box-shadow: 0 3px 12px rgba(98, 153, 36, 0.35);
+        }
+        .btn-coach-hint:hover {
+            background: #72b02a;
+            box-shadow: 0 4px 16px rgba(98, 153, 36, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-coach-hint:active {
+            transform: translateY(1px);
+        }
+
+        /* Footer Utilities */
+        .coach-footer-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: var(--lic-bg-surface-header);
+            border-top: 1px solid var(--lic-border-subtle);
+        }
+
+        /* Coach Persona Selection Modal */
+        .coach-select-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .coach-option-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #262421;
+            border: 1px solid #383530;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .coach-option-card:hover {
+            background: #312e2a;
+            border-color: #4a4640;
+        }
+        .coach-option-card.active {
+            border-color: var(--lic-blue);
+            background: rgba(54, 146, 231, 0.1);
+        }
+        .coach-option-avatar {
+            font-size: 28px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1b1916;
+            border-radius: 50%;
+            border: 1px solid #383530;
+        }
+        .coach-option-details {
+            flex-grow: 1;
+        }
+
+        /* Highlight hint squares on board */
+        .highlight-hint {
+            box-shadow: inset 0 0 3px 3px rgba(98, 153, 36, 0.8) !important;
+            background-color: rgba(98, 153, 36, 0.3) !important;
+        }
+        .highlight-last-coach {
+            background-color: rgba(246, 228, 92, 0.45) !important;
+        }
     </style>
 </head>
 <body>
@@ -2091,10 +2452,17 @@
                 <img src="img/app-icon.svg" alt="WhyBlunder Icon" width="22" height="22" class="rounded-1 shadow-sm">
                 <span>WhyBlunder</span>
             </a>
-            <span class="d-none d-md-inline badge bg-secondary bg-opacity-25 text-secondary fw-normal font-monospace" style="font-size:var(--lic-fs-sm);">ANALYSIS BOARD</span>
+            <div class="lic-mode-segmented-control" role="tablist">
+                <button type="button" class="lic-mode-btn active" id="tabModeAnalysis" data-mode="analysis" title="Full Game Analysis">
+                    <i class="bi bi-graph-up me-1"></i> Analysis
+                </button>
+                <button type="button" class="lic-mode-btn" id="tabModeCoach" data-mode="coach" title="Play with Coach">
+                    <i class="bi bi-person-workspace me-1"></i> Play Coach
+                </button>
+            </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <div class="d-none d-lg-flex align-items-center text-muted small me-2">
+            <div class="d-none d-lg-flex align-items-center text-muted small me-2" id="analysisKeysLegend">
                 <span class="me-1" style="font-size:var(--lic-fs-sm);">Keys:</span>
                 <kbd style="background:#262421;color:#8c8c8c;border:1px solid #2e2b27;font-size:var(--lic-fs-sm);padding:1px 4px;border-radius:3px;">←</kbd>
                 <kbd style="background:#262421;color:#8c8c8c;border:1px solid #2e2b27;font-size:var(--lic-fs-sm);padding:1px 4px;border-radius:3px;" class="ms-1">→</kbd>
@@ -2102,6 +2470,13 @@
                 <kbd style="background:#262421;color:#8c8c8c;border:1px solid #2e2b27;font-size:var(--lic-fs-sm);padding:1px 4px;border-radius:3px;" class="ms-1">Space</kbd>
             </div>
             
+            <div class="d-none align-items-center gap-2" id="coachHeaderGroup">
+                <button type="button" id="btnHeaderNewCoachGame" class="lic-btn lic-btn-primary" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="New Sparring Game">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>New Game</span>
+                </button>
+            </div>
+
             <div class="btn-group" id="importGameGroup">
                 <button type="button" id="btnTogglePgn" class="lic-btn" data-action="toggle-pgn" title="Import game from Lichess or PGN">
                     <i class="bi bi-box-arrow-in-down"></i>
@@ -2382,6 +2757,92 @@
                 </div>
             </div>
 
+            <!-- COLUMN COACH (SHOWN IN COACH MODE) -->
+            <div class="col-coach d-none" id="colCoach">
+                <div class="coach-play-panel">
+                    <!-- Coach Header -->
+                    <div class="coach-panel-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person-workspace text-info"></i>
+                            <span class="coach-header-title">Play Coach</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" id="btnCoachSound" class="coach-icon-btn" title="Toggle Sound">
+                                <i class="bi bi-volume-up-fill" id="coachSoundIcon"></i>
+                            </button>
+                            <button type="button" id="btnCoachSettings" class="coach-icon-btn" title="Coach Persona & Settings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
+                                <i class="bi bi-gear-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coach Avatar & Speech Bubbles Section -->
+                    <div class="coach-dialogue-card">
+                        <div class="coach-avatar-col">
+                            <div class="coach-avatar-wrapper" id="coachAvatarDisplay">
+                                <span id="coachAvatarEmoji">😎</span>
+                            </div>
+                        </div>
+                        <div class="coach-bubbles-col">
+                            <!-- Bubble 1: Coach Move Comment -->
+                            <div class="coach-speech-bubble bubble-thought" id="coachBubble1">
+                                Hey! Ready to play? I love passed pawns and fast play—let's do this!
+                            </div>
+                            <!-- Bubble 2: Interactive Challenge / Turn Prompt -->
+                            <div class="coach-speech-bubble bubble-challenge" id="coachBubble2">
+                                Make your opening move to get started!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opening Info Strip -->
+                    <div class="coach-opening-bar">
+                        <div class="d-flex align-items-center gap-2 text-truncate">
+                            <span class="coach-opening-name text-truncate" id="coachOpeningName">Standard Game</span>
+                            <span class="badge bg-secondary bg-opacity-25 text-secondary font-monospace" id="coachOpeningEco" style="font-size:11px;">A00</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" id="btnCoachFlip" class="coach-mini-tool-btn" title="Flip Board">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Moves Notation Sheet -->
+                    <div class="coach-moves-sheet" id="coachMovesSheet">
+                        <div class="coach-moves-table" id="coachMovesTable">
+                            <div class="text-center text-muted py-4 small">Game ready. Make a move on the board!</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar Matching Screenshot -->
+                    <div class="coach-action-bar">
+                        <button type="button" id="btnCoachResign" class="coach-action-btn btn-coach-resign" title="Resign / New Game">
+                            <i class="bi bi-flag-fill"></i>
+                        </button>
+                        <button type="button" id="btnCoachHint" class="coach-action-btn btn-coach-hint" title="Ask Coach for a Hint">
+                            <i class="bi bi-lightbulb-fill"></i>
+                        </button>
+                        <button type="button" id="btnCoachTakeback" class="coach-action-btn btn-coach-takeback" title="Takeback Move">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+
+                    <!-- Bottom Utility Strip -->
+                    <div class="coach-footer-bar">
+                        <button type="button" id="btnCoachShare" class="coach-icon-btn" title="Share Game / PGN">
+                            <i class="bi bi-share"></i>
+                        </button>
+                        <button type="button" id="btnCoachDownloadPgn" class="coach-icon-btn" title="Download PGN">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button type="button" class="coach-icon-btn" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="Change Coach">
+                            <i class="bi bi-person-gear"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -2437,6 +2898,81 @@
         </div>
     </div>
 
+    <!-- Coach Persona Selection Modal -->
+    <div class="modal fade" id="coachSettingsModal" tabindex="-1" aria-labelledby="coachSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="coachSettingsModalLabel"><i class="bi bi-person-workspace text-info me-2"></i>Choose Your Coach</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="coach-select-grid" id="coachSelectGrid">
+                        <!-- Coach Pikaru (1600) -->
+                        <div class="coach-option-card active" data-persona="pikaru">
+                            <div class="coach-option-avatar">😎</div>
+                            <div class="coach-option-details">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Coach Pikaru 🇺🇸</span>
+                                    <span class="badge bg-warning text-dark font-monospace">1600 ELO</span>
+                                </div>
+                                <div class="small text-muted">Speed & Passed Pawn Prodigy. Sharp, witty, and tactical.</div>
+                            </div>
+                        </div>
+                        <!-- Coach McMarty (800) -->
+                        <div class="coach-option-card" data-persona="mcmarty">
+                            <div class="coach-option-avatar">🤠</div>
+                            <div class="coach-option-details">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Coach McMarty 🇨🇦</span>
+                                    <span class="badge bg-success text-white font-monospace">800 ELO</span>
+                                </div>
+                                <div class="small text-muted">Enthusiastic Rookie Coach. Friendly and frequently blunders for you to spot!</div>
+                            </div>
+                        </div>
+                        <!-- Coach Sophy (1200) -->
+                        <div class="coach-option-card" data-persona="sophy">
+                            <div class="coach-option-avatar">👩‍🏫</div>
+                            <div class="coach-option-details">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Coach Sophy 🇬🇧</span>
+                                    <span class="badge bg-info text-dark font-monospace">1200 ELO</span>
+                                </div>
+                                <div class="small text-muted">Club Coach & Instructor. Teaches harmony, king safety, and pins.</div>
+                            </div>
+                        </div>
+                        <!-- GM Mangoose (2200) -->
+                        <div class="coach-option-card" data-persona="mangoose">
+                            <div class="coach-option-avatar">🧙‍♂️</div>
+                            <div class="coach-option-details">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">GM Mangoose 🇳🇴</span>
+                                    <span class="badge bg-danger text-white font-monospace">2200 ELO</span>
+                                </div>
+                                <div class="small text-muted">Endgame Wizard. Chilled-out master who rarely slips up.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary my-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Play as:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="coachPlayerColor" id="colorWhite" value="w" checked autocomplete="off">
+                            <label class="btn btn-outline-light" for="colorWhite">White ⚪</label>
+                            <input type="radio" class="btn-check" name="coachPlayerColor" id="colorBlack" value="b" autocomplete="off">
+                            <label class="btn btn-outline-light" for="colorBlack">Black ⚫</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnStartCoachGame" data-bs-dismiss="modal">Start New Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -2447,6 +2983,7 @@
     <script src="js/situation-recognizer.js"></script>
     <script src="js/analysis-cache.js"></script>
     <script src="js/browser-analyzer.js"></script>
+    <script src="js/coach-manager.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -2550,11 +3087,60 @@
             const mobileMovesOffcanvasBody = document.getElementById('mobileMovesOffcanvasBody');
             const mobileSheetMoveCount = document.getElementById('mobileSheetMoveCount');
 
+            // Coach Drag & Drop Handlers
+            function handleCoachDragStart(source, piece, position, orientation) {
+                if (!coachManager || coachManager.isGameOver) return false;
+                if (!coachManager.isPlayerTurn()) return false;
+                const pCol = coachManager.playerColor;
+                if ((pCol === 'w' && piece.search(/^b/) !== -1) ||
+                    (pCol === 'b' && piece.search(/^w/) !== -1)) {
+                    return false;
+                }
+                return true;
+            }
+
+            function handleCoachDrop(source, target) {
+                if (!coachManager || coachManager.isGameOver) return 'snapback';
+                if (source === target) return 'snapback';
+
+                // Verify move legality with chess.js
+                const testChess = new Chess(coachManager.chess.fen());
+                const m = testChess.move({ from: source, to: target, promotion: 'q' });
+                if (!m) return 'snapback';
+
+                // Execute valid player move asynchronously
+                executeCoachUserMove({ from: source, to: target, promotion: 'q' });
+                return;
+            }
+
+            function handleCoachSnapEnd() {
+                if (coachManager) {
+                    board.position(coachManager.chess.fen());
+                }
+            }
+
             // Initialize Chessboard
             const boardConfig = {
-                draggable: false,
+                draggable: true,
                 position: 'start',
-                pieceTheme: 'img/chesspieces/lichess/{piece}.svg'
+                pieceTheme: 'img/chesspieces/lichess/{piece}.svg',
+                onDragStart: function(source, piece, position, orientation) {
+                    if (currentAppMode === 'coach') {
+                        return handleCoachDragStart(source, piece, position, orientation);
+                    }
+                    return false;
+                },
+                onDrop: function(source, target) {
+                    if (currentAppMode === 'coach') {
+                        return handleCoachDrop(source, target);
+                    }
+                    return 'snapback';
+                },
+                onSnapEnd: function() {
+                    if (currentAppMode === 'coach') {
+                        handleCoachSnapEnd();
+                    }
+                }
             };
             const board = Chessboard('board', boardConfig);
 
@@ -5399,6 +5985,460 @@
                 } else {
                     goToFirstMove();
                 }
+            }
+
+            // ==========================================================================
+            // PLAY COACH MODE IMPLEMENTATION
+            // ==========================================================================
+            let currentAppMode = 'analysis'; // 'analysis' or 'coach'
+            let coachManager = null;
+            let coachWorker = null;
+            let coachSoundMuted = false;
+            let selectedCoachPersona = 'pikaru';
+            let selectedCoachColor = 'w';
+
+            function playChessSound(type = 'move') {
+                if (coachSoundMuted) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    if (type === 'capture') {
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(360, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.08);
+                        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.08);
+                    } else if (type === 'challenge') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+                        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16);
+                        gain.gain.setValueAtTime(0.14, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.28);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.28);
+                    } else { // normal move
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(280, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.05);
+                        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.05);
+                    }
+                } catch (e) {}
+            }
+
+            function highlightLastMove(from, to) {
+                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                    sq.classList.remove('highlight-last-coach');
+                });
+                if (from) {
+                    const fEl = document.querySelector(`#board .square-${from}`);
+                    if (fEl) fEl.classList.add('highlight-last-coach');
+                }
+                if (to) {
+                    const tEl = document.querySelector(`#board .square-${to}`);
+                    if (tEl) tEl.classList.add('highlight-last-coach');
+                }
+            }
+
+            function clearHintHighlights() {
+                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                    sq.classList.remove('highlight-hint');
+                });
+            }
+
+            function renderCoachDialogue() {
+                const b1 = document.getElementById('coachBubble1');
+                const b2 = document.getElementById('coachBubble2');
+                if (coachManager && b1 && b2) {
+                    b1.textContent = coachManager.currentBubble1;
+                    b2.textContent = coachManager.currentBubble2;
+                }
+            }
+
+            function renderCoachMoveSheet() {
+                const table = document.getElementById('coachMovesTable');
+                if (!table || !coachManager) return;
+                if (coachManager.moveHistory.length === 0) {
+                    table.innerHTML = '<div class="text-center text-muted py-4 small">Game ready. Make a move on the board!</div>';
+                    return;
+                }
+
+                let html = '';
+                const history = coachManager.moveHistory;
+                const numMoves = Math.ceil(history.length / 2);
+
+                for (let i = 0; i < numMoves; i++) {
+                    const whiteMove = history[i * 2];
+                    const blackMove = history[i * 2 + 1];
+                    const isLastWhite = (history.length - 1 === i * 2);
+                    const isLastBlack = (history.length - 1 === i * 2 + 1);
+
+                    html += `<div class="coach-move-row ${isLastWhite || isLastBlack ? 'active-row' : ''}">
+                        <span class="coach-move-num">${i + 1}.</span>
+                        <span class="coach-move-san ${isLastWhite ? 'active' : ''}">${whiteMove ? whiteMove.san : ''}</span>
+                        <span class="coach-move-san ${isLastBlack ? 'active' : ''}">${blackMove ? blackMove.san : ''}</span>
+                    </div>`;
+                }
+                table.innerHTML = html;
+                const container = document.getElementById('coachMovesSheet');
+                if (container) container.scrollTop = container.scrollHeight;
+            }
+
+            function updateCoachPlayerBars() {
+                if (!coachManager) return;
+                const p = coachManager.getPersona();
+                const isPlayerWhite = (coachManager.playerColor === 'w');
+
+                if (isPlayerWhite) {
+                    topPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    topPlayerMeta.textContent = p.title;
+                    bottomPlayerName.textContent = "You 🇺🇸";
+                    bottomPlayerMeta.textContent = "Sparring Player";
+                } else {
+                    topPlayerName.textContent = "You 🇺🇸";
+                    topPlayerMeta.textContent = "Sparring Player";
+                    bottomPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    bottomPlayerMeta.textContent = p.title;
+                }
+
+                // Turn dots
+                const turn = coachManager.chess.turn();
+                if (topPlayerTurn && bottomPlayerTurn) {
+                    if (turn === (isPlayerWhite ? 'b' : 'w')) {
+                        topPlayerTurn.classList.add('active');
+                        bottomPlayerTurn.classList.remove('active');
+                    } else {
+                        topPlayerTurn.classList.remove('active');
+                        bottomPlayerTurn.classList.add('active');
+                    }
+                }
+
+                // Calculate material difference
+                if (typeof ChessEvaluator !== 'undefined' && ChessEvaluator.calculateMaterialDifference) {
+                    const mat = ChessEvaluator.calculateMaterialDifference(coachManager.chess.fen());
+                    renderMaterialDisplay(topMaterialDisplay, isPlayerWhite ? mat.blackPieces : mat.whitePieces, isPlayerWhite ? -mat.scoreDiff : mat.scoreDiff);
+                    renderMaterialDisplay(bottomMaterialDisplay, isPlayerWhite ? mat.whitePieces : mat.blackPieces, isPlayerWhite ? mat.scoreDiff : -mat.scoreDiff);
+                }
+            }
+
+            function updateCoachOpening() {
+                if (!coachManager) return;
+                const historySans = coachManager.moveHistory.map(m => m.san);
+                if (typeof OpeningDetector !== 'undefined' && OpeningDetector.identifyOpening) {
+                    const op = OpeningDetector.identifyOpening(historySans);
+                    const opNameEl = document.getElementById('coachOpeningName');
+                    const opEcoEl = document.getElementById('coachOpeningEco');
+                    if (opNameEl) opNameEl.textContent = op.name || 'Standard Game';
+                    if (opEcoEl) opEcoEl.textContent = op.eco || 'A00';
+                }
+            }
+
+            async function executeCoachUserMove(moveInput) {
+                if (!coachManager || coachManager.isGameOver) return;
+                clearHintHighlights();
+                highlightLastMove(moveInput.from, moveInput.to);
+
+                const userResult = await coachManager.handleUserMove(moveInput);
+                if (!userResult || !userResult.success) {
+                    board.position(coachManager.chess.fen());
+                    return;
+                }
+
+                playChessSound(userResult.move.captured ? 'capture' : 'move');
+                renderCoachDialogue();
+                renderCoachMoveSheet();
+                updateCoachPlayerBars();
+                updateCoachOpening();
+
+                if (coachManager.isGameOver) {
+                    renderCoachDialogue();
+                    return;
+                }
+
+                const bubble2 = document.getElementById('coachBubble2');
+                if (bubble2) bubble2.textContent = "Thinking...";
+
+                const delay = Math.floor(Math.random() * 250) + 400; // 400-650ms natural delay
+                setTimeout(async () => {
+                    if (currentAppMode !== 'coach' || coachManager.isGameOver) return;
+                    const coachRes = await coachManager.computeCoachMove();
+                    if (coachRes && coachRes.success && coachRes.move) {
+                        board.position(coachManager.chess.fen());
+                        highlightLastMove(coachRes.move.from, coachRes.move.to);
+                        if (coachRes.isChallenge) {
+                            playChessSound('challenge');
+                        } else {
+                            playChessSound(coachRes.move.captured ? 'capture' : 'move');
+                        }
+                        renderCoachDialogue();
+                        renderCoachMoveSheet();
+                        updateCoachPlayerBars();
+                        updateCoachOpening();
+                    }
+                }, delay);
+            }
+
+            function startNewCoachGame(personaId = 'pikaru', playerColor = 'w') {
+                selectedCoachPersona = personaId;
+                selectedCoachColor = playerColor;
+
+                if (!coachWorker) {
+                    if (typeof BrowserWhyBlunder !== 'undefined' && BrowserWhyBlunder.StockfishWorker) {
+                        try {
+                            coachWorker = new BrowserWhyBlunder.StockfishWorker(888);
+                        } catch (e) {}
+                    }
+                }
+
+                coachManager = new CoachManager({
+                    personaId: selectedCoachPersona,
+                    worker: coachWorker,
+                    playerColor: selectedCoachColor
+                });
+
+                if (coachWorker && typeof coachWorker.init === 'function') {
+                    coachWorker.init().then(() => {
+                        coachManager._configureWorkerElo();
+                    }).catch(() => {});
+                }
+
+                board.orientation(playerColor === 'w' ? 'white' : 'black');
+                board.position('start');
+                clearHintHighlights();
+                highlightLastMove(null, null);
+
+                // Update UI persona details
+                const p = coachManager.getPersona();
+                const coachAvatarEmoji = document.getElementById('coachAvatarEmoji');
+                if (coachAvatarEmoji) {
+                    const emojis = { pikaru: '😎', mcmarty: '🤠', sophy: '👩‍🏫', mangoose: '🧙‍♂️' };
+                    coachAvatarEmoji.textContent = emojis[p.id] || '😎';
+                }
+
+                renderCoachDialogue();
+                renderCoachMoveSheet();
+                updateCoachPlayerBars();
+                updateCoachOpening();
+
+                // If player is Black, Coach makes move 1!
+                if (playerColor === 'b') {
+                    const bubble2 = document.getElementById('coachBubble2');
+                    if (bubble2) bubble2.textContent = "Thinking...";
+                    setTimeout(async () => {
+                        const coachRes = await coachManager.computeCoachMove();
+                        if (coachRes && coachRes.success && coachRes.move) {
+                            board.position(coachManager.chess.fen());
+                            highlightLastMove(coachRes.move.from, coachRes.move.to);
+                            playChessSound(coachRes.move.captured ? 'capture' : 'move');
+                            renderCoachDialogue();
+                            renderCoachMoveSheet();
+                            updateCoachPlayerBars();
+                            updateCoachOpening();
+                        }
+                    }, 500);
+                }
+            }
+
+            function switchAppMode(mode) {
+                if (mode === currentAppMode) return;
+                currentAppMode = mode;
+
+                const btnAnalysis = document.getElementById('tabModeAnalysis');
+                const btnCoach = document.getElementById('tabModeCoach');
+                const colCoach = document.getElementById('colCoach');
+                const coachHeaderGroup = document.getElementById('coachHeaderGroup');
+                const importGameGroup = document.getElementById('importGameGroup');
+                const analysisKeysLegend = document.getElementById('analysisKeysLegend');
+
+                if (mode === 'coach') {
+                    document.body.classList.add('coach-mode');
+                    if (btnAnalysis) btnAnalysis.classList.remove('active');
+                    if (btnCoach) btnCoach.classList.add('active');
+                    if (colCoach) colCoach.classList.remove('d-none');
+                    if (coachHeaderGroup) {
+                        coachHeaderGroup.classList.remove('d-none');
+                        coachHeaderGroup.classList.add('d-flex');
+                    }
+                    if (importGameGroup) importGameGroup.classList.add('d-none');
+                    if (analysisKeysLegend) analysisKeysLegend.classList.add('d-none');
+
+                    if (arrowSvg) arrowSvg.innerHTML = '';
+                    stopVariationPlayback();
+
+                    if (!coachManager) {
+                        startNewCoachGame(selectedCoachPersona, selectedCoachColor);
+                    } else {
+                        board.orientation(coachManager.playerColor === 'w' ? 'white' : 'black');
+                        board.position(coachManager.chess.fen());
+                        updateCoachPlayerBars();
+                        renderCoachDialogue();
+                        renderCoachMoveSheet();
+                    }
+                } else {
+                    document.body.classList.remove('coach-mode');
+                    if (btnCoach) btnCoach.classList.remove('active');
+                    if (btnAnalysis) btnAnalysis.classList.add('active');
+                    if (colCoach) colCoach.classList.add('d-none');
+                    if (coachHeaderGroup) {
+                        coachHeaderGroup.classList.add('d-none');
+                        coachHeaderGroup.classList.remove('d-flex');
+                    }
+                    if (importGameGroup) importGameGroup.classList.remove('d-none');
+                    if (analysisKeysLegend) analysisKeysLegend.classList.remove('d-none');
+
+                    clearHintHighlights();
+                    highlightLastMove(null, null);
+
+                    if (moves.length > 0 && currentMoveIndex >= 0) {
+                        goToMove(currentMoveIndex);
+                    } else {
+                        board.orientation('white');
+                        board.position('start');
+                        updatePlayerBars();
+                    }
+                }
+
+                setTimeout(() => {
+                    if (board && board.resize) board.resize();
+                    updateSvgDimensions();
+                }, 50);
+            }
+
+            // Bind Coach Events
+            const tabModeAnalysis = document.getElementById('tabModeAnalysis');
+            const tabModeCoach = document.getElementById('tabModeCoach');
+            if (tabModeAnalysis) tabModeAnalysis.addEventListener('click', () => switchAppMode('analysis'));
+            if (tabModeCoach) tabModeCoach.addEventListener('click', () => switchAppMode('coach'));
+
+            const btnCoachSound = document.getElementById('btnCoachSound');
+            if (btnCoachSound) {
+                btnCoachSound.addEventListener('click', () => {
+                    coachSoundMuted = !coachSoundMuted;
+                    const icon = document.getElementById('coachSoundIcon');
+                    if (icon) {
+                        icon.className = coachSoundMuted ? 'bi bi-volume-mute-fill text-danger' : 'bi bi-volume-up-fill';
+                    }
+                });
+            }
+
+            const btnCoachFlip = document.getElementById('btnCoachFlip');
+            if (btnCoachFlip) {
+                btnCoachFlip.addEventListener('click', () => {
+                    board.flip();
+                });
+            }
+
+            const btnCoachHint = document.getElementById('btnCoachHint');
+            if (btnCoachHint) {
+                btnCoachHint.addEventListener('click', () => {
+                    if (!coachManager || currentAppMode !== 'coach') return;
+                    const hint = coachManager.generateHint();
+                    const bubble2 = document.getElementById('coachBubble2');
+                    if (bubble2) bubble2.textContent = hint.hintText;
+
+                    clearHintHighlights();
+                    if (hint.highlightSquares && hint.highlightSquares.length > 0) {
+                        hint.highlightSquares.forEach(sq => {
+                            const el = document.querySelector(`#board .square-${sq}`);
+                            if (el) el.classList.add('highlight-hint');
+                        });
+                        setTimeout(clearHintHighlights, 3000);
+                    }
+                });
+            }
+
+            const btnCoachTakeback = document.getElementById('btnCoachTakeback');
+            if (btnCoachTakeback) {
+                btnCoachTakeback.addEventListener('click', () => {
+                    if (!coachManager || currentAppMode !== 'coach') return;
+                    const ok = coachManager.takeback();
+                    if (ok) {
+                        board.position(coachManager.chess.fen());
+                        clearHintHighlights();
+                        highlightLastMove(null, null);
+                        renderCoachDialogue();
+                        renderCoachMoveSheet();
+                        updateCoachPlayerBars();
+                        updateCoachOpening();
+                    }
+                });
+            }
+
+            const btnCoachResign = document.getElementById('btnCoachResign');
+            if (btnCoachResign) {
+                btnCoachResign.addEventListener('click', () => {
+                    if (!coachManager || currentAppMode !== 'coach') return;
+                    if (coachManager.isGameOver) {
+                        startNewCoachGame(selectedCoachPersona, selectedCoachColor);
+                        return;
+                    }
+                    if (confirm("Resign this game and start a new sparring round?")) {
+                        coachManager.isGameOver = true;
+                        coachManager.currentBubble1 = "You resigned. No worries, every game is a learning opportunity!";
+                        coachManager.currentBubble2 = "Click 'New Game' or the Flag button whenever you're ready to play again.";
+                        renderCoachDialogue();
+                    }
+                });
+            }
+
+            const btnCoachDownloadPgn = document.getElementById('btnCoachDownloadPgn');
+            if (btnCoachDownloadPgn) {
+                btnCoachDownloadPgn.addEventListener('click', () => {
+                    if (!coachManager) return;
+                    const pgnText = coachManager.getPgn();
+                    const blob = new Blob([pgnText], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sparring_${coachManager.personaId}_${Date.now()}.pgn`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+            }
+
+            const btnCoachShare = document.getElementById('btnCoachShare');
+            if (btnCoachShare) {
+                btnCoachShare.addEventListener('click', () => {
+                    if (!coachManager) return;
+                    const pgnText = coachManager.getPgn();
+                    navigator.clipboard.writeText(pgnText).then(() => {
+                        alert("PGN copied to clipboard!");
+                    }).catch(() => {
+                        prompt("Copy PGN:", pgnText);
+                    });
+                });
+            }
+
+            // Persona modal cards selection
+            const coachSelectCards = document.querySelectorAll('#coachSelectGrid .coach-option-card');
+            coachSelectCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    coachSelectCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedCoachPersona = card.dataset.persona || 'pikaru';
+                });
+            });
+
+            const btnStartCoachGame = document.getElementById('btnStartCoachGame');
+            if (btnStartCoachGame) {
+                btnStartCoachGame.addEventListener('click', () => {
+                    const colorInput = document.querySelector('input[name="coachPlayerColor"]:checked');
+                    selectedCoachColor = colorInput ? colorInput.value : 'w';
+                    startNewCoachGame(selectedCoachPersona, selectedCoachColor);
+                    if (currentAppMode !== 'coach') {
+                        switchAppMode('coach');
+                    }
+                });
             }
 
             // Auto-load game from URL Hash / Search Query / Path
