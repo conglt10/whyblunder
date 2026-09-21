@@ -1381,8 +1381,8 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     console.log("✓ Coach Selection State Machine passed!");
     console.log("✓ Coach Move Feedback & Explanatory Arrows passed!");
 
-    // 7. Test King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝)
-    console.log("Testing King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝)...");
+    // 7. Test King Checkmate & Stalemate Badges (Winner ⭑, Loser ×, Stalemate/Draw ½)
+    console.log("Testing King Checkmate & Stalemate Badges (Winner ⭑, Loser ×, Stalemate/Draw ½)...");
     assert(indexContent.includes('.king-checkmate-badge'), "index.html must include .king-checkmate-badge CSS");
     assert(indexContent.includes('.king-badge-winner'), "index.html must include .king-badge-winner CSS");
     assert(indexContent.includes('.king-badge-loser'), "index.html must include .king-badge-loser CSS");
@@ -1438,23 +1438,23 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
             if (winnerSq) {
                 const file = isFlipped ? 7 - (winnerSq.charCodeAt(0) - 97) : (winnerSq.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(winnerSq.charAt(1)) - 1 : 8 - parseInt(winnerSq.charAt(1));
-                badges.push({ type: 'winner', emoji: '👑', square: winnerSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+                badges.push({ type: 'winner', emoji: '⭑', square: winnerSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
             }
             if (loserSq) {
                 const file = isFlipped ? 7 - (loserSq.charCodeAt(0) - 97) : (loserSq.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(loserSq.charAt(1)) - 1 : 8 - parseInt(loserSq.charAt(1));
-                badges.push({ type: 'loser', emoji: '💀', square: loserSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+                badges.push({ type: 'loser', emoji: '×', square: loserSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
             }
         } else if (isStalemate) {
             if (whiteKingSq) {
                 const file = isFlipped ? 7 - (whiteKingSq.charCodeAt(0) - 97) : (whiteKingSq.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(whiteKingSq.charAt(1)) - 1 : 8 - parseInt(whiteKingSq.charAt(1));
-                badges.push({ type: 'stalemate', emoji: '🤝', square: whiteKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+                badges.push({ type: 'stalemate', emoji: '½', square: whiteKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
             }
             if (blackKingSq) {
                 const file = isFlipped ? 7 - (blackKingSq.charCodeAt(0) - 97) : (blackKingSq.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(blackKingSq.charAt(1)) - 1 : 8 - parseInt(blackKingSq.charAt(1));
-                badges.push({ type: 'stalemate', emoji: '🤝', square: blackKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+                badges.push({ type: 'stalemate', emoji: '½', square: blackKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
             }
         }
         return badges;
@@ -1463,13 +1463,13 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     const badgesStandard = simulateKingBadges(mateChess, false);
     assert.strictEqual(badgesStandard.length, 2, "Must produce 2 badges on checkmate");
     assert.strictEqual(badgesStandard[0].type, 'winner');
-    assert.strictEqual(badgesStandard[0].emoji, '👑');
+    assert.strictEqual(badgesStandard[0].emoji, '⭑');
     assert.strictEqual(badgesStandard[0].square, 'e1'); // White king
     assert.strictEqual(badgesStandard[0].left, '50%'); // file e = index 4 => 4 * 12.5 = 50%
     assert.strictEqual(badgesStandard[0].top, '87.5%'); // rank 1 => 8 - 1 = 7 => 7 * 12.5 = 87.5%
 
     assert.strictEqual(badgesStandard[1].type, 'loser');
-    assert.strictEqual(badgesStandard[1].emoji, '💀');
+    assert.strictEqual(badgesStandard[1].emoji, '×');
     assert.strictEqual(badgesStandard[1].square, 'e8'); // Black king
     assert.strictEqual(badgesStandard[1].left, '50%'); // file e = index 4 => 4 * 12.5 = 50%
     assert.strictEqual(badgesStandard[1].top, '0%'); // rank 8 => 8 - 8 = 0 => 0 * 12.5 = 0%
@@ -1485,17 +1485,17 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     const stalemateBadges = simulateKingBadges(stalemateChess, false);
     assert.strictEqual(stalemateBadges.length, 2, "Must produce 2 stalemate badges on stalemate");
     assert.strictEqual(stalemateBadges[0].type, 'stalemate');
-    assert.strictEqual(stalemateBadges[0].emoji, '🤝');
+    assert.strictEqual(stalemateBadges[0].emoji, '½');
     assert.strictEqual(stalemateBadges[0].square, 'a6'); // White king
     assert.strictEqual(stalemateBadges[1].type, 'stalemate');
-    assert.strictEqual(stalemateBadges[1].emoji, '🤝');
+    assert.strictEqual(stalemateBadges[1].emoji, '½');
     assert.strictEqual(stalemateBadges[1].square, 'a8'); // Black king
 
     // Non-checkmate/non-stalemate position should return no badges
     const nonMateChess = new Chess();
     assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Initial position must produce 0 badges");
 
-    console.log("✓ King Checkmate & Stalemate Badges (Winner 👑, Loser 💀, Stalemate/Draw 🤝) passed!");
+    console.log("✓ King Checkmate & Stalemate Badges (Winner ⭑, Loser ×, Stalemate/Draw ½) passed!");
 
     // =========================================================================
     // Regression Tests for Coach Play Code Review Fixes (11 Items)

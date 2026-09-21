@@ -1039,7 +1039,7 @@
             color: #ffffff;
         }
 
-        /* King Checkmate Badges (Winner 👑 & Loser 💀) */
+        /* King Checkmate Badges (Winner ⭑ & Loser ×) */
         .king-checkmate-badge {
             position: absolute;
             width: 12.5%;
@@ -1077,6 +1077,9 @@
             align-items: center;
             justify-content: center;
             font-size: 1.25rem;
+            font-weight: 700;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-variant-emoji: text;
             line-height: 1;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
@@ -1085,23 +1088,26 @@
 
         .king-badge-winner .king-badge-icon {
             background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%);
-            border: 2px solid #fffbeb;
+            border: none;
+            color: #ffffff;
             box-shadow: 0 0 14px rgba(245, 158, 11, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
         .king-badge-loser .king-badge-icon {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
-            border: 2px solid #fecaca;
+            border: none;
+            color: #ffffff;
             box-shadow: 0 0 14px rgba(239, 68, 68, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
         .king-badge-stalemate .king-badge-icon,
         .king-badge-draw .king-badge-icon {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%);
-            border: 2px solid #e0f2fe;
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
+            background: #000000;
+            border: none;
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(0, 0, 0, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
@@ -5342,14 +5348,14 @@
                     const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
                     const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
-                    if (winnerSq) addKingBadge(winnerSq, 'winner', '👑', 'Winner (Checkmate)');
-                    if (loserSq) addKingBadge(loserSq, 'loser', '💀', 'Checkmated');
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Checkmate)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Checkmated');
                 } else if (isStalemate) {
-                    if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '🤝', 'Stalemate (Draw)');
-                    if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '🤝', 'Stalemate (Draw)');
+                    if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '½', 'Stalemate (Draw)');
+                    if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '½', 'Stalemate (Draw)');
                 } else if (isDraw) {
-                    if (whiteKingSq) addKingBadge(whiteKingSq, 'draw', '🤝', 'Draw');
-                    if (blackKingSq) addKingBadge(blackKingSq, 'draw', '🤝', 'Draw');
+                    if (whiteKingSq) addKingBadge(whiteKingSq, 'draw', '½', 'Draw');
+                    if (blackKingSq) addKingBadge(blackKingSq, 'draw', '½', 'Draw');
                 }
             }
 
