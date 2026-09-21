@@ -743,6 +743,9 @@
             const Recognizer = getRecognizer();
             const Detector = getOpeningDetector();
 
+            let refMoveObj = null;
+            let bestMoveObj = null;
+
             if (wasSuggested) {
                 // User played the exact move the coach recommended after a blunder takeback!
                 classification = { uiQuality: 'good move', detailedQuality: 'best', wpLoss: 0.0 };
@@ -769,6 +772,14 @@
                     const playedIsBest = (playedUci === bestUci);
                     const bestCp = evalBefore.lines[1]?.cp || 0;
                     const wpBefore = Evaluator.cpToWinProb(bestCp);
+
+                    if (bestUci && bestUci.length >= 4) {
+                        bestMoveObj = {
+                            from: bestUci.slice(0, 2),
+                            to: bestUci.slice(2, 4),
+                            promotion: bestUci[4]
+                        };
+                    }
 
                     // Check opening book to avoid false positive opening blunders
                     const historySans = this.moveHistory.map(m => m.san).concat([legalMove.san]);
@@ -824,7 +835,6 @@
                             const boardBefore = new this.Chess(fenBefore);
                             const boardAfter = new this.Chess(fenAfter);
                             const refUci = (evalAfter.lines[1]?.pv && evalAfter.lines[1].pv[0]) || '';
-                            let refMoveObj = null;
                             let sanRef = null;
                             if (refUci && refUci.length >= 4) {
                                 const refBoard = new this.Chess(fenAfter);
@@ -838,12 +848,6 @@
                                     sanRef = rm.san;
                                 }
                             }
-
-                            const bestMoveObj = (bestUci && bestUci.length >= 4) ? {
-                                from: bestUci.slice(0, 2),
-                                to: bestUci.slice(2, 4),
-                                promotion: bestUci[4]
-                            } : null;
 
                             const diag = Recognizer.explainBlunderOrMistake({
                                 boardBefore,
@@ -938,9 +942,13 @@
                 bubble2,
                 dialogue: this.currentDialogue,
                 quality: classification.detailedQuality,
+                detailedQuality: classification.detailedQuality,
+                uiQuality: classification.uiQuality,
                 isBlunder,
                 blunderAnalysis,
-                bestSan
+                bestSan,
+                bestMoveObj,
+                refMoveObj
             };
             this.moveHistory.push(record);
 
@@ -951,9 +959,13 @@
                 bubble2,
                 dialogue: this.currentDialogue,
                 quality: classification,
+                detailedQuality: classification.detailedQuality,
+                uiQuality: classification.uiQuality,
                 isBlunder,
                 blunderAnalysis,
                 bestSan,
+                bestMoveObj,
+                refMoveObj,
                 isGameOver: this.isGameOver
             };
         }

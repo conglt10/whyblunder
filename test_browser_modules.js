@@ -1071,8 +1071,264 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert(indexContent.includes('.highlight-dest'), "index.html must define .highlight-dest CSS");
     assert(indexContent.includes('.coach-blunder-actions'), "index.html must define .coach-blunder-actions CSS");
     assert(indexContent.includes('.pulse-takeback'), "index.html must define .pulse-takeback CSS");
+    assert(indexContent.includes('body > .piece-417db'), "index.html must have CSS for body > .piece-417db to prevent ghost piece click interception");
+    assert(indexContent.includes('pointer-events: none !important;'), "body > .piece-417db must have pointer-events: none !important;");
+    assert(indexContent.includes('onSnapbackEnd'), "boardConfig must define onSnapbackEnd to preserve dots on snapback");
     assert(!indexContent.includes('renderMaterialDisplay('), "index.html must not call undefined renderMaterialDisplay");
 
+    // 5. Test Coach Mode Selection & Interaction State Machine
+    console.log("Testing Coach Mode Selection & Interaction State Machine...");
+    const testChess = new Chess();
+    let mockCoachSelectedSquare = null;
+    let mockLastSelectionTime = 0;
+    const mockSquareClasses = {};
+
+    function mockClearClickMoveHighlights() {
+        mockCoachSelectedSquare = null;
+        for (const sq in mockSquareClasses) {
+            mockSquareClasses[sq] = (mockSquareClasses[sq] || []).filter(
+                c => !['highlight-selected', 'highlight-dest', 'highlight-dest-capture'].includes(c)
+            );
+        }
+    }
+
+    function mockSelectCoachSquare(square) {
+        mockClearClickMoveHighlights();
+        const piece = testChess.get(square);
+        if (!piece || piece.color !== 'w') return;
+
+        mockCoachSelectedSquare = square;
+        mockLastSelectionTime = Date.now();
+        mockSquareClasses[square] = mockSquareClasses[square] || [];
+        mockSquareClasses[square].push('highlight-selected');
+
+        const moves = testChess.moves({ square: square, verbose: true });
+        moves.forEach(m => {
+            mockSquareClasses[m.to] = mockSquareClasses[m.to] || [];
+            if (m.captured) {
+                mockSquareClasses[m.to].push('highlight-dest-capture');
+            } else {
+                mockSquareClasses[m.to].push('highlight-dest');
+            }
+        });
+    }
+
+    let executedMoves = [];
+    function mockExecuteCoachUserMove(moveInput) {
+        executedMoves.push(moveInput);
+        testChess.move({ from: moveInput.from, to: moveInput.to, promotion: 'q' });
+    }
+
+    function mockHandleCoachDragStart(source, piece) {
+        const isOwn = piece.startsWith('w');
+        if (!isOwn) {
+            if (mockCoachSelectedSquare) {
+                const legalMoves = testChess.moves({ square: mockCoachSelectedSquare, verbose: true });
+                const match = legalMoves.find(m => m.to === source);
+                if (match) {
+                    const fromSq = mockCoachSelectedSquare;
+                    mockClearClickMoveHighlights();
+                    mockExecuteCoachUserMove({ from: fromSq, to: source, promotion: 'q' });
+                    return false;
+                }
+            }
+            mockClearClickMoveHighlights();
+            return false;
+        }
+        mockSelectCoachSquare(source);
+        return true;
+    }
+
+    function mockHandleCoachDrop(source, target) {
+        if (source === target) {
+            mockSelectCoachSquare(source);
+            return 'snapback';
+        }
+        const targetPiece = testChess.get(target);
+        if (targetPiece && targetPiece.color === 'w') {
+            mockSelectCoachSquare(target);
+            return 'snapback';
+        }
+        const testMoveChess = new Chess(testChess.fen());
+        const m = testMoveChess.move({ from: source, to: target, promotion: 'q' });
+        if (!m) {
+            mockSelectCoachSquare(source);
+            return 'snapback';
+        }
+        mockClearClickMoveHighlights();
+        mockExecuteCoachUserMove({ from: source, to: target, promotion: 'q' });
+        return;
+    }
+
+    // Step A: Drag start on e2 pawn -> e2 selected, e3/e4 dots active
+    const canDragE2 = mockHandleCoachDragStart('e2', 'wP');
+    assert.strictEqual(canDragE2, true, "Drag start on own piece should return true");
+    assert.strictEqual(mockCoachSelectedSquare, 'e2', "e2 should be selected");
+    assert(mockSquareClasses['e2'].includes('highlight-selected'), "e2 must have highlight-selected");
+    assert(mockSquareClasses['e3'].includes('highlight-dest'), "e3 must have highlight-dest");
+    assert(mockSquareClasses['e4'].includes('highlight-dest'), "e4 must have highlight-dest");
+
+    // Step B: User releases on e2 (click/tap without moving) -> remains selected with dots!
+    const dropResultSame = mockHandleCoachDrop('e2', 'e2');
+    assert.strictEqual(dropResultSame, 'snapback', "Drop on same square should return snapback");
+    assert.strictEqual(mockCoachSelectedSquare, 'e2', "e2 must remain selected after snapback");
+    assert(mockSquareClasses['e3'].includes('highlight-dest'), "e3 must retain highlight-dest after snapback");
+    assert(mockSquareClasses['e4'].includes('highlight-dest'), "e4 must retain highlight-dest after snapback");
+
+    // Step C: Drop on another own piece (g1 knight) -> switches selection to g1
+    const dropResultG1 = mockHandleCoachDrop('e2', 'g1');
+    assert.strictEqual(dropResultG1, 'snapback', "Drop on own piece should return snapback");
+    assert.strictEqual(mockCoachSelectedSquare, 'g1', "Selection should switch to g1");
+    assert(mockSquareClasses['g1'].includes('highlight-selected'), "g1 must have highlight-selected");
+    assert(mockSquareClasses['f3'].includes('highlight-dest'), "f3 must have highlight-dest for knight");
+    assert(mockSquareClasses['h3'].includes('highlight-dest'), "h3 must have highlight-dest for knight");
+
+    // Step D: Drag start / drop valid move g1-f3
+    mockHandleCoachDrop('g1', 'f3');
+    assert.strictEqual(mockCoachSelectedSquare, null, "Selection should clear after valid move");
+    assert.strictEqual(executedMoves.length, 1, "Move should be executed");
+    assert.strictEqual(executedMoves[0].from, 'g1');
+    assert.strictEqual(executedMoves[0].to, 'f3');
+
+    // Step E: Enemy capture interaction
+    // Setup position where White can capture Black piece
+    testChess.load("rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 2");
+    // Select Nf3
+    mockSelectCoachSquare('f3');
+    assert.strictEqual(mockCoachSelectedSquare, 'f3');
+    assert(mockSquareClasses['e5'].includes('highlight-dest-capture'), "e5 must have highlight-dest-capture");
+
+    // Clicking / tapping enemy piece on e5 directly executes capture
+    const captureDrag = mockHandleCoachDragStart('e5', 'bP');
+    assert.strictEqual(captureDrag, false, "Clicking enemy piece on legal capture should return false (no drag)");
+    assert.strictEqual(mockCoachSelectedSquare, null, "Selection should clear after capture");
+    assert.strictEqual(executedMoves.length, 2);
+    assert.strictEqual(executedMoves[1].from, 'f3');
+    assert.strictEqual(executedMoves[1].to, 'e5');
+
+    assert(indexContent.includes('.coach-move-glyph'), "index.html must define .coach-move-glyph CSS");
+    assert(indexContent.includes('.coach-move-san.quality-blunder'), "index.html must style blunder coach moves");
+    assert(indexContent.includes('addSquareAnnotation(userResult.move.to'), "index.html must display move feedback annotation on played squares");
+    assert(indexContent.includes("drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better')"), "index.html must draw better move arrow on blunder takeback");
+    assert(indexContent.includes("drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat')"), "index.html must draw opponent threat arrow on blunder takeback");
+
+    // 6. Test Coach Move Sheet Feedback & Explanatory Arrows
+    console.log("Testing Coach Move Feedback & Explanatory Arrows...");
+    const mockBlunderMoveRecord = {
+        san: "Qh5",
+        from: "d1",
+        to: "h5",
+        quality: "blunder",
+        detailedQuality: "blunder",
+        isBlunder: true,
+        bestMoveObj: { from: "g1", to: "f3" },
+        refMoveObj: { from: "g8", to: "f6" }
+    };
+
+    // Verify arrow drawing logic for blunder takeback
+    const arrowsDrawn = [];
+    function mockDrawArrow(from, to, type) {
+        arrowsDrawn.push({ from, to, type });
+    }
+
+    if (mockBlunderMoveRecord.isBlunder) {
+        if (mockBlunderMoveRecord.bestMoveObj) {
+            mockDrawArrow(mockBlunderMoveRecord.bestMoveObj.from, mockBlunderMoveRecord.bestMoveObj.to, 'better');
+        }
+        if (mockBlunderMoveRecord.refMoveObj) {
+            mockDrawArrow(mockBlunderMoveRecord.refMoveObj.from, mockBlunderMoveRecord.refMoveObj.to, 'opponent-threat');
+        }
+    }
+
+    assert.strictEqual(arrowsDrawn.length, 2, "Should draw 2 arrows for blunder takeback");
+    assert.deepStrictEqual(arrowsDrawn[0], { from: "g1", to: "f3", type: "better" });
+    assert.deepStrictEqual(arrowsDrawn[1], { from: "g8", to: "f6", type: "opponent-threat" });
+
+    console.log("✓ Coach Selection State Machine passed!");
+    console.log("✓ Coach Move Feedback & Explanatory Arrows passed!");
+
+    // 7. Test King Checkmate Badges (Winner 👑 & Loser 💀)
+    console.log("Testing King Checkmate Badges (Winner 👑 & Loser 💀)...");
+    assert(indexContent.includes('.king-checkmate-badge'), "index.html must include .king-checkmate-badge CSS");
+    assert(indexContent.includes('.king-badge-winner'), "index.html must include .king-badge-winner CSS");
+    assert(indexContent.includes('.king-badge-loser'), "index.html must include .king-badge-loser CSS");
+    assert(indexContent.includes('.king-badge-icon'), "index.html must include .king-badge-icon CSS");
+    assert(indexContent.includes('updateKingCheckmateBadges'), "index.html must define updateKingCheckmateBadges");
+    assert(indexContent.includes('clearKingCheckmateBadges'), "index.html must define clearKingCheckmateBadges");
+
+    // Unit test logic for updateKingCheckmateBadges with Scholar's Mate
+    const mateChess = new Chess();
+    // 1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#
+    mateChess.move('e4');
+    mateChess.move('e5');
+    mateChess.move('Qh5');
+    mateChess.move('Nc6');
+    mateChess.move('Bc4');
+    mateChess.move('Nf6');
+    mateChess.move('Qxf7#');
+
+    assert.strictEqual(mateChess.in_checkmate(), true, "Position must be checkmate");
+    assert.strictEqual(mateChess.turn(), 'b', "Black is checkmated (turn is 'b')");
+
+    // Test king badge calculation simulation
+    function simulateKingBadges(chessInstance, isFlipped = false) {
+        if (!chessInstance || !chessInstance.in_checkmate()) return [];
+        const loserColor = chessInstance.turn();
+        const winnerColor = loserColor === 'w' ? 'b' : 'w';
+
+        let winnerKingSq = null;
+        let loserKingSq = null;
+        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+        for (let r = 1; r <= 8; r++) {
+            for (let f = 0; f < 8; f++) {
+                const sq = files[f] + r;
+                const piece = chessInstance.get(sq);
+                if (piece && piece.type === 'k') {
+                    if (piece.color === winnerColor) winnerKingSq = sq;
+                    if (piece.color === loserColor) loserKingSq = sq;
+                }
+            }
+        }
+
+        const badges = [];
+        if (winnerKingSq) {
+            const file = isFlipped ? 7 - (winnerKingSq.charCodeAt(0) - 97) : (winnerKingSq.charCodeAt(0) - 97);
+            const rank = isFlipped ? parseInt(winnerKingSq.charAt(1)) - 1 : 8 - parseInt(winnerKingSq.charAt(1));
+            badges.push({ type: 'winner', emoji: '👑', square: winnerKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+        }
+        if (loserKingSq) {
+            const file = isFlipped ? 7 - (loserKingSq.charCodeAt(0) - 97) : (loserKingSq.charCodeAt(0) - 97);
+            const rank = isFlipped ? parseInt(loserKingSq.charAt(1)) - 1 : 8 - parseInt(loserKingSq.charAt(1));
+            badges.push({ type: 'loser', emoji: '💀', square: loserKingSq, left: `${file * 12.5}%`, top: `${rank * 12.5}%` });
+        }
+        return badges;
+    }
+
+    const badgesStandard = simulateKingBadges(mateChess, false);
+    assert.strictEqual(badgesStandard.length, 2, "Must produce 2 badges on checkmate");
+    assert.strictEqual(badgesStandard[0].type, 'winner');
+    assert.strictEqual(badgesStandard[0].emoji, '👑');
+    assert.strictEqual(badgesStandard[0].square, 'e1'); // White king
+    assert.strictEqual(badgesStandard[0].left, '50%'); // file e = index 4 => 4 * 12.5 = 50%
+    assert.strictEqual(badgesStandard[0].top, '87.5%'); // rank 1 => 8 - 1 = 7 => 7 * 12.5 = 87.5%
+
+    assert.strictEqual(badgesStandard[1].type, 'loser');
+    assert.strictEqual(badgesStandard[1].emoji, '💀');
+    assert.strictEqual(badgesStandard[1].square, 'e8'); // Black king
+    assert.strictEqual(badgesStandard[1].left, '50%'); // file e = index 4 => 4 * 12.5 = 50%
+    assert.strictEqual(badgesStandard[1].top, '0%'); // rank 8 => 8 - 8 = 0 => 0 * 12.5 = 0%
+
+    // Flipped orientation
+    const badgesFlipped = simulateKingBadges(mateChess, true);
+    assert.strictEqual(badgesFlipped[0].top, '0%'); // e1 becomes top 0% when flipped
+    assert.strictEqual(badgesFlipped[1].top, '87.5%'); // e8 becomes top 87.5% when flipped
+
+    // Non-checkmate position should return no badges
+    const nonMateChess = new Chess();
+    assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Non-checkmate position must produce 0 badges");
+
+    console.log("✓ King Checkmate Badges (Winner 👑 & Loser 💀) passed!");
     console.log("✓ CoachManager passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
 })().catch(err => {

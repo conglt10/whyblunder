@@ -1039,6 +1039,72 @@
             color: #ffffff;
         }
 
+        /* King Checkmate Badges (Winner 👑 & Loser 💀) */
+        .king-checkmate-badge {
+            position: absolute;
+            width: 12.5%;
+            height: 12.5%;
+            z-index: 1015;
+            pointer-events: none !important;
+            box-sizing: border-box;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 2px 2px 0 0;
+            animation: kingBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes kingBadgePop {
+            0% {
+                transform: scale(0.3) rotate(-10deg);
+                opacity: 0;
+            }
+            70% {
+                transform: scale(1.15) rotate(3deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .king-badge-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            line-height: 1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            user-select: none;
+        }
+
+        .king-badge-winner .king-badge-icon {
+            background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%);
+            border: 2px solid #fffbeb;
+            box-shadow: 0 0 14px rgba(245, 158, 11, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+        }
+
+        .king-badge-loser .king-badge-icon {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
+            border: 2px solid #fecaca;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+        }
+
+        @media (max-width: 768px) {
+            .king-badge-icon {
+                width: 1.75rem;
+                height: 1.75rem;
+                font-size: 0.95rem;
+            }
+        }
+
         /* Variation Status Bar (Under the Board) */
         .variation-under-board {
             background: var(--lic-bg-surface);
@@ -2456,16 +2522,52 @@
             font-size: var(--lic-fs-sm);
         }
         .coach-move-san {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             color: var(--lic-text-primary);
             padding: 2px 6px;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: default;
+            transition: all 0.15s ease;
         }
         .coach-move-san.active {
             background: var(--lic-active-move);
             color: var(--lic-active-move-text);
             font-weight: 600;
         }
+        .coach-move-san.quality-blunder .move-san-wrap { color: #ff5c5c; font-weight: 600; }
+        .coach-move-san.quality-miss .move-san-wrap,
+        .coach-move-san.quality-missed-win .move-san-wrap { color: #f87171; font-weight: 600; }
+        .coach-move-san.quality-mistake .move-san-wrap { color: #f59f00; font-weight: 600; }
+        .coach-move-san.quality-inaccuracy .move-san-wrap { color: #38bdf8; }
+        .coach-move-san.quality-brilliant .move-san-wrap { color: #10b981; font-weight: 600; }
+        .coach-move-san.quality-great .move-san-wrap,
+        .coach-move-san.quality-best .move-san-wrap { color: #60a5fa; }
+        .coach-move-san.quality-book .move-san-wrap { color: #a78bfa; }
+
+        .coach-move-glyph {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.68rem;
+            font-weight: 900;
+            line-height: 1;
+            padding: 1px 4px;
+            border-radius: 3px;
+            letter-spacing: -0.05em;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            flex-shrink: 0;
+        }
+        .coach-move-glyph.quality-blunder { background: #df4444; color: #ffffff; }
+        .coach-move-glyph.quality-miss,
+        .coach-move-glyph.quality-missed-win { background: #dc2626; color: #ffffff; }
+        .coach-move-glyph.quality-mistake { background: #e58226; color: #ffffff; }
+        .coach-move-glyph.quality-inaccuracy { background: #e6b800; color: #1a1815; font-weight: 900; }
+        .coach-move-glyph.quality-brilliant { background: #10b981; color: #ffffff; }
+        .coach-move-glyph.quality-great,
+        .coach-move-glyph.quality-best { background: #3b82f6; color: #ffffff; }
+        .coach-move-glyph.quality-book { background: #8b5cf6; color: #ffffff; }
 
         /* Bottom Action Buttons */
         .coach-action-bar {
@@ -2608,6 +2710,13 @@
             border-radius: 50%;
             pointer-events: none;
             z-index: 10;
+        }
+        /* Prevent dragged ghost piece from intercepting pointer/click events */
+        body > .piece-417db {
+            pointer-events: none !important;
+        }
+        body.coach-mode .square-55d63 {
+            touch-action: none;
         }
     </style>
 </head>
@@ -3267,8 +3376,7 @@
 
             // Coach Drag & Drop / Click-to-Move Handlers
             let coachSelectedSquare = null;
-            let lastDropClickTime = 0;
-            let lastDropSquare = null;
+            let lastSelectionTime = 0;
 
             function clearClickMoveHighlights() {
                 coachSelectedSquare = null;
@@ -3280,8 +3388,14 @@
             function selectCoachSquare(square) {
                 clearClickMoveHighlights();
                 if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+                if (!square) return;
+
+                const piece = coachManager.chess.get(square);
+                if (!piece || piece.color !== coachManager.playerColor) return;
 
                 coachSelectedSquare = square;
+                lastSelectionTime = Date.now();
+
                 const selEl = document.querySelector(`#board .square-${square}`);
                 if (selEl) selEl.classList.add('highlight-selected');
 
@@ -3301,11 +3415,12 @@
             function handleCoachSquareClick(square) {
                 if (currentAppMode !== 'coach') return;
                 if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+                if (!square) return;
 
                 const piece = coachManager.chess.get(square);
                 const isOwnPiece = piece && piece.color === coachManager.playerColor;
 
-                // 1. Nothing selected yet
+                // 1. Nothing selected yet -> select own piece
                 if (!coachSelectedSquare) {
                     if (isOwnPiece) {
                         selectCoachSquare(square);
@@ -3313,8 +3428,12 @@
                     return;
                 }
 
-                // 2. Clicked currently selected square again -> deselect
+                // 2. Clicked currently selected square again
                 if (square === coachSelectedSquare) {
+                    // If clicked immediately from the same mouse-down/up action that selected it (< 300ms), don't toggle off
+                    if (Date.now() - lastSelectionTime < 300) {
+                        return;
+                    }
                     clearClickMoveHighlights();
                     return;
                 }
@@ -3325,7 +3444,7 @@
                     return;
                 }
 
-                // 4. Clicked destination square -> check legality
+                // 4. Clicked destination square (empty square or opponent piece) -> check legality
                 const legalMoves = coachManager.chess.moves({ square: coachSelectedSquare, verbose: true });
                 const match = legalMoves.find(m => m.to === square);
                 if (match) {
@@ -3340,28 +3459,57 @@
             function handleCoachDragStart(source, piece, position, orientation) {
                 if (!coachManager || coachManager.isGameOver) return false;
                 if (!coachManager.isPlayerTurn()) return false;
+
                 const pCol = coachManager.playerColor;
-                if ((pCol === 'w' && piece.search(/^b/) !== -1) ||
-                    (pCol === 'b' && piece.search(/^w/) !== -1)) {
+                const isOwn = (pCol === 'w' && piece.search(/^w/) !== -1) ||
+                              (pCol === 'b' && piece.search(/^b/) !== -1);
+
+                // If user clicks / touches an opponent's piece while a piece is already selected:
+                // Check if this opponent piece is a legal capture target!
+                if (!isOwn) {
+                    if (coachSelectedSquare) {
+                        const legalMoves = coachManager.chess.moves({ square: coachSelectedSquare, verbose: true });
+                        const match = legalMoves.find(m => m.to === source);
+                        if (match) {
+                            const fromSq = coachSelectedSquare;
+                            clearClickMoveHighlights();
+                            executeCoachUserMove({ from: fromSq, to: source, promotion: 'q' });
+                            return false;
+                        }
+                    }
+                    clearClickMoveHighlights();
                     return false;
                 }
-                clearClickMoveHighlights();
+
+                // Own piece: immediately select square and display legal move dots!
+                selectCoachSquare(source);
                 return true;
             }
 
             function handleCoachDrop(source, target) {
                 if (!coachManager || coachManager.isGameOver) return 'snapback';
+
+                // 1. Released on the same square (tap/click without moving)
                 if (source === target) {
-                    lastDropClickTime = Date.now();
-                    lastDropSquare = source;
-                    handleCoachSquareClick(source);
+                    selectCoachSquare(source);
                     return 'snapback';
                 }
 
-                // Verify move legality with chess.js
+                // 2. Released on another own piece -> switch selection
+                const targetPiece = coachManager.chess.get(target);
+                if (targetPiece && targetPiece.color === coachManager.playerColor) {
+                    selectCoachSquare(target);
+                    return 'snapback';
+                }
+
+                // 3. Verify move legality with chess.js
                 const testChess = new Chess(coachManager.chess.fen());
                 const m = testChess.move({ from: source, to: target, promotion: 'q' });
-                if (!m) return 'snapback';
+                if (!m) {
+                    // Invalid destination or offboard -> keep source selected so dots remain visible
+                    selectCoachSquare(source);
+                    return 'snapback';
+                }
 
                 clearClickMoveHighlights();
                 // Execute valid player move asynchronously
@@ -3376,6 +3524,12 @@
                     if (currentFen !== targetFen) {
                         board.position(coachManager.chess.fen(), false);
                     }
+                }
+            }
+
+            function handleCoachSnapbackEnd() {
+                if (currentAppMode === 'coach' && coachSelectedSquare) {
+                    selectCoachSquare(coachSelectedSquare);
                 }
             }
 
@@ -3400,6 +3554,11 @@
                     if (currentAppMode === 'coach') {
                         handleCoachSnapEnd();
                     }
+                },
+                onSnapbackEnd: function() {
+                    if (currentAppMode === 'coach') {
+                        handleCoachSnapbackEnd();
+                    }
                 }
             };
             const board = Chessboard('board', boardConfig);
@@ -3419,16 +3578,13 @@
                     const square = sqEl.getAttribute('data-square');
                     if (!square) return;
 
-                    if (square === lastDropSquare && Date.now() - lastDropClickTime < 250) {
-                        return;
-                    }
                     handleCoachSquareClick(square);
                 });
             }
 
             document.addEventListener('click', function(e) {
                 if (currentAppMode === 'coach' && coachSelectedSquare) {
-                    if (!e.target.closest('#board')) {
+                    if (!e.target.closest('#board') && !e.target.closest('.piece-417db')) {
                         clearClickMoveHighlights();
                     }
                 }
@@ -3628,6 +3784,7 @@
                     updatePlayerStripsOrientation();
                     clearArrows();
                     clearSquareAnnotations();
+                    clearKingCheckmateBadges();
                     if (currentMoveIndex >= 0 && !isPlayingVariation && !isInVariationMode) {
                         setTimeout(() => drawMoveArrows(currentMoveIndex), 50);
                     }
@@ -4972,9 +5129,14 @@
             function drawMoveArrows(index) {
                 clearArrows();
                 clearSquareAnnotations();
+                clearKingCheckmateBadges();
                 clearBoardSquareHighlights();
                 updateSvgDimensions();
                 
+                if (typeof chess !== 'undefined' && chess) {
+                    updateKingCheckmateBadges(chess);
+                }
+
                 if (index < 0 || index >= moves.length) return;
                 
                 const move = moves[index];
@@ -5109,6 +5271,65 @@
             function clearSquareAnnotations() {
                 const annotations = document.querySelectorAll('.square-annotation');
                 annotations.forEach(annotation => annotation.remove());
+            }
+
+            function clearKingCheckmateBadges() {
+                const badges = document.querySelectorAll('.king-checkmate-badge');
+                badges.forEach(badge => badge.remove());
+            }
+
+            function updateKingCheckmateBadges(chessInstance) {
+                clearKingCheckmateBadges();
+                if (!chessInstance || typeof chessInstance.in_checkmate !== 'function') return;
+                if (!chessInstance.in_checkmate()) return;
+                if (!boardContainer) return;
+
+                const loserColor = chessInstance.turn();
+                const winnerColor = loserColor === 'w' ? 'b' : 'w';
+
+                let winnerKingSq = null;
+                let loserKingSq = null;
+                const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+                for (let r = 1; r <= 8; r++) {
+                    for (let f = 0; f < 8; f++) {
+                        const sq = files[f] + r;
+                        const piece = chessInstance.get(sq);
+                        if (piece && piece.type === 'k') {
+                            if (piece.color === winnerColor) winnerKingSq = sq;
+                            if (piece.color === loserColor) loserKingSq = sq;
+                        }
+                    }
+                }
+
+                const isFlipped = (typeof board !== 'undefined' && board && typeof board.orientation === 'function') 
+                    ? (board.orientation() === 'black') 
+                    : false;
+
+                function addKingBadge(sq, type, emoji) {
+                    if (!sq) return;
+                    const file = isFlipped ? 7 - (sq.charCodeAt(0) - 97) : (sq.charCodeAt(0) - 97);
+                    const rank = isFlipped ? parseInt(sq.charAt(1)) - 1 : 8 - parseInt(sq.charAt(1));
+
+                    const badgeEl = document.createElement('div');
+                    badgeEl.className = `king-checkmate-badge king-badge-${type}`;
+                    badgeEl.style.left = `${file * 12.5}%`;
+                    badgeEl.style.top = `${rank * 12.5}%`;
+
+                    const iconEl = document.createElement('div');
+                    iconEl.className = 'king-badge-icon';
+                    iconEl.textContent = emoji;
+                    badgeEl.appendChild(iconEl);
+
+                    boardContainer.appendChild(badgeEl);
+                }
+
+                if (winnerKingSq) {
+                    addKingBadge(winnerKingSq, 'winner', '👑');
+                }
+                if (loserKingSq) {
+                    addKingBadge(loserKingSq, 'loser', '💀');
+                }
             }
 
             function getQualityClass(quality) {
@@ -5379,6 +5600,7 @@
                 updateMaterialDifference('start');
                 clearArrows();
                 clearSquareAnnotations();
+                clearKingCheckmateBadges();
                 updateKeyMomentBadge();
 
                 moveExplanation.innerHTML = `
@@ -5815,6 +6037,8 @@
                 // Clear & draw arrows
                 clearArrows();
                 clearSquareAnnotations();
+                clearKingCheckmateBadges();
+                updateKingCheckmateBadges(chess);
                 const arrowStyle = activeVariation.isRefutation ? 'opponent-threat' : 'better';
 
                 if (stepIndex >= 0) {
@@ -6264,6 +6488,7 @@
                 }
                 clearArrows();
                 clearSquareAnnotations();
+                clearKingCheckmateBadges();
                 updateMaterialDifference();
             }
 
@@ -6376,6 +6601,21 @@
                 const history = coachManager.moveHistory;
                 const numMoves = Math.ceil(history.length / 2);
 
+                const formatMoveSpan = (m, isWhite, isLast) => {
+                    if (!m) return '<span class="coach-move-san empty"></span>';
+                    const qClass = getMoveQualityClass(m);
+                    const glyph = getMoveGlyph(m);
+                    const baseSan = (m.san || '').replace(/[?!]+$/, '');
+                    const sanFormatted = (typeof formatSanWithFigurines === 'function')
+                        ? formatSanWithFigurines(baseSan, isWhite)
+                        : escapeHtml(baseSan);
+                    const glyphBadge = glyph ? `<span class="coach-move-glyph ${qClass}">${glyph}</span>` : '';
+                    return `<span class="coach-move-san ${isLast ? 'active' : ''} ${qClass}">
+                        <span class="move-san-wrap">${sanFormatted}</span>
+                        ${glyphBadge}
+                    </span>`;
+                };
+
                 for (let i = 0; i < numMoves; i++) {
                     const whiteMove = history[i * 2];
                     const blackMove = history[i * 2 + 1];
@@ -6384,8 +6624,8 @@
 
                     html += `<div class="coach-move-row ${isLastWhite || isLastBlack ? 'active-row' : ''}">
                         <span class="coach-move-num">${i + 1}.</span>
-                        <span class="coach-move-san ${isLastWhite ? 'active' : ''}">${whiteMove ? whiteMove.san : ''}</span>
-                        <span class="coach-move-san ${isLastBlack ? 'active' : ''}">${blackMove ? blackMove.san : ''}</span>
+                        ${formatMoveSpan(whiteMove, true, isLastWhite)}
+                        ${formatMoveSpan(blackMove, false, isLastBlack)}
                     </div>`;
                 }
                 table.innerHTML = html;
@@ -6454,15 +6694,19 @@
                 if (coachRes && coachRes.success && coachRes.move) {
                     board.position(coachManager.chess.fen(), true);
                     highlightLastMove(coachRes.move.from, coachRes.move.to);
+                    clearArrows();
                     if (coachRes.isChallenge) {
                         playChessSound('challenge');
+                        addSquareAnnotation(coachRes.move.to, 'blunder');
                     } else {
                         playChessSound(coachRes.move.captured ? 'capture' : 'move');
+                        clearSquareAnnotations();
                     }
                     renderCoachDialogue();
                     renderCoachMoveSheet();
                     updateCoachPlayerBars();
                     updateCoachOpening();
+                    updateKingCheckmateBadges(coachManager.chess);
                 }
             }
 
@@ -6502,8 +6746,14 @@
                 updateCoachPlayerBars();
                 updateCoachOpening();
 
+                // Display move feedback square annotation badge on the board
+                const moveQuality = userResult.detailedQuality || (userResult.quality && (userResult.quality.detailedQuality || userResult.quality.uiQuality)) || 'good';
+                addSquareAnnotation(userResult.move.to, moveQuality);
+                updateKingCheckmateBadges(coachManager.chess);
+
                 if (coachManager.isGameOver) {
                     hideBlunderTakebackCard();
+                    clearArrows();
                     renderCoachDialogue();
                     return;
                 }
@@ -6511,10 +6761,22 @@
                 if (userResult.isBlunder) {
                     playChessSound('blunder');
                     showBlunderTakebackCard(userResult);
+
+                    // Display takeback explanatory arrows
+                    clearArrows();
+                    // 1. Better alternative move arrow (green)
+                    if (userResult.bestMoveObj && userResult.bestMoveObj.from && userResult.bestMoveObj.to) {
+                        drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better');
+                    }
+                    // 2. Opponent's punishing refutation threat arrow (red)
+                    if (userResult.refMoveObj && userResult.refMoveObj.from && userResult.refMoveObj.to) {
+                        drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat');
+                    }
                     return;
                 }
 
                 hideBlunderTakebackCard();
+                clearArrows();
                 renderCoachThinking();
 
                 const delay = Math.floor(Math.random() * 300) + 1000; // 1000-1300ms natural delay
@@ -6527,6 +6789,10 @@
                 selectedCoachPersona = personaId;
                 selectedCoachColor = playerColor;
                 hideBlunderTakebackCard();
+                clearArrows();
+                clearSquareAnnotations();
+                clearKingCheckmateBadges();
+                clearHintHighlights();
 
                 if (!coachWorker) {
                     if (typeof BrowserWhyBlunder !== 'undefined' && BrowserWhyBlunder.StockfishWorker) {
@@ -6588,6 +6854,7 @@
                 if (mode === currentAppMode) return;
                 currentAppMode = mode;
                 hideBlunderTakebackCard();
+                clearKingCheckmateBadges();
 
                 const btnAnalysis = document.getElementById('tabModeAnalysis');
                 const btnCoach = document.getElementById('tabModeCoach');
@@ -6619,6 +6886,7 @@
                         updateCoachPlayerBars();
                         renderCoachDialogue();
                         renderCoachMoveSheet();
+                        updateKingCheckmateBadges(coachManager.chess);
                     }
                 } else {
                     document.body.classList.remove('coach-mode');
@@ -6641,6 +6909,7 @@
                         board.orientation('white');
                         board.position('start');
                         updatePlayerBars();
+                        clearKingCheckmateBadges();
                     }
                 }
 
@@ -6671,6 +6940,10 @@
             if (btnCoachFlip) {
                 btnCoachFlip.addEventListener('click', () => {
                     board.flip();
+                    clearKingCheckmateBadges();
+                    if (coachManager && coachManager.chess) {
+                        updateKingCheckmateBadges(coachManager.chess);
+                    }
                 });
             }
 
@@ -6698,6 +6971,9 @@
                 btnCoachTakeback.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach') return;
                     hideBlunderTakebackCard();
+                    clearArrows();
+                    clearSquareAnnotations();
+                    clearKingCheckmateBadges();
                     const ok = coachManager.takeback();
                     if (ok) {
                         board.position(coachManager.chess.fen());
@@ -6710,6 +6986,7 @@
                         renderCoachMoveSheet();
                         updateCoachPlayerBars();
                         updateCoachOpening();
+                        updateKingCheckmateBadges(coachManager.chess);
                     }
                 });
             }
@@ -6725,6 +7002,9 @@
                     if (ok) {
                         board.position(coachManager.chess.fen());
                         clearHintHighlights();
+                        clearSquareAnnotations();
+                        clearKingCheckmateBadges();
+                        clearArrows();
                         if (typeof clearClickMoveHighlights === 'function') {
                             clearClickMoveHighlights();
                         }
@@ -6734,6 +7014,7 @@
                         renderCoachMoveSheet();
                         updateCoachPlayerBars();
                         updateCoachOpening();
+                        updateKingCheckmateBadges(coachManager.chess);
 
                         if (suggestedSan) {
                             try {
@@ -6742,7 +7023,11 @@
                                 if (testM) {
                                     const fromSq = document.querySelector(`#board .square-${testM.from}`);
                                     if (fromSq) fromSq.classList.add('highlight-hint');
-                                    setTimeout(clearHintHighlights, 3000);
+                                    drawArrow(testM.from, testM.to, 'better');
+                                    setTimeout(() => {
+                                        clearHintHighlights();
+                                        clearArrows();
+                                    }, 4000);
                                 }
                             } catch (e) {}
                         }
@@ -6754,6 +7039,9 @@
             if (btnCoachContinueAnyway) {
                 btnCoachContinueAnyway.addEventListener('click', () => {
                     if (!coachManager || currentAppMode !== 'coach' || coachManager.isGameOver) return;
+                    clearArrows();
+                    clearSquareAnnotations();
+                    clearKingCheckmateBadges();
                     hideBlunderTakebackCard();
                     renderCoachThinking();
                     const delay = Math.floor(Math.random() * 300) + 900;
@@ -6924,6 +7212,8 @@
             window.toggleMobileHeader = toggleMobileHeader;
             window.renderCoachDialogue = renderCoachDialogue;
             window.renderCoachThinking = renderCoachThinking;
+            window.updateKingCheckmateBadges = updateKingCheckmateBadges;
+            window.clearKingCheckmateBadges = clearKingCheckmateBadges;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
 
