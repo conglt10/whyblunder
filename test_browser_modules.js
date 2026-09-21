@@ -480,7 +480,7 @@ console.log("✓ AnalysisCache passed!");
 // Test index.html banner markup and styling integrity
 console.log("Testing index.html banner markup & styling integrity...");
 const fs = require('fs');
-const indexHtml = fs.readFileSync('/home/king/code/whyblunder/index.html', 'utf8');
+const indexHtml = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 
 assert(!indexHtml.includes("Missed Opportunity"), "index.html should not have old 'Missed Opportunity' label");
 assert(indexHtml.includes("badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED'"), "index.html should use MISSED and MISSED WIN labels");
