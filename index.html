@@ -2319,13 +2319,50 @@
                 overflow-y: auto;
             }
             body.coach-mode .coach-dialogue-card {
-                padding: 10px 12px;
-                gap: 10px;
+                padding: 8px 10px;
+                gap: 8px;
             }
             body.coach-mode .coach-avatar-wrapper {
-                width: 44px;
-                height: 44px;
-                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+            body.coach-mode .coach-bubbles-col::before {
+                top: 10px;
+            }
+            body.coach-mode .coach-speech-bubble {
+                max-height: 96px;
+                padding: 7px 10px;
+                font-size: 0.78rem;
+                line-height: 1.35;
+                cursor: pointer;
+            }
+            body.coach-mode .coach-speech-bubble.expanded {
+                max-height: 220px;
+            }
+            body.coach-mode .coach-player-feedback {
+                margin-bottom: 4px !important;
+                padding-bottom: 4px;
+                font-size: 0.77rem;
+                line-height: 1.32;
+            }
+            body.coach-mode .coach-reply-text {
+                font-size: 0.78rem;
+                line-height: 1.35;
+            }
+            body.coach-mode .coach-blunder-actions {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            body.coach-mode .btn-coach-blunder-retry {
+                flex: 1 1 auto;
+                padding: 6px 10px;
+                font-size: 0.76rem;
+            }
+            body.coach-mode .btn-coach-blunder-continue {
+                flex: 1 1 auto;
+                padding: 6px 10px;
+                font-size: 0.76rem;
             }
             body.coach-mode .coach-moves-sheet {
                 display: none !important;
@@ -2431,6 +2468,20 @@
             gap: 8px;
             flex-grow: 1;
             min-width: 0;
+            position: relative;
+        }
+        .coach-bubbles-col::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 14px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-right: 7px solid #ffffff;
+            z-index: 2;
+            pointer-events: none;
         }
         .coach-speech-bubble {
             background: #ffffff;
@@ -2440,21 +2491,33 @@
             font-size: 0.83rem;
             font-weight: 500;
             line-height: 1.45;
-            position: relative;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
             word-wrap: break-word;
-            transition: all 0.2s ease;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-height: 220px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+            transition: max-height 0.25s ease, padding 0.2s ease, box-shadow 0.2s ease;
         }
-        .coach-speech-bubble::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 12px;
-            width: 0;
-            height: 0;
-            border-top: 5px solid transparent;
-            border-bottom: 5px solid transparent;
-            border-right: 7px solid #ffffff;
+        .coach-speech-bubble.expanded {
+            max-height: 380px;
+        }
+        .coach-speech-bubble::-webkit-scrollbar {
+            width: 4px;
+        }
+        .coach-speech-bubble::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .coach-speech-bubble::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 4px;
+        }
+        .coach-speech-bubble::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.45);
         }
         .coach-player-feedback {
             padding-bottom: 6px;
@@ -6778,6 +6841,7 @@
             function renderCoachDialogue() {
                 const bubble = document.getElementById('coachBubble');
                 if (!coachManager || !bubble) return;
+                bubble.classList.remove('expanded');
 
                 if (coachManager.isGameOver) {
                     const result = coachManager.gameResult;
@@ -7050,7 +7114,10 @@
                 // Update dialogue if available
                 if (record.dialogue) {
                     const bubble = document.getElementById('coachBubble');
-                    if (bubble) bubble.textContent = record.dialogue;
+                    if (bubble) {
+                        bubble.textContent = record.dialogue;
+                        bubble.classList.remove('expanded');
+                    }
                 } else if (clampedIndex === maxIndex) {
                     renderCoachDialogue();
                 }
@@ -7212,6 +7279,7 @@
             function renderCoachThinking(userResult) {
                 const bubble = document.getElementById('coachBubble');
                 if (!bubble || !coachManager) return;
+                bubble.classList.remove('expanded');
                 const thinkingPhrase = coachManager.persona.voice.thinking || "Thinking...";
                 const lastPlayerRecord = [...coachManager.moveHistory].reverse().find(m => m.isPlayer);
                 const feedbackText = (userResult && (userResult.bubble1 || userResult.dialogue)) ||
@@ -7551,7 +7619,10 @@
                     if (!coachManager || currentAppMode !== 'coach') return;
                     const hint = coachManager.generateHint();
                     const bubble = document.getElementById('coachBubble');
-                    if (bubble) bubble.textContent = hint.hintText;
+                    if (bubble) {
+                        bubble.textContent = hint.hintText;
+                        bubble.classList.remove('expanded');
+                    }
 
                     clearHintHighlights();
                     if (hint.highlightSquares && hint.highlightSquares.length > 0) {
@@ -7561,6 +7632,15 @@
                         });
                         setTimeout(clearHintHighlights, 3000);
                     }
+                });
+            }
+
+            const coachBubbleEl = document.getElementById('coachBubble');
+            if (coachBubbleEl) {
+                coachBubbleEl.addEventListener('click', () => {
+                    const selection = window.getSelection ? window.getSelection().toString() : '';
+                    if (selection.length > 0) return;
+                    coachBubbleEl.classList.toggle('expanded');
                 });
             }
 
