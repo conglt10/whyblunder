@@ -222,46 +222,338 @@
         return threats;
     }
 
+    // ------------------------------------------------------------------
+    // Static Exchange Evaluation (SEE)
+    // ------------------------------------------------------------------
+    // A real iterative swap-off on a lightweight occupancy map. Because the
+    // attacker set is recomputed from the *current* occupancy after every
+    // capture, x-ray / battery attackers hiding behind a captured piece are
+    // revealed automatically (rook or queen behind a rook on a file/rank,
+    // bishop or queen behind a bishop on a diagonal). Absolutely pinned
+    // defenders are excluded (a pinned piece may only capture along its own
+    // pin ray), the king may only capture when the square is left undefended,
+    // and either side may stand pat when continuing the exchange loses
+    // material - that last rule is what makes SEE correct rather than a
+    // count of attackers versus defenders.
+
+    const SEE_MAX_PLY = 32;
+
+    function oppositeColor(color) {
+        return color === 'w' ? 'b' : 'w';
+    }
+
     /**
-     * Check if a piece of `color` on `square` is safe from being captured profitably.
+     * Snapshot a chess.js board into a plain { square: {type, color} } map.
+     * The caller's board is only read, never mutated.
+     */
+    function buildOccupancy(board) {
+        const occ = Object.create(null);
+        for (let f = 0; f < 8; f++) {
+            for (let r = 0; r < 8; r++) {
+                const sq = fileRankToSquare(f, r);
+                const p = board.get(sq);
+                if (p) occ[sq] = { type: p.type, color: p.color };
+            }
+        }
+        return occ;
+    }
+
+    function cloneOccupancy(occ) {
+        return Object.assign(Object.create(null), occ);
+    }
+
+    function findKingInOccupancy(occ, color) {
+        for (const sq in occ) {
+            const p = occ[sq];
+            if (p.type === 'k' && p.color === color) return sq;
+        }
+        return null;
+    }
+
+    const SLIDE_DIAGONAL = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    const SLIDE_ORTHOGONAL = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const KNIGHT_OFFSETS = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+
+    /**
+     * All squares holding a `color` piece that pseudo-legally attacks `sq`
+     * in the given occupancy map (pins ignored - this is raw control, which
+     * is also what decides whether a king may step onto the square).
+     */
+    function rawAttackersTo(occ, sq, color) {
+        const file = squareToFile(sq);
+        const rank = squareToRank(sq);
+        const out = [];
+
+        // Pawns: a white pawn attacking `sq` stands one rank below it.
+        const pawnRankOffset = (color === 'w') ? -1 : 1;
+        for (const df of [-1, 1]) {
+            const nf = file + df;
+            const nr = rank + pawnRankOffset;
+            if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+            const from = fileRankToSquare(nf, nr);
+            const p = occ[from];
+            if (p && p.color === color && p.type === 'p') out.push(from);
+        }
+
+        for (const [df, dr] of KNIGHT_OFFSETS) {
+            const nf = file + df;
+            const nr = rank + dr;
+            if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+            const from = fileRankToSquare(nf, nr);
+            const p = occ[from];
+            if (p && p.color === color && p.type === 'n') out.push(from);
+        }
+
+        for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+                if (df === 0 && dr === 0) continue;
+                const nf = file + df;
+                const nr = rank + dr;
+                if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+                const from = fileRankToSquare(nf, nr);
+                const p = occ[from];
+                if (p && p.color === color && p.type === 'k') out.push(from);
+            }
+        }
+
+        // Sliders: walk outwards until the first occupied square. Re-running
+        // this after a capture is what exposes batteries / x-rays.
+        const rays = [
+            [SLIDE_DIAGONAL, 'b'],
+            [SLIDE_ORTHOGONAL, 'r']
+        ];
+        for (const [dirs, sliderType] of rays) {
+            for (const [df, dr] of dirs) {
+                let nf = file + df;
+                let nr = rank + dr;
+                while (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7) {
+                    const cur = fileRankToSquare(nf, nr);
+                    const p = occ[cur];
+                    if (p) {
+                        if (p.color === color && (p.type === sliderType || p.type === 'q')) {
+                            out.push(cur);
+                        }
+                        break;
+                    }
+                    nf += df;
+                    nr += dr;
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * If the piece on `sq` is absolutely pinned against `kingSq`, return the
+     * pin direction [df, dr] pointing from the king outwards; otherwise null.
+     */
+    function pinDirection(occ, sq, kingSq) {
+        const piece = occ[sq];
+        if (!piece || !kingSq || sq === kingSq) return null;
+
+        const kf = squareToFile(kingSq);
+        const kr = squareToRank(kingSq);
+        const df = squareToFile(sq) - kf;
+        const dr = squareToRank(sq) - kr;
+
+        let dirF;
+        let dirR;
+        if (df === 0 && dr === 0) return null;
+        if (df === 0) {
+            dirF = 0;
+            dirR = dr > 0 ? 1 : -1;
+        } else if (dr === 0) {
+            dirR = 0;
+            dirF = df > 0 ? 1 : -1;
+        } else if (Math.abs(df) === Math.abs(dr)) {
+            dirF = df > 0 ? 1 : -1;
+            dirR = dr > 0 ? 1 : -1;
+        } else {
+            return null;
+        }
+
+        // Nothing may stand between the king and the candidate pinned piece.
+        let f = kf + dirF;
+        let r = kr + dirR;
+        while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+            const cur = fileRankToSquare(f, r);
+            if (cur === sq) break;
+            if (occ[cur]) return null;
+            f += dirF;
+            r += dirR;
+        }
+        if (f < 0 || f > 7 || r < 0 || r > 7) return null;
+
+        // Look for an enemy slider behind the piece along the same ray.
+        const diagonal = (dirF !== 0 && dirR !== 0);
+        f += dirF;
+        r += dirR;
+        while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+            const cur = fileRankToSquare(f, r);
+            const p = occ[cur];
+            if (p) {
+                if (p.color !== piece.color) {
+                    if (diagonal && (p.type === 'b' || p.type === 'q')) return [dirF, dirR];
+                    if (!diagonal && (p.type === 'r' || p.type === 'q')) return [dirF, dirR];
+                }
+                return null;
+            }
+            f += dirF;
+            r += dirR;
+        }
+        return null;
+    }
+
+    /** Is `targetSq` on the ray that starts at `kingSq` and runs along `dir`? */
+    function onPinRay(kingSq, dir, targetSq) {
+        const df = squareToFile(targetSq) - squareToFile(kingSq);
+        const dr = squareToRank(targetSq) - squareToRank(kingSq);
+        const [dirF, dirR] = dir;
+        if (dirF === 0) return df === 0 && dr !== 0 && (dr > 0 ? 1 : -1) === dirR;
+        if (dirR === 0) return dr === 0 && df !== 0 && (df > 0 ? 1 : -1) === dirF;
+        if (Math.abs(df) !== Math.abs(dr) || df === 0) return false;
+        return (df > 0 ? 1 : -1) === dirF && (dr > 0 ? 1 : -1) === dirR;
+    }
+
+    /**
+     * Attackers of `sq` belonging to `color` that could *legally* capture
+     * there: absolutely pinned pieces are dropped unless the capture happens
+     * on their own pin ray, and the king is only offered when the square is
+     * not defended once the capture is made.
+     */
+    function legalAttackersTo(occ, sq, color) {
+        const kingSq = findKingInOccupancy(occ, color);
+        const raw = rawAttackersTo(occ, sq, color);
+        const out = [];
+        let kingAttacker = null;
+
+        for (const from of raw) {
+            const p = occ[from];
+            if (!p) continue;
+            if (p.type === 'k') {
+                kingAttacker = from;
+                continue;
+            }
+            if (kingSq) {
+                const dir = pinDirection(occ, from, kingSq);
+                if (dir && !onPinRay(kingSq, dir, sq)) continue;
+            }
+            out.push(from);
+        }
+
+        // The king is the most valuable capturer, so it is only ever used
+        // when nothing else is left - and only if the square is then safe.
+        if (out.length === 0 && kingAttacker) {
+            const probe = cloneOccupancy(occ);
+            delete probe[sq];
+            delete probe[kingAttacker];
+            probe[sq] = { type: 'k', color: color };
+            if (rawAttackersTo(probe, sq, oppositeColor(color)).length === 0) {
+                out.push(kingAttacker);
+            }
+        }
+        return out;
+    }
+
+    function seeSwapOff(occ, sq, side, ply) {
+        if (ply > SEE_MAX_PLY) return 0;
+        const target = occ[sq];
+        if (!target || target.color === side) return 0;
+        if (target.type === 'k') return 0; // kings are never actually captured
+
+        const attackers = legalAttackersTo(occ, sq, side);
+        if (attackers.length === 0) return 0;
+
+        let bestFrom = null;
+        let bestVal = Infinity;
+        for (const from of attackers) {
+            const val = PIECE_VALUES[occ[from].type] || 0;
+            if (val < bestVal) {
+                bestVal = val;
+                bestFrom = from;
+            }
+        }
+        if (!bestFrom) return 0;
+
+        const mover = occ[bestFrom];
+        let gain = PIECE_VALUES[target.type] || 0;
+        let landing = { type: mover.type, color: mover.color };
+
+        const promotionRank = (side === 'w') ? 7 : 0;
+        if (mover.type === 'p' && squareToRank(sq) === promotionRank) {
+            landing = { type: 'q', color: side };
+            gain += (PIECE_VALUES.q - PIECE_VALUES.p);
+        }
+
+        const next = cloneOccupancy(occ);
+        delete next[bestFrom];
+        next[sq] = landing;
+
+        // Stand pat: never continue an exchange that loses material.
+        return Math.max(0, gain - seeSwapOff(next, sq, oppositeColor(side), ply + 1));
+    }
+
+    /**
+     * Static Exchange Evaluation for the square `square`.
+     *
+     * @param {object} board - chess.js instance (read only, never mutated)
+     * @param {string} square - the contested square, e.g. 'e5'
+     * @param {string} sideToCapture - 'w' | 'b', the side that initiates
+     * @returns {number} net material, in pawn units, that `sideToCapture`
+     *          wins by starting the capture sequence. Either side may stop
+     *          capturing at any point, so the result is never negative: 0
+     *          means "the exchange is not worth starting / is balanced".
+     */
+    function staticExchangeEval(board, square, sideToCapture) {
+        if (!board || !square || !sideToCapture) return 0;
+        const target = board.get(square);
+        if (!target || target.color === sideToCapture) return 0;
+        if (target.type === 'k') return 0;
+        return seeSwapOff(buildOccupancy(board), square, sideToCapture, 0);
+    }
+
+    /** Same as staticExchangeEval, on an already-built occupancy map. */
+    function seeOnOccupancy(occ, square, sideToCapture) {
+        const target = occ[square];
+        if (!target || target.color === sideToCapture || target.type === 'k') return 0;
+        return seeSwapOff(occ, square, sideToCapture, 0);
+    }
+
+    /**
+     * Check if a piece of `color` on `square` is safe from being captured
+     * profitably. Backed by a real static exchange evaluation, so sound
+     * exchanges and pieces defended through a battery are no longer flagged,
+     * and defenders that are absolutely pinned no longer count.
+     *
+     * @param {object} board - chess.js instance
+     * @param {string} color - colour of the piece we are asking about
+     * @param {string} square - its square
+     * @param {number|null} oppAttackerVal - optional cap: if the piece is
+     *        attacked and worth more than this, treat it as unsafe
+     *        (preserved from the previous heuristic implementation).
+     * @returns {boolean}
      */
     function isPieceSafe(board, color, square, oppAttackerVal = null) {
         const piece = board.get(square);
         if (!piece) return true;
-        const oppColor = (color === 'w' ? 'b' : 'w');
+
+        const ownColor = piece.color || color;
+        const oppColor = oppositeColor(ownColor);
 
         if (!isSquareAttackedBy(board, oppColor, square)) {
             return true;
         }
 
+        // A king is "safe" only when the square is not attacked at all.
+        if (piece.type === 'k') return false;
+
+        if (staticExchangeEval(board, square, oppColor) > 0) {
+            return false;
+        }
+
         const val = PIECE_VALUES[piece.type] || 0;
-        const isDefended = isSquareAttackedBy(board, color, square);
-        if (!isDefended) {
-            return false;
-        }
-
-        const attackers = getAttackers(board, oppColor, square);
-        let minAttackerVal = 999;
-        for (const a of attackers) {
-            const p = board.get(a);
-            if (p) {
-                const aVal = PIECE_VALUES[p.type] || 0;
-                if (aVal < minAttackerVal) minAttackerVal = aVal;
-            }
-        }
-        if (minAttackerVal < val) {
-            return false;
-        }
-
         if (oppAttackerVal !== null && val > oppAttackerVal) {
             return false;
-        }
-
-        if (minAttackerVal <= val) {
-            const defenders = getAttackers(board, color, square);
-            if (attackers.length > defenders.length) {
-                return false;
-            }
         }
 
         return true;
@@ -858,62 +1150,190 @@
     }
 
     /**
-     * Detect hanging piece blunder.
+     * Normalise a single refutation ply into { from, to } or { san }.
      */
-    function detectHangingPieceBlunder(boardBefore, boardAfter, playedMove) {
+    function normalizeRefutationPly(m) {
+        if (!m) return null;
+        if (typeof m === 'string') {
+            const s = m.trim();
+            if (/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(s)) {
+                return {
+                    from: s.slice(0, 2),
+                    to: s.slice(2, 4),
+                    promotion: s.length > 4 ? s.charAt(4).toLowerCase() : undefined
+                };
+            }
+            return s ? { san: s } : null;
+        }
+        if (m.from && m.to) return { from: m.from, to: m.to, promotion: m.promotion };
+        if (m.san) return { san: m.san };
+        return null;
+    }
+
+    /**
+     * Accepts a refutation move object, a UCI/SAN string, an array of plies,
+     * or an object carrying a `pv` array; returns up to the first 3 plies.
+     */
+    function normalizeRefutationPlies(refutation) {
+        if (!refutation) return [];
+        let raw;
+        if (Array.isArray(refutation)) {
+            raw = refutation.slice();
+        } else if (Array.isArray(refutation.pv) && refutation.pv.length > 0) {
+            raw = refutation.pv.slice();
+            if (refutation.from && refutation.to) {
+                const head = normalizeRefutationPly(raw[0]);
+                if (!head || head.from !== refutation.from || head.to !== refutation.to) {
+                    raw.unshift(refutation);
+                }
+            }
+        } else {
+            raw = [refutation];
+        }
+        return raw.slice(0, 3).map(normalizeRefutationPly).filter(function(p) { return !!p; });
+    }
+
+    /**
+     * Does the engine's refutation actually win the piece standing on
+     * `square`? Returns true / false, or null when the refutation could not
+     * be replayed (caller should then fall back to pure SEE).
+     */
+    function refutationWinsPiece(boardAfter, square, color, refutation) {
+        const plies = normalizeRefutationPlies(refutation);
+        if (plies.length === 0) return null;
+
+        const ChessCtor = getChessConstructor();
+        if (!ChessCtor) return null;
+
+        let sim;
+        try {
+            sim = new ChessCtor(boardAfter.fen());
+        } catch (e) {
+            return null;
+        }
+
+        const oppColor = oppositeColor(color);
+        let playedPlies = 0;
+        let lastOppTo = null;
+
+        for (const ply of plies) {
+            let res = null;
+            try {
+                res = ply.san
+                    ? sim.move(ply.san, { sloppy: true })
+                    : sim.move({ from: ply.from, to: ply.to, promotion: ply.promotion || 'q' });
+            } catch (e) {
+                res = null;
+            }
+            if (!res) break;
+            playedPlies++;
+            if (res.color === oppColor) {
+                lastOppTo = res.to;
+                // The refutation captures the piece outright.
+                if (res.to === square && res.captured) return true;
+            } else if (res.from === square) {
+                // We saved the piece inside the given line.
+                return false;
+            }
+        }
+
+        if (playedPlies === 0) return null; // unreplayable -> unknown
+
+        // Not captured yet: it still counts if the refutation attacks the
+        // piece and winning it is only a capture away.
+        const still = sim.get(square);
+        if (still && still.color === color && lastOppTo) {
+            const attacks = getPieceAttacks(sim, lastOppTo);
+            if (attacks.indexOf(square) !== -1 && staticExchangeEval(sim, square, oppColor) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Detect hanging piece blunder, using static exchange evaluation rather
+     * than an attacker/defender count, and - when the engine's refutation is
+     * supplied - only claiming the piece when that refutation really wins it.
+     *
+     * @param {object} boardBefore - position before the played move
+     * @param {object} boardAfter - position after the played move
+     * @param {object} playedMove - { from, to, ... }
+     * @param {object|string|Array} [refutationMove] - OPTIONAL engine
+     *        refutation (move object, UCI/SAN string, PV array, or an object
+     *        with a `pv` array). When omitted, pure SEE decides.
+     * @returns {{type, piece, square, description}|null}
+     */
+    function detectHangingPieceBlunder(boardBefore, boardAfter, playedMove, refutationMove) {
         const color = boardBefore.turn();
-        const oppColor = (color === 'w' ? 'b' : 'w');
+        const oppColor = oppositeColor(color);
         const movedPiece = boardBefore.get(playedMove.from);
         if (!movedPiece) return null;
 
         const toSq = playedMove.to;
-        const isAttacked = isSquareAttackedBy(boardAfter, oppColor, toSq);
-        const isDefended = isSquareAttackedBy(boardAfter, color, toSq);
+        const pieceNow = boardAfter.get(toSq);
 
-        const attackers = getAttackers(boardAfter, oppColor, toSq);
-        if (attackers.length > 0) {
-            let minAttackerVal = 999;
-            for (const a of attackers) {
-                const ap = boardAfter.get(a);
-                if (ap) {
-                    const val = PIECE_VALUES[ap.type] || 0;
-                    if (val < minAttackerVal) minAttackerVal = val;
+        if (pieceNow && pieceNow.color === color && pieceNow.type !== 'k') {
+            const loss = staticExchangeEval(boardAfter, toSq, oppColor);
+
+            // Net out whatever the played move itself captured: a knight that
+            // takes a Queen and is recaptured is not a hanging knight, and a
+            // sound exchange is not a blunder.
+            let gained = 0;
+            if (playedMove.captured) {
+                gained = PIECE_VALUES[playedMove.captured] || 0;
+            } else {
+                const capturedBefore = boardBefore.get(toSq);
+                if (capturedBefore && capturedBefore.color === oppColor) {
+                    gained = PIECE_VALUES[capturedBefore.type] || 0;
                 }
             }
-            const movedVal = PIECE_VALUES[movedPiece.type] || 0;
 
-            if (!isDefended || minAttackerVal < movedVal) {
-                const name = PIECE_NAMES[movedPiece.type] || 'piece';
-                return {
-                    type: 'hanging_piece',
-                    piece: name,
-                    square: toSq,
-                    description: `leaves the ${name} hanging on ${toSq}`
-                };
+            if (loss - gained > 0) {
+                const corroborated = refutationMove
+                    ? refutationWinsPiece(boardAfter, toSq, color, refutationMove)
+                    : null;
+                if (corroborated !== false) {
+                    const name = PIECE_NAMES[pieceNow.type] || 'piece';
+                    return {
+                        type: 'hanging_piece',
+                        piece: name,
+                        square: toSq,
+                        description: `leaves the ${name} hanging on ${toSq}`
+                    };
+                }
             }
         }
 
-        // Check if removing defender left another friendly piece hanging
+        // Check if the move removed the defense of another friendly piece.
+        const occAfter = buildOccupancy(boardAfter);
+        let occBefore = null;
         for (let f = 0; f < 8; f++) {
             for (let r = 0; r < 8; r++) {
                 const sq = fileRankToSquare(f, r);
                 if (sq === toSq) continue;
-                const p = boardAfter.get(sq);
-                if (p && p.color === color && p.type !== 'k') {
-                    const attackedNow = isSquareAttackedBy(boardAfter, oppColor, sq);
-                    const defendedNow = isSquareAttackedBy(boardAfter, color, sq);
-                    const attackedBefore = isSquareAttackedBy(boardBefore, oppColor, sq);
-                    const defendedBefore = isSquareAttackedBy(boardBefore, color, sq);
+                const p = occAfter[sq];
+                if (!p || p.color !== color || p.type === 'k') continue;
+                if (rawAttackersTo(occAfter, sq, oppColor).length === 0) continue;
 
-                    if (attackedNow && !defendedNow && defendedBefore) {
-                        const name = PIECE_NAMES[p.type] || 'piece';
-                        return {
-                            type: 'removed_defender',
-                            piece: name,
-                            square: sq,
-                            description: `removes the defense of the ${name} on ${sq}`
-                        };
+                const before = boardBefore.get(sq);
+                if (!before || before.color !== color || before.type !== p.type) continue;
+
+                if (!occBefore) occBefore = buildOccupancy(boardBefore);
+                const safeBefore = seeOnOccupancy(occBefore, sq, oppColor) <= 0;
+                const lossNow = seeOnOccupancy(occAfter, sq, oppColor);
+                if (safeBefore && lossNow > 0) {
+                    if (refutationMove
+                        && refutationWinsPiece(boardAfter, sq, color, refutationMove) === false) {
+                        continue;
                     }
+                    const name = PIECE_NAMES[p.type] || 'piece';
+                    return {
+                        type: 'removed_defender',
+                        piece: name,
+                        square: sq,
+                        description: `removes the defense of the ${name} on ${sq}`
+                    };
                 }
             }
         }
@@ -1908,6 +2328,7 @@
         getPieceAttacks,
         isSquareAttackedBy,
         getAttackers,
+        staticExchangeEval,
         isPieceSafe,
         detectThreatsCreated,
         detectAttacksOnPieces,
