@@ -2330,6 +2330,10 @@
         body.coach-mode #mobileMoveTicker {
             display: none !important;
         }
+        body.coach-mode .m-sheet,
+        body.coach-mode .m-sheet-scrim {
+            display: none !important;
+        }
 
         /* Mobile Header Hidden State & Fullscreen Space */
         @media (max-width: 991.98px) {
@@ -3551,6 +3555,10 @@
                 display: none !important;
             }
             body:not(.coach-mode) .mobile-slot-coach {
+                display: none !important;
+            }
+            body.coach-mode .m-sheet,
+            body.coach-mode .m-sheet-scrim {
                 display: none !important;
             }
             .coach-action-bar {
@@ -4974,13 +4982,9 @@
                 } else {
                     if (mode === 'coach') {
                         restore(moveExp);
-                        const isLandscapeRail = window.matchMedia("(max-width: 991.98px) and (orientation: landscape) and (max-height: 500px)").matches;
-                        const dock = document.getElementById("coachMobileDock");
-                        const targetContainer = (isLandscapeRail || !dock) ? sheetBody : dock;
-
-                        if (coachOpeningBar && coachOpeningBar.parentElement !== sheetBody) sheetBody.appendChild(coachOpeningBar);
-                        if (coachBubbleCard && coachBubbleCard.parentElement !== targetContainer) targetContainer.appendChild(coachBubbleCard);
-                        if (coachMovesWrapper && coachMovesWrapper.parentElement !== sheetBody) sheetBody.appendChild(coachMovesWrapper);
+                        restore(coachBubbleCard);
+                        restore(coachOpeningBar);
+                        restore(coachMovesWrapper);
                     } else {
                         restore(coachBubbleCard);
                         restore(coachOpeningBar);
@@ -8415,10 +8419,6 @@
                     setCoachSheetSummary();
                 } else if (clampedIndex === maxIndex) {
                     renderCoachDialogue();
-                }
-
-                if (window.MobileSheet && window.MobileSheet.isMobile() && window.MobileSheet.get() === 'peek') {
-                    window.MobileSheet.set('half');
                 }
 
                 // Update player bars

@@ -1847,6 +1847,7 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
 
     // D. Verify CSS responsiveness
     assert(coachHtml.includes('body.coach-mode .coach-mobile-move-ticker'), "index.html must define .coach-mobile-move-ticker styles");
+    assert(coachHtml.includes('body.coach-mode .m-sheet'), "index.html must hide .m-sheet in coach mode");
     assert(coachHtml.includes('.btn-coach-review'), "index.html must define .btn-coach-review styles");
 
     // E. Verify record.fen in CoachManager
