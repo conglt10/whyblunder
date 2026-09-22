@@ -72,8 +72,9 @@
             --q-blunder: #cc3333;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -86,6 +87,8 @@
             font-size: var(--lic-fs-base);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Lichess Top Header */
@@ -245,13 +248,19 @@
         /* Collapsible PGN Drawer */
         .pgn-drawer {
             background: var(--lic-bg-surface-header);
-            border-bottom: 1px solid var(--lic-border-subtle);
+            border-bottom: none;
+            box-shadow: none;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            visibility: hidden;
+            pointer-events: none;
+            transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
         }
         .pgn-drawer.open {
             max-height: 480px;
+            visibility: visible;
+            pointer-events: auto;
+            border-bottom: 1px solid var(--lic-border-subtle);
         }
         /* Import Source Tabs */
         .import-tabs-group {
@@ -940,6 +949,13 @@
         #board {
             width: 100%;
             aspect-ratio: 1 / 1;
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .board-b72b1 {
@@ -977,13 +993,13 @@
 
         /* Lichess Move Square Highlights */
         .square-highlight-from, .square-highlight-to {
-            box-shadow: inset 0 0 0 9999px rgba(135, 169, 34, 0.45) !important;
+            box-shadow: inset 0 0 0 100px rgba(135, 169, 34, 0.45) !important;
         }
         .white-1e1d7.square-highlight-from, .white-1e1d7.square-highlight-to {
-            box-shadow: inset 0 0 0 9999px rgba(205, 210, 106, 0.65) !important;
+            box-shadow: inset 0 0 0 100px rgba(205, 210, 106, 0.65) !important;
         }
         .black-3c85d.square-highlight-from, .black-3c85d.square-highlight-to {
-            box-shadow: inset 0 0 0 9999px rgba(170, 162, 58, 0.65) !important;
+            box-shadow: inset 0 0 0 100px rgba(170, 162, 58, 0.65) !important;
         }
 
         /* Square Annotations (Lichess Large Floating Move Badges) */
@@ -2171,11 +2187,17 @@
                 left: 0;
                 right: 0;
                 z-index: 1050;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+                box-shadow: none;
+                border-bottom: none;
+            }
+            body.mobile-header-hidden .pgn-drawer {
+                top: 0;
             }
             .pgn-drawer.open {
                 max-height: calc(100dvh - 50px);
                 overflow-y: auto;
+                border-bottom: 1px solid var(--lic-border-subtle);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
             }
 
             .variation-under-board {
@@ -2983,10 +3005,10 @@
             background-color: rgba(98, 153, 36, 0.3) !important;
         }
         .highlight-last-coach {
-            box-shadow: inset 0 0 0 9999px rgba(246, 228, 92, 0.45) !important;
+            box-shadow: inset 0 0 0 100px rgba(246, 228, 92, 0.45) !important;
         }
         .highlight-selected {
-            box-shadow: inset 0 0 0 9999px rgba(246, 228, 92, 0.6) !important;
+            box-shadow: inset 0 0 0 100px rgba(246, 228, 92, 0.6) !important;
         }
         .highlight-dest {
             position: relative;
@@ -3020,9 +3042,19 @@
             pointer-events: none;
             z-index: 10;
         }
-        /* Prevent dragged ghost piece from intercepting pointer/click events */
+        /* Prevent dragged ghost piece from intercepting pointer/click events and isolate transforms */
         body > .piece-417db {
             pointer-events: none !important;
+            will-change: left, top;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .square-55d63, .piece-417db {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         body.coach-mode .square-55d63 {
             touch-action: none;
@@ -3699,24 +3731,44 @@
             let lastSelectionTime = 0;
 
             function clearClickMoveHighlights() {
+                if (!coachSelectedSquare) {
+                    const anyHighlighted = document.querySelector('#board .highlight-selected, #board .highlight-dest, #board .highlight-dest-capture');
+                    if (!anyHighlighted) return;
+                }
                 coachSelectedSquare = null;
-                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                document.querySelectorAll('#board .highlight-selected, #board .highlight-dest, #board .highlight-dest-capture').forEach(sq => {
                     sq.classList.remove('highlight-selected', 'highlight-dest', 'highlight-dest-capture');
                 });
             }
 
             function selectCoachSquare(square) {
-                clearClickMoveHighlights();
-                if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
-                if (!square) return;
+                if (!coachManager || coachManager.isGameOver || !coachManager.isPlayerTurn()) {
+                    clearClickMoveHighlights();
+                    return;
+                }
+                if (!square) {
+                    clearClickMoveHighlights();
+                    return;
+                }
 
                 const piece = coachManager.chess.get(square);
-                if (!piece || piece.color !== coachManager.playerColor) return;
+                if (!piece || piece.color !== coachManager.playerColor) {
+                    clearClickMoveHighlights();
+                    return;
+                }
+
+                // If already selected and highlighted on the board, keep selection and avoid DOM thrashing
+                const selEl = document.querySelector(`#board .square-${square}`);
+                if (coachSelectedSquare === square && selEl && selEl.classList.contains('highlight-selected')) {
+                    lastSelectionTime = Date.now();
+                    return;
+                }
+
+                clearClickMoveHighlights();
 
                 coachSelectedSquare = square;
                 lastSelectionTime = Date.now();
 
-                const selEl = document.querySelector(`#board .square-${square}`);
                 if (selEl) selEl.classList.add('highlight-selected');
 
                 const moves = coachManager.chess.moves({ square: square, verbose: true });
@@ -6934,7 +6986,7 @@
             }
 
             function highlightLastMove(from, to) {
-                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                document.querySelectorAll('#board .highlight-last-coach').forEach(sq => {
                     sq.classList.remove('highlight-last-coach');
                 });
                 if (from) {
@@ -6951,7 +7003,7 @@
                 if (typeof clearClickMoveHighlights === 'function') {
                     clearClickMoveHighlights();
                 }
-                document.querySelectorAll('#board .square-55d63').forEach(sq => {
+                document.querySelectorAll('#board .highlight-hint').forEach(sq => {
                     sq.classList.remove('highlight-hint');
                 });
             }

@@ -1196,7 +1196,11 @@
 
       // animation complete
       function complete () {
-        drawPositionInstant()
+        if (squareElsIds[draggedPieceSource]) {
+          $('#' + squareElsIds[draggedPieceSource]).find('.' + CSS.piece).css('display', '')
+        } else {
+          drawPositionInstant()
+        }
         $draggedPiece.css('display', 'none')
 
         // run their onSnapbackEnd function
@@ -1208,6 +1212,13 @@
             currentOrientation
           )
         }
+      }
+
+      // If released on source square (tap to select), complete immediately without layout jitter
+      if (draggedPieceLocation === draggedPieceSource) {
+        complete()
+        isDragging = false
+        return
       }
 
       // get source square position
