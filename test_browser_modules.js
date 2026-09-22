@@ -488,6 +488,24 @@ assert(indexHtml.includes(".diag-missed-banner {"), "index.html must include .di
 assert(indexHtml.includes(".diag-missed-text {"), "index.html must include .diag-missed-text CSS");
 assert(indexHtml.includes("align-items: flex-start;"), "index.html banner must align to flex-start for multi-line text");
 assert(indexHtml.includes("badge-missed-win"), "index.html must support badge-missed-win");
+assert(indexHtml.includes("function getQualityClass("), "index.html must define getQualityClass");
+assert(indexHtml.includes("function getQualityBadgeClass("), "index.html must define getQualityBadgeClass");
+
+// Verify getQualityClass and getQualityBadgeClass execution
+const fnCode = indexHtml.match(/function getQualityClass\([^)]*\)\s*\{[\s\S]*?\n\s{12}\}/)[0] +
+               "\n" + indexHtml.match(/function getQualityBadgeClass\([^)]*\)\s*\{[\s\S]*?\n\s{12}\}/)[0] +
+               "\nreturn { getQualityClass, getQualityBadgeClass };";
+const { getQualityClass, getQualityBadgeClass } = new Function(fnCode)();
+assert.strictEqual(getQualityClass('blunder'), 'blunder');
+assert.strictEqual(getQualityClass('BLUNDER'), 'blunder');
+assert.strictEqual(getQualityClass('missed win'), 'miss');
+assert.strictEqual(getQualityClass('mistake'), 'mistake');
+assert.strictEqual(getQualityClass('inaccuracy'), 'inaccuracy');
+assert.strictEqual(getQualityClass('good move'), 'good-move');
+assert.strictEqual(getQualityClass('brilliant'), 'brilliant');
+assert.strictEqual(getQualityBadgeClass('blunder'), 'blunder');
+assert.strictEqual(getQualityBadgeClass('mistake'), 'mistake');
+
 console.log("✓ Banner markup & styling integrity passed!");
 
 // 5. Material Difference Calculation & UI Integrity tests

@@ -6884,7 +6884,8 @@
             }
 
             function getQualityClass(quality) {
-                switch (quality) {
+                const q = (quality || '').toLowerCase().trim();
+                switch (q) {
                     case 'blunder': return 'blunder';
                     case 'missed win':
                     case 'miss': return 'miss';
@@ -6899,6 +6900,10 @@
                     case 'book': return 'book';
                     default: return '';
                 }
+            }
+
+            function getQualityBadgeClass(quality) {
+                return getQualityClass(quality);
             }
 
             // --- Key Moment Navigation & Recognition ---
@@ -7261,8 +7266,8 @@
                     }
 
                     if (window.MobileSheet) {
-                        const quality = (move.quality || 'good move').toUpperCase();
-                        const qualityClass = getQualityBadgeClass(move.quality);
+                        const quality = (move.detailed_quality || move.quality || 'good move').toUpperCase();
+                        const qualityClass = getQualityClass(move.detailed_quality || move.quality);
                         const evalFormatted = formatEvalForMoveList(move.evaluation);
                         const bestEvalFormatted = (move.analysis && move.analysis.best_evaluation) ? formatEvalForMoveList(move.analysis.best_evaluation) : '';
                         const evalDeltaStr = bestEvalFormatted && bestEvalFormatted !== evalFormatted ? `${bestEvalFormatted} → ${evalFormatted}` : evalFormatted;
@@ -7270,7 +7275,7 @@
                         window.MobileSheet.setSummary(`
                             <div class="d-flex align-items-center gap-2 text-truncate">
                                 <span class="fw-bold">${movePrefix}${formatSanWithFigurines(playedBase + playedGlyph, move.is_white)}</span>
-                                <span class="badge ${qualityClass}" style="font-size:var(--m-fs-chip);">${quality}</span>
+                                <span class="badge-q ${qualityClass}" style="font-size:var(--m-fs-chip);">${quality}</span>
                                 <span class="text-muted small">${evalDeltaStr}</span>
                             </div>
                         `);
