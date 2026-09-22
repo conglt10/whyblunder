@@ -889,7 +889,7 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(coach.moveHistory.length, 2);
 
     // Test Hint Generation
-    const hint = coach.generateHint();
+    const hint = await coach.generateHint();
     assert(hint.hintText.includes('Coach Hint:'), "Hint text should be prefixed with 'Coach Hint:'");
     assert(Array.isArray(hint.highlightSquares), "highlightSquares must be an array");
 
@@ -1098,7 +1098,7 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(tbToolbarCoach.lastSuggestedMove.to, 'e4');
 
     // Hint should align with the suggested move
-    const hintRes = tbToolbarCoach.generateHint();
+    const hintRes = await tbToolbarCoach.generateHint();
     assert(hintRes.hintText.includes('e4'), `Hint should suggest e4, got: ${hintRes.hintText}`);
     assert.deepStrictEqual(hintRes.highlightSquares, ['e2']);
 
@@ -1926,17 +1926,161 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     // A. Defended knight: capturing with Queen is unsound (SEE <= 0), must NOT suggest tactical capture
     const coachDefended = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
     coachDefended.chess.load('r1bqkb1r/ppp2ppp/3p4/4n3/4Q3/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1');
-    const defendedHint = coachDefended.generateHint();
+    const defendedHint = await coachDefended.generateHint();
     assert(!defendedHint.hintText.includes('tactical capture available'),
         `Hint must NOT suggest unsound capture with negative SEE, got: ${defendedHint.hintText}`);
 
     // B. Undefended piece: capturing with Queen is sound (SEE > 0), MUST suggest tactical capture
     const coachUndefended = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
     coachUndefended.chess.load('r1bqkb1r/pppp1ppp/8/4n3/4Q3/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1');
-    const undefendedHint = coachUndefended.generateHint();
+    const undefendedHint = await coachUndefended.generateHint();
     assert(undefendedHint.hintText.includes('tactical capture available'),
         `Hint MUST announce tactical capture when SEE > 0, got: ${undefendedHint.hintText}`);
-    assert(undefendedHint.highlightSquares.includes('e5'), "Hint must highlight target square e5");
+    assert(undefendedHint.highlightSquares.includes('e5') || undefendedHint.targetSquares.includes('e5'), "Hint must highlight target square e5");
+
+    // 11b. Progressive Coach Hints & Motif-Aware Baits Tests (progressive-coach-hints-plan.md)
+    console.log("Testing Progressive Coach Hints & Motif-Aware Baits (8 tests)...");
+
+    // 1. Escalation ladder 1->4 on a fixed fork position
+    const coachFork = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachFork.chess.load('r3k2r/pppb1ppp/8/1N6/8/8/PPPP1PPP/R1B1K2R w KQkq - 0 1');
+    coachFork._positionEvalCache.set(coachFork._normalizeFen(coachFork.chess.fen()), {
+        bestSan: 'Nxc7+',
+        lines: { 1: { pv: ['b5c7', 'e8d8', 'c7a8'] } }
+    });
+
+    const h1 = await coachFork.generateHint();
+    assert.strictEqual(h1.level, 1, "First hint press must be level 1");
+    assert.strictEqual(h1.maxLevel, 4);
+    assert.strictEqual(h1.motif, 'fork', "Motif should be fork");
+    assert(h1.hintText.toLowerCase().includes('fork'), `Level 1 must mention fork, got: ${h1.hintText}`);
+    assert.deepStrictEqual(h1.highlightSquares, ['b5'], "Level 1 must highlight piece source square 'b5'");
+    assert.strictEqual(h1.arrow, null, "Level 1 must have no arrow");
+
+    const h2 = await coachFork.generateHint();
+    assert.strictEqual(h2.level, 2, "Second hint press must be level 2");
+    assert.deepStrictEqual(h2.highlightSquares, ['b5']);
+    assert(Array.isArray(h2.targetSquares) && h2.targetSquares.length >= 2, "Level 2 must include target squares");
+    assert.strictEqual(h2.arrow, null, "Level 2 must have no arrow");
+
+    const h3 = await coachFork.generateHint();
+    assert.strictEqual(h3.level, 3, "Third hint press must be level 3");
+    assert(h3.highlightSquares.includes('b5') && h3.highlightSquares.includes('c7'), "Level 3 highlights from and to");
+    assert.strictEqual(h3.arrow, null, "Level 3 must have no arrow");
+
+    const h4 = await coachFork.generateHint();
+    assert.strictEqual(h4.level, 4, "Fourth hint press must be level 4");
+    assert.deepStrictEqual(h4.arrow, { from: 'b5', to: 'c7' }, "Level 4 must return arrow equal to answer move");
+    assert(h4.hintText.includes('Nxc7+'), `Level 4 must name move Nxc7+, got: ${h4.hintText}`);
+
+    // Fifth press stays capped at level 4 and maintains arrow
+    const h5 = await coachFork.generateHint();
+    assert.strictEqual(h5.level, 4);
+    assert.deepStrictEqual(h5.arrow, { from: 'b5', to: 'c7' });
+
+    // 2. Reset: hint twice, play a move, hint again -> level === 1. The same after takeback()
+    const coachReset = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachReset.chess.load('r3k2r/pppb1ppp/8/1N6/8/8/PPPP1PPP/R1B1K2R w KQkq - 0 1');
+    await coachReset.generateHint();
+    const rHint2 = await coachReset.generateHint();
+    assert.strictEqual(rHint2.level, 2);
+    await coachReset.handleUserMove('Nxc7+');
+    assert.strictEqual(coachReset.getHintState().level, 0, "Hint level must reset to 0 after user move");
+
+    const coachTb = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    await coachTb.handleUserMove('e4');
+    await coachTb.computeCoachMove();
+    await coachTb.generateHint();
+    await coachTb.generateHint();
+    assert.strictEqual(coachTb.getHintState().level, 2);
+    coachTb.takeback();
+    assert.strictEqual(coachTb.getHintState().level, 0, "Hint level must reset to 0 after takeback");
+    const tbHint = await coachTb.generateHint();
+    assert.strictEqual(tbHint.level, 1, "First hint after takeback must be level 1");
+
+    // 3. Tracking: hint x2 then play -> player record hintsUsed === 2, hintStats.totalPresses === 2
+    const coachTrack = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachTrack.chess.load('r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2');
+    await coachTrack.generateHint();
+    await coachTrack.generateHint();
+    assert.strictEqual(coachTrack.hintStats.totalPresses, 2);
+    const trackMoveRes = await coachTrack.handleUserMove('Nf3');
+    assert.strictEqual(trackMoveRes.success, true);
+    const playerRecord = coachTrack.moveHistory[coachTrack.moveHistory.length - 1];
+    assert.strictEqual(playerRecord.hintsUsed, 2, "Player record hintsUsed must be 2");
+
+    // 4. Challenge hint: with pendingChallenge, level-1 highlight is the refuting piece's from, not coach's moved square
+    const coachChallenge = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachChallenge.chess.load('rnb1kbnr/pppp1ppp/8/4q3/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 1');
+    coachChallenge.pendingChallenge = {
+        move: { from: 'd8', to: 'e5' }, // Coach moved queen to e5
+        san: 'Qe5',
+        motif: 'Hanging Queen',
+        type: 'hanging',
+        refutations: ['dxe5', 'd4e5'],
+        bestSan: 'dxe5',
+        refutationMove: { from: 'd4', to: 'e5', san: 'dxe5' }
+    };
+    const chHint = await coachChallenge.generateHint();
+    assert.strictEqual(chHint.level, 1);
+    assert.deepStrictEqual(chHint.highlightSquares, ['d4'], "Challenge hint level 1 must highlight refuting piece from 'd4', not coach square 'e5'");
+
+    // 5. Hint-aware praise: solve a challenge after 2 hints -> text comes from praiseWithHint
+    const coachPraise = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachPraise.chess.load('rnb1kbnr/pppp1ppp/8/4q3/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 1');
+    coachPraise.pendingChallenge = {
+        move: { from: 'd8', to: 'e5' },
+        san: 'Qe5',
+        motif: 'Hanging Queen',
+        type: 'hanging',
+        refutations: ['dxe5'],
+        bestSan: 'dxe5',
+        refutationMove: { from: 'd4', to: 'e5', san: 'dxe5' }
+    };
+    await coachPraise.generateHint();
+    await coachPraise.generateHint();
+    assert.strictEqual(coachPraise.getHintState().level, 2);
+    const praiseRes = await coachPraise.handleUserMove('dxe5');
+    assert.strictEqual(praiseRes.success, true);
+    assert(coachPraise.persona.voice.praiseWithHint.some(phrase => praiseRes.bubble1.includes(phrase)),
+        `Solved after 2 hints should use praiseWithHint, got: ${praiseRes.bubble1}`);
+
+    // 6. Bait text: stub _findInstructiveBlunder to return type: 'pin' -> bubble 2 contains a baitByMotif.pin line
+    const coachBait = new CoachManager({ personaId: 'sophy', playerColor: 'b' });
+    coachBait.chess.load('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1');
+    coachBait._findInstructiveBlunder = async () => ({
+        move: { from: 'g1', to: 'f3' },
+        san: 'Nf3',
+        motif: 'Pin',
+        type: 'pin',
+        refutations: ['Bg4'],
+        bestSan: 'Bg4'
+    });
+    coachBait.pliesSinceBlunder = coachBait.persona.blunderInterval;
+    const coachMoveRes = await coachBait.computeCoachMove();
+    assert.strictEqual(coachMoveRes.isChallenge, true);
+    assert(coachBait.persona.voice.baitByMotif.pin.some(line => coachMoveRes.bubble2.includes(line)),
+        `Bubble 2 must contain a baitByMotif.pin line, got: ${coachMoveRes.bubble2}`);
+
+    // 7. Detector squares: detectFork(...).targetSquares equals the expected pair
+    const srModule = require('./js/situation-recognizer.js');
+    const chessModule = require('./js/chess.min.js');
+    const ChessCtor = chessModule.Chess || chessModule;
+    const forkDetBoard = new ChessCtor('r3k2r/pppb1ppp/8/1N6/8/8/PPPP1PPP/R1B1K2R w KQkq - 0 1');
+    const forkDetMove = forkDetBoard.move('Nxc7+');
+    const forkDetRes = srModule.detectFork(forkDetBoard, forkDetMove);
+    assert(forkDetRes, "detectFork must recognize the fork on c7");
+    assert.strictEqual(forkDetRes.attackerSquare, 'c7');
+    assert(Array.isArray(forkDetRes.targetSquares), "targetSquares must be an array");
+    assert(forkDetRes.targetSquares.includes('e8'), "targetSquares must include king square e8");
+    assert(forkDetRes.targetSquares.includes('a8') || forkDetRes.targetSquares.includes('d7'), "targetSquares must include rook square a8");
+
+    // 8. SEE guard: capture hint is never produced for an SEE-negative capture
+    const coachSeeGuard = new CoachManager({ personaId: 'sophy', playerColor: 'w' });
+    coachSeeGuard.chess.load('r1bqkb1r/ppp2ppp/3p4/4n3/4Q3/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1');
+    const seeGuardHint = await coachSeeGuard.generateHint();
+    assert(!seeGuardHint.hintText.includes('tactical capture available'),
+        `SEE guard must prevent recommending negative SEE capture, got: ${seeGuardHint.hintText}`);
 
     // 12. MoveDiagnostics Unified Module Tests
     console.log("Testing MoveDiagnostics module...");

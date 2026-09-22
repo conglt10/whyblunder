@@ -145,10 +145,50 @@
                     "Wait a second... did I just slip up? Can you punish this?",
                     "Tactical alert! I might have overextended. Do you see what I missed?"
                 ],
+                baitByMotif: {
+                    fork: [
+                        "Hmm, my pieces look a bit crowded. Anything jump out at you?",
+                        "Double trouble alert! Check what's lined up against my pieces."
+                    ],
+                    pin: [
+                        "Did I just freeze my piece on that line? Look closely!",
+                        "That piece can't move without disaster behind it... see it?"
+                    ],
+                    skewer: [
+                        "A line opens right through my heavy pieces. Spot the tactic!",
+                        "Look along the files and diagonals—did I just align my pieces poorly?"
+                    ],
+                    discovered: [
+                        "Watch out for surprise attacks if one of your pieces moves!",
+                        "Did I forget about the piece hiding behind yours? Uncover the threat!"
+                    ],
+                    hanging: [
+                        "Uh oh, did I leave a piece unguarded? Take a look!",
+                        "Check the defense count—did my last move drop material?"
+                    ],
+                    kingSafety: [
+                        "My king feels a bit drafty after that. Can you find the attack?",
+                        "Kingside vulnerability! Can you crack open my king?"
+                    ],
+                    mateThreat: [
+                        "Is that a mating net forming? Spot the decisive attack!",
+                        "Danger zone! Can you push for checkmate here?"
+                    ]
+                },
                 praiseSpotBlunder: [
                     "Boom! You saw right through my slip-up. Nice catch!",
                     "Great eye! You punished my mistake immediately.",
                     "You got me! That was a sharp tactical spot."
+                ],
+                praiseWithHint: [
+                    "Nice! You found it with a little nudge!",
+                    "Great follow-through! You converted the hint into a win.",
+                    "Good job spotting that after the hint!"
+                ],
+                praiseAfterReveal: [
+                    "There's the move! Good tactical execution.",
+                    "That was the solution. Keep that pattern in your memory bank!",
+                    "Clean follow-through on the revealed tactic."
                 ],
                 missedBlunder: [
                     "Phew! You let me off the hook. You had a chance to punish me there!",
@@ -267,10 +307,50 @@
                     "Uh oh! I might have left something hanging! Can you find it?",
                     "Did I make an oopsie? Spot my mistake if you can!"
                 ],
+                baitByMotif: {
+                    fork: [
+                        "Oopsie! Did I just let you attack two of my pieces at once?! 🙈",
+                        "Uh oh! Fork alert! Can you find where your piece hits two of mine?"
+                    ],
+                    pin: [
+                        "Oh no! I think one of my pieces is frozen and can't move! Pin time!",
+                        "Uh oh, is my piece stuck in front of my king? Can you spot the pin?"
+                    ],
+                    skewer: [
+                        "Oops! My pieces are standing in a straight line like bowling pins!",
+                        "Skewer alert! Did I line up my king and rook for you?"
+                    ],
+                    discovered: [
+                        "Wait, if your piece steps aside, does something laser beam into mine?",
+                        "Surprise! Look what happens if you move your piece out of the way!"
+                    ],
+                    hanging: [
+                        "Oops… did I leave something without a guard? 🙈",
+                        "Uh oh, is my piece totally free for the taking?! Check it out!"
+                    ],
+                    kingSafety: [
+                        "Yikes! My king doesn't have many friends around him! Can you check me?",
+                        "My king is looking scared! Can you find the way in?"
+                    ],
+                    mateThreat: [
+                        "Wait, am I getting checkmated?! Spot the winning move!",
+                        "Checkmate danger! Can you wrap up the game right now?"
+                    ]
+                },
                 praiseSpotBlunder: [
                     "Aww shucks, you got me! Good eye!",
                     "You found it! I knew I shouldn't have moved there!",
                     "Nice catch! You're really good at this!"
+                ],
+                praiseWithHint: [
+                    "Yay, you got it with a little hint! Super proud of you!",
+                    "Awesome! You listened to the hint and smashed it!",
+                    "Look at you go! Nice find after that clue!"
+                ],
+                praiseAfterReveal: [
+                    "Yep, that was the big move! Now you know the trick!",
+                    "There it is! Playing the top move like a champ!",
+                    "That was the solution! Great job putting it on the board!"
                 ],
                 missedBlunder: [
                     "Phew! You didn't take my piece! That was close!",
@@ -389,10 +469,50 @@
                     "Look carefully at the board. There is an instructive tactic available right now.",
                     "I made an inaccuracy. Can you find the tactical refutation?"
                 ],
+                baitByMotif: {
+                    fork: [
+                        "Tactical check: my pieces are clustered. Can you spot the fork?",
+                        "Examine the board for a double attack motif—two targets are vulnerable."
+                    ],
+                    pin: [
+                        "I think one of my pieces can't move freely now. Can you spot the pin?",
+                        "Notice the alignment with my king: an absolute pin is available."
+                    ],
+                    skewer: [
+                        "Geometry lesson: two valuable targets are aligned. Find the skewer.",
+                        "Look for an x-ray attack through the front piece onto the piece behind."
+                    ],
+                    discovered: [
+                        "A masked battery has formed. Find the discovered attack!",
+                        "Uncovering an attack: which piece should vacate to unleash the line?"
+                    ],
+                    hanging: [
+                        "Count the attackers versus defenders. Is one of my pieces hanging?",
+                        "Material calculation: my last move left a piece en prise."
+                    ],
+                    kingSafety: [
+                        "My king's shelter has been compromised. Exploit the weakened diagonal or file.",
+                        "King safety flaw: calculate the most forcing check or entry square."
+                    ],
+                    mateThreat: [
+                        "Calculate the mating net—my king has run out of escape squares.",
+                        "Forcing mate sequence available. Don't rush, calculate precisely."
+                    ]
+                },
                 praiseSpotBlunder: [
                     "Well done! You correctly recognized the tactical motif.",
                     "Spot on! That is exactly how to punish that mistake.",
                     "Excellent tactical calculation! Clean and precise."
+                ],
+                praiseWithHint: [
+                    "Well done! You pieced the tactic together with that clue.",
+                    "Good work! You recognized the theme after the hint.",
+                    "Excellent execution once the motif was highlighted."
+                ],
+                praiseAfterReveal: [
+                    "That is the textbook refutation. Commit that motif to memory.",
+                    "Correct execution of the revealed move. Good technique.",
+                    "That was the solution line. Solid tactical pattern to remember."
                 ],
                 missedBlunder: [
                     "You let me off the hook! Take a look at the alternative: you had a tactical win.",
@@ -512,10 +632,50 @@
                     "Did I slip up? Let's see if your tactical vision is sharp enough.",
                     "A rare opening. Spot the punish if you can."
                 ],
+                baitByMotif: {
+                    fork: [
+                        "A subtle geometric vulnerability. Can you exploit the double attack?",
+                        "Two loose pieces share a focal square. Find it."
+                    ],
+                    pin: [
+                        "A pin paralyzes the defense. Exploit the frozen square.",
+                        "Structural tension along the line. See the pin?"
+                    ],
+                    skewer: [
+                        "A line opens. Few players see the skewer.",
+                        "Linear geometry on the open diagonal. Find the penetration."
+                    ],
+                    discovered: [
+                        "The front piece acts as a detonator. Unmask the discovered attack.",
+                        "Discovered attack potential. Vacate with maximum effect."
+                    ],
+                    hanging: [
+                        "A tactical lapse in protection. The exchange math is in your favor.",
+                        "Loose piece. Punish the lack of defense."
+                    ],
+                    kingSafety: [
+                        "King shelter is fractured. Find the surgical mating attack.",
+                        "The king is critically exposed. Precision required."
+                    ],
+                    mateThreat: [
+                        "Mating net closing in. Calculate to the finish.",
+                        "Inescapable checkmate sequence. Show me the technique."
+                    ]
+                },
                 praiseSpotBlunder: [
                     "Impressive! You actually found the punishment. Very sharp.",
                     "Top class. You spotted the tactical shot immediately.",
                     "Respect. That was a grandmaster-level response."
+                ],
+                praiseWithHint: [
+                    "You converted the clue into the correct line. Acceptable.",
+                    "Good adjustment after the hint. That's the right calculation.",
+                    "You found the tactic once pointed in the right direction."
+                ],
+                praiseAfterReveal: [
+                    "That is the engine line. Technique completed.",
+                    "The refutation is played. Learn the underlying geometry.",
+                    "Standard conversion on the revealed solution."
                 ],
                 missedBlunder: [
                     "You missed the critical refutation. At this level, you have to seize every chance.",
@@ -570,6 +730,212 @@
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    /**
+     * Progressive Coach Hint Templates organized by motif and ladder level (1-4).
+     * Provides differentiated phrasing for beginner (<=900 Elo), default (1000-1900 Elo),
+     * and master (>=2000 Elo) personas.
+     */
+    const HINT_TEMPLATES = {
+        fork: {
+            1: {
+                beginner: "Coach Hint: Can you spot a fork? Look closely at your {piece} on {from}.",
+                default: "Coach Hint: There's a tactical fork hiding here. Can you spot which square your {piece} can attack from?",
+                master: "Coach Hint: Geometric motif: there is a double attack available with your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: Your {piece} can attack {targetNames} at the same time!",
+                default: "Coach Hint: Your {piece} can strike multiple targets at once ({targetNames}).",
+                master: "Coach Hint: Multiple enemy targets ({targetNames}) are vulnerable to a simultaneous attack."
+            },
+            3: {
+                beginner: "Coach Hint: Try moving your {piece} to {to}!",
+                default: "Coach Hint: Look at {to}, where your {piece} attacks multiple pieces simultaneously.",
+                master: "Coach Hint: Focus on {to} to establish an inescapable double attack."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! It forks {targetNames}!",
+                default: "Coach Hint: {san}! After this fork, you win material.{followUpText}",
+                master: "Coach Hint: {san} is decisive, creating an unresolvable double attack.{followUpText}"
+            }
+        },
+        pin: {
+            1: {
+                beginner: "Coach Hint: Can you spot a pin? Look at your {piece} on {from}.",
+                default: "Coach Hint: There is a pin you can exploit. Take a close look at your {piece} on {from}.",
+                master: "Coach Hint: Relative or absolute pin: find the line of fire for your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: My piece is pinned in front of something valuable! Put pressure on it.",
+                default: "Coach Hint: An enemy piece cannot move freely without exposing a high-value piece behind it.",
+                master: "Coach Hint: Exploit the pinned piece along the line to paralyze the enemy defense."
+            },
+            3: {
+                beginner: "Coach Hint: Put pressure on the pinned piece by moving to {to}!",
+                default: "Coach Hint: Move your {piece} to {to} to target and paralyze the pinned piece.",
+                master: "Coach Hint: Press the pinned unit by targeting {to}."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! It pins and wins!",
+                default: "Coach Hint: {san}! Exploiting the pin to win material or dominate the line.{followUpText}",
+                master: "Coach Hint: {san} exploits the pin with maximum technical force.{followUpText}"
+            }
+        },
+        skewer: {
+            1: {
+                beginner: "Coach Hint: Look for a skewer! Your {piece} on {from} can line up two pieces.",
+                default: "Coach Hint: An alignment allows a skewer with your {piece} on {from}.",
+                master: "Coach Hint: Linear geometry: a skewer can be executed with your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: Attack the more valuable piece in front so the piece behind it is left open!",
+                default: "Coach Hint: Lining up the enemy pieces: once the front piece steps aside, the one behind is lost.",
+                master: "Coach Hint: Skewer the enemy pieces along the open file, rank, or diagonal."
+            },
+            3: {
+                beginner: "Coach Hint: Aim your {piece} at {to}!",
+                default: "Coach Hint: Move your {piece} to {to} to skewer the aligned pieces.",
+                master: "Coach Hint: {to} establishes the penetrating skewer ray."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! The skewer wins material!",
+                default: "Coach Hint: {san}! The front piece must evade, leaving the piece behind it to fall.{followUpText}",
+                master: "Coach Hint: {san} skewers the pieces decisively.{followUpText}"
+            }
+        },
+        discovered: {
+            1: {
+                beginner: "Coach Hint: What happens if your {piece} on {from} gets out of the way?",
+                default: "Coach Hint: A discovered attack is waiting! Look at your {piece} on {from}.",
+                master: "Coach Hint: Battery unmasking: vacating {from} unleashes a discovered attack."
+            },
+            2: {
+                beginner: "Coach Hint: Moving your {piece} will unleash a surprise attack on my {targetNames}!",
+                default: "Coach Hint: Moving your {piece} uncovers a direct line of attack from your backline piece against {targetNames}.",
+                master: "Coach Hint: Moving the front piece exposes a masked attack on {targetNames}."
+            },
+            3: {
+                beginner: "Coach Hint: Look at moving your {piece} to {to} to reveal the attack!",
+                default: "Coach Hint: Reposition your {piece} to {to}, uncovering the line of attack with tempo.",
+                master: "Coach Hint: {to} unmasks the discovered attack with maximum tactical impact."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! It unmasks the discovered attack!",
+                default: "Coach Hint: {san}! Uncovering the attack wins decisive material or initiative.{followUpText}",
+                master: "Coach Hint: {san} unmasks the discovered attack cleanly.{followUpText}"
+            }
+        },
+        hanging: {
+            1: {
+                beginner: "Coach Hint: Is anything of mine unprotected? Look at your {piece} on {from}.",
+                default: "Coach Hint: You have a tactical capture available! Look at your {piece} on {from}.",
+                master: "Coach Hint: Tactical oversight: undefended piece en prise for your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: Count my defenders—look closely at my loose piece on {to}!",
+                default: "Coach Hint: The enemy piece on {to} is undefended or insufficiently guarded.",
+                master: "Coach Hint: Static exchange evaluation favors capturing on {to}."
+            },
+            3: {
+                beginner: "Coach Hint: Your {piece} can capture on {to} right now!",
+                default: "Coach Hint: Target {to}—capturing there wins clean material without adequate defense.",
+                master: "Coach Hint: Capture on {to} to collect the unprotected material."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! Grab the free piece!",
+                default: "Coach Hint: {san}! Capturing on {to} safely wins material.{followUpText}",
+                master: "Coach Hint: {san} takes the loose piece, converting the advantage.{followUpText}"
+            }
+        },
+        mateThreat: {
+            1: {
+                beginner: "Coach Hint: My king looks drafty! Look at your {piece} on {from}.",
+                default: "Coach Hint: Checkmating net or mating attack available! Focus on your {piece} on {from}.",
+                master: "Coach Hint: Mating net: calculate the forcing mating sequence starting with your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: You can trap my king with checks or unstoppable mate threats!",
+                default: "Coach Hint: The enemy king lacks escape squares. Look for the most forcing line.",
+                master: "Coach Hint: King safety is fatally compromised; calculate the mating corridor."
+            },
+            3: {
+                beginner: "Coach Hint: Aim your {piece} at {to} to tighten the net!",
+                default: "Coach Hint: Move your {piece} to {to} to bring unstoppable mating pressure.",
+                master: "Coach Hint: {to} executes the decisive mating threat."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! It leads to checkmate!",
+                default: "Coach Hint: {san}! A lethal blow sealing the checkmate or decisive win.{followUpText}",
+                master: "Coach Hint: {san} finishes the attack with unavoidable mate.{followUpText}"
+            }
+        },
+        check: {
+            1: {
+                beginner: "Coach Hint: You have an active check! Look at your {piece} on {from}.",
+                default: "Coach Hint: Look for a forcing check to pressure the enemy King with your {piece} on {from}.",
+                master: "Coach Hint: Forcing tempo: evaluate the check available with your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: Checking the king forces me to respond while you keep the initiative!",
+                default: "Coach Hint: A check here restricts opponent options and keeps tempo firmly on your side.",
+                master: "Coach Hint: Initiating checks constrains the defense and drives the king into vulnerability."
+            },
+            3: {
+                beginner: "Coach Hint: Look at checking from {to}!",
+                default: "Coach Hint: Mobilize your {piece} to {to} to deliver check and restrict the king.",
+                master: "Coach Hint: Step to {to} with check to control the initiative."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! Check!",
+                default: "Coach Hint: {san}! An aggressive check that maintains strong initiative.{followUpText}",
+                master: "Coach Hint: {san} delivers check with optimal tactical pressure.{followUpText}"
+            }
+        },
+        trapped: {
+            1: {
+                beginner: "Coach Hint: One of my pieces has no safe squares! Look at your {piece} on {from}.",
+                default: "Coach Hint: You can trap an enemy piece using your {piece} on {from}.",
+                master: "Coach Hint: Domination motif: an enemy piece's escape squares can be completely cut off."
+            },
+            2: {
+                beginner: "Coach Hint: An enemy piece is boxed in with nowhere to run!",
+                default: "Coach Hint: The opponent's piece mobility is restricted—trap it and win material.",
+                master: "Coach Hint: Systematic square denial traps the target piece."
+            },
+            3: {
+                beginner: "Coach Hint: Move your {piece} to {to} to shut the door!",
+                default: "Coach Hint: Advance to {to} to cut off the final retreat square.",
+                master: "Coach Hint: {to} clamps the trap shut on the target piece."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! The piece is trapped!",
+                default: "Coach Hint: {san}! The trapped piece cannot escape capture.{followUpText}",
+                master: "Coach Hint: {san} traps the piece decisively.{followUpText}"
+            }
+        },
+        positional: {
+            1: {
+                beginner: "Coach Hint: No direct tactic here. Look at improving your {piece} on {from}.",
+                default: "Coach Hint: Solid positional play: look to activate your {piece} on {from}.",
+                master: "Coach Hint: Positional prophylaxis and coordination: find the ideal square for your {piece}."
+            },
+            2: {
+                beginner: "Coach Hint: Your {piece} on {from} isn't doing much yet. Find a more active square!",
+                default: "Coach Hint: Look to control the center, open files, or key outposts with your {piece}.",
+                master: "Coach Hint: Enhance piece harmony and contest structural weaknesses."
+            },
+            3: {
+                beginner: "Coach Hint: Consider moving your {piece} toward {to}!",
+                default: "Coach Hint: Re-routing your {piece} to {to} secures better space and activity.",
+                master: "Coach Hint: Station your {piece} on {to} to dominate vital outposts."
+            },
+            4: {
+                beginner: "Coach Hint: Try playing {san}! It improves your piece placement.",
+                default: "Coach Hint: {san}! A harmonious positional move improving piece activity.{followUpText}",
+                master: "Coach Hint: {san} optimizes your coordination and maintains strategic control.{followUpText}"
+            }
+        }
+    };
+
     class CoachManager {
         /**
          * @param {object} options
@@ -610,10 +976,37 @@
                 openingPrinciple: 0
             };
 
+            // Progressive Hint Ladder State & Tracking
+            this.hintState = {
+                posKey: null,
+                level: 0,
+                plan: null
+            };
+            this.hintStats = {
+                totalPresses: 0,
+                movesWithHints: 0,
+                fullReveals: 0,
+                challengesSolved: {
+                    unaided: 0,
+                    withHints: 0,
+                    missed: 0
+                }
+            };
+            this.pendingOpportunity = null;
+            this.lastBaitType = null;
+
             // Current speech commentary
             this.currentBubble1 = this.persona.voice.intro;
             this.currentBubble2 = "Make your opening move to get started!";
             this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
+        }
+
+        _resetHintState() {
+            this.hintState = {
+                posKey: null,
+                level: 0,
+                plan: null
+            };
         }
 
         getDialogue() {
@@ -632,6 +1025,7 @@
                     this.currentBubble1 = this.persona.voice.intro;
                     this.currentBubble2 = "Make your opening move to get started!";
                     this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
+                    this._resetHintState();
                 }
                 this._configureWorkerElo();
             }
@@ -746,6 +1140,20 @@
             this.announcedOpening = false;
             this.lastSuggestedMove = null;
             this._positionEvalCache.clear();
+
+            this._resetHintState();
+            this.hintStats = {
+                totalPresses: 0,
+                movesWithHints: 0,
+                fullReveals: 0,
+                challengesSolved: {
+                    unaided: 0,
+                    withHints: 0,
+                    missed: 0
+                }
+            };
+            this.pendingOpportunity = null;
+            this.lastBaitType = null;
 
             this.currentBubble1 = this.persona.voice.intro;
             this.currentBubble2 = (this.playerColor === 'w')
@@ -864,6 +1272,9 @@
             }
 
             // 1. Check if user is resolving an active intentional blunder challenge
+            const posKey = this._normalizeFen(fenBefore);
+            const hintsOnThisMove = (this.hintState && this.hintState.posKey === posKey) ? (this.hintState.level || 0) : 0;
+
             let challengeFeedback = null;
             if (this.pendingChallenge) {
                 const playedUci = legalMove.from + legalMove.to;
@@ -872,22 +1283,61 @@
                 });
 
                 if (isPunished) {
+                    let praiseText;
+                    if (hintsOnThisMove === 0) {
+                        this.hintStats.challengesSolved.unaided = (this.hintStats.challengesSolved.unaided || 0) + 1;
+                        praiseText = pickRandom(this.persona.voice.praiseSpotBlunder);
+                    } else if (hintsOnThisMove <= 2) {
+                        this.hintStats.challengesSolved.withHints = (this.hintStats.challengesSolved.withHints || 0) + 1;
+                        praiseText = pickRandom(this.persona.voice.praiseWithHint || ["Nice, you got it with a nudge!"]);
+                    } else {
+                        this.hintStats.challengesSolved.withHints = (this.hintStats.challengesSolved.withHints || 0) + 1;
+                        praiseText = pickRandom(this.persona.voice.praiseAfterReveal || ["Good execution on the tactic."]);
+                    }
                     challengeFeedback = {
                         success: true,
-                        text: pickRandom(this.persona.voice.praiseSpotBlunder)
+                        text: praiseText
                     };
                 } else {
+                    this.hintStats.challengesSolved.missed = (this.hintStats.challengesSolved.missed || 0) + 1;
                     const bestText = this.pendingChallenge.bestSan || 'the tactical refutation';
                     challengeFeedback = {
                         success: false,
                         text: `${pickRandom(this.persona.voice.missedBlunder)} (${bestText} was the punishing tactic!)`
                     };
                 }
+
+                // Learner model: a motif that needed >= 3 hints bumps the related errorProfile counter by 0.5
+                if (hintsOnThisMove >= 3 && this.pendingChallenge.type) {
+                    const cType = this.pendingChallenge.type;
+                    if (cType === 'hanging') {
+                        this.errorProfile.hangingPiece = (this.errorProfile.hangingPiece || 0) + 0.5;
+                    } else if (cType === 'fork') {
+                        this.errorProfile.missedFork = (this.errorProfile.missedFork || 0) + 0.5;
+                        this.errorProfile.tacticalBlunder = (this.errorProfile.tacticalBlunder || 0) + 0.5;
+                    } else if (cType === 'pin' || cType === 'skewer' || cType === 'discovered') {
+                        this.errorProfile.tacticalBlunder = (this.errorProfile.tacticalBlunder || 0) + 0.5;
+                    } else if (cType === 'kingSafety' || cType === 'mateThreat') {
+                        this.errorProfile.kingSafety = (this.errorProfile.kingSafety || 0) + 0.5;
+                    }
+                }
+
                 this.pendingChallenge = null;
+            } else if (hintsOnThisMove >= 3 && this.hintState && this.hintState.plan && this.hintState.plan.motif) {
+                const mType = this.hintState.plan.motif;
+                if (mType === 'hanging') {
+                    this.errorProfile.hangingPiece = (this.errorProfile.hangingPiece || 0) + 0.5;
+                } else if (mType === 'fork') {
+                    this.errorProfile.missedFork = (this.errorProfile.missedFork || 0) + 0.5;
+                    this.errorProfile.tacticalBlunder = (this.errorProfile.tacticalBlunder || 0) + 0.5;
+                } else if (mType === 'pin' || mType === 'skewer' || mType === 'discovered') {
+                    this.errorProfile.tacticalBlunder = (this.errorProfile.tacticalBlunder || 0) + 0.5;
+                } else if (mType === 'kingSafety' || mType === 'check' || mType === 'mateThreat') {
+                    this.errorProfile.kingSafety = (this.errorProfile.kingSafety || 0) + 0.5;
+                }
             }
 
             // 2. Evaluation of user move quality (with deterministic caching & coach suggestion memory)
-            const posKey = this._normalizeFen(fenBefore);
             const playedUci = legalMove.from + legalMove.to + (legalMove.promotion || '');
             const playedFrom = legalMove.from;
             const playedTo = legalMove.to;
@@ -1310,6 +1760,13 @@
                 this.currentDialogue = this._getGameOverMessage();
             }
 
+            if (hintsOnThisMove > 0) {
+                this.hintStats.movesWithHints = (this.hintStats.movesWithHints || 0) + 1;
+                if (hintsOnThisMove >= 4) {
+                    this.hintStats.fullReveals = (this.hintStats.fullReveals || 0) + 1;
+                }
+            }
+
             const record = {
                 ply,
                 san: legalMove.san,
@@ -1317,6 +1774,7 @@
                 to: legalMove.to,
                 moveObj: legalMove,
                 isPlayer: true,
+                hintsUsed: hintsOnThisMove,
                 bubble1,
                 bubble2,
                 dialogue: this.currentDialogue,
@@ -1333,6 +1791,7 @@
                 fen: this.chess.fen()
             };
             this.moveHistory.push(record);
+            this._resetHintState();
 
             return {
                 success: true,
@@ -1365,6 +1824,7 @@
 
             const currentFen = this.chess.fen();
             this.pliesSinceBlunder++;
+            this._resetHintState();
 
             let selectedMove = null;
             let isChallenge = false;
@@ -1379,6 +1839,7 @@
                     isChallenge = true;
                     challengeData = blunderCandidate;
                     this.pendingChallenge = blunderCandidate;
+                    this.lastBaitType = blunderCandidate.type;
                     this.pliesSinceBlunder = 0;
                 }
             }
@@ -1411,6 +1872,65 @@
 
             // C. Generate Dual Speech Bubbles
             const bubbles = this._generateCoachBubbles(boardBefore, boardAfter, executed, isChallenge, challengeData);
+
+            // D. Opportunity Nudge (Section 3.6): Check for unprompted tactical opportunity
+            if (!isChallenge && !this.isGameOver) {
+                const shouldCheckOpp = (this.persona.id === 'mcmarty' || this.persona.id === 'sophy')
+                    ? true
+                    : (this.persona.id === 'pikaru')
+                        ? (ply % 2 === 0)
+                        : false;
+                if (shouldCheckOpp && this.worker && typeof this.worker.evaluate === 'function') {
+                    try {
+                        const oppFen = this.chess.fen();
+                        const oppEval = await this._evaluatePosition(oppFen, 8, 2);
+                        if (oppEval && oppEval.lines && oppEval.lines[1] && oppEval.lines[2]) {
+                            const l1 = oppEval.lines[1];
+                            const l2 = oppEval.lines[2];
+                            const cp1 = l1.cp !== undefined ? l1.cp : 0;
+                            const cp2 = l2.cp !== undefined ? l2.cp : 0;
+                            const isSignificant = (cp1 - cp2 >= 150) || (l1.mate && !l2.mate);
+                            if (isSignificant && l1.pv && l1.pv[0]) {
+                                const Recognizer = getRecognizer();
+                                const motifRes = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                                    ? Recognizer.classifyTacticalMotif(oppFen, l1.pv[0])
+                                    : null;
+                                if (motifRes && motifRes.motif !== 'positional') {
+                                    const oppBoard = new this.Chess(oppFen);
+                                    const moveEx = oppBoard.move(l1.pv[0].length >= 4 ? { from: l1.pv[0].slice(0, 2), to: l1.pv[0].slice(2, 4), promotion: l1.pv[0][4] } : l1.pv[0]);
+                                    if (moveEx) {
+                                        const oppPlan = {
+                                            source: 'opportunity',
+                                            motif: motifRes.motif,
+                                            move: { from: moveEx.from, to: moveEx.to, san: moveEx.san, uci: l1.pv[0], piece: moveEx.piece },
+                                            keySquares: motifRes.keySquares || { targets: [] },
+                                            followUp: null
+                                        };
+                                        this.pendingOpportunity = {
+                                            posKey: this._normalizeFen(oppFen),
+                                            plan: oppPlan
+                                        };
+
+                                        let nudgeText = "";
+                                        if (this.persona.id === 'mcmarty') {
+                                            nudgeText = " Hmm, I have a feeling you might have something tricky here!";
+                                        } else if (this.persona.id === 'sophy') {
+                                            nudgeText = " Look closely at this position—there could be a tactical opportunity.";
+                                        } else if (this.persona.id === 'pikaru') {
+                                            nudgeText = " Wait a second, do you have a tactical shot here?";
+                                        }
+                                        if (nudgeText) {
+                                            bubbles.bubble2 = (bubbles.bubble2 || "") + nudgeText;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.debug?.('[coach] opportunity nudge error:', e);
+                    }
+                }
+            }
             
             // PRESERVE Bubble 1 from the player's last move so the user's feedback is not wiped!
             let playerFeedback = "";
@@ -1465,7 +1985,7 @@
         }
 
         /**
-         * Inspects candidate moves to find an instructive tactical mistake (Hanging piece, Fork, Pin, etc.).
+         * Inspects candidate moves to find an instructive tactical mistake (Hanging piece, Fork, Pin, Skewer, Discovered Attack, Mate Threat, etc.).
          */
         async _findInstructiveBlunder(fen) {
             const Recognizer = getRecognizer();
@@ -1479,6 +1999,7 @@
                 // Search MultiPV=5
                 const multiEval = await this._evaluatePosition(fen, 8, 5);
                 const boardBefore = new this.Chess(fen);
+                const candidates = [];
 
                 for (let pvIndex = 2; pvIndex <= 5; pvIndex++) {
                     const line = multiEval.lines[pvIndex];
@@ -1507,103 +2028,179 @@
                         }
                     }
 
-                    // Prioritize weaknesses from learner error profile
-                    const preferTactics = Boolean(this.errorProfile && (this.errorProfile.missedFork >= 2 || this.errorProfile.tacticalBlunder >= 2));
-                    const preferHanging = Boolean(this.errorProfile && this.errorProfile.hangingPiece >= 2);
-                    const preferKingSafety = Boolean(this.errorProfile && this.errorProfile.kingSafety >= 2);
-
-                    if (preferKingSafety && repEx) {
-                        const replyBoard = new this.Chess(testBoard.fen());
-                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
-                        if (replyBoard.in_check && replyBoard.in_check()) {
-                            return {
-                                move: candMove,
-                                san: moveExecuted.san,
-                                motif: 'Exposed King',
-                                refutations: [refUci, repEx.san],
-                                bestSan: repEx.san,
-                                type: 'kingSafety'
-                            };
-                        }
+                    let followUp = null;
+                    const followUci = line.pv[2] || '';
+                    if (followUci.length >= 4 && repEx) {
+                        try {
+                            const folBoard = new this.Chess(testBoard.fen());
+                            folBoard.move(repEx);
+                            const folEx = folBoard.move({ from: followUci.slice(0, 2), to: followUci.slice(2, 4), promotion: followUci[4] });
+                            if (folEx) {
+                                followUp = folEx.san;
+                            }
+                        } catch (e) {}
                     }
 
-                    if (preferHanging) {
-                        const hanging = Recognizer.detectHangingPieceBlunder(boardBefore, testBoard, moveExecuted);
-                        if (hanging) {
-                            return {
-                                move: candMove,
-                                san: moveExecuted.san,
-                                motif: `Hanging ${hanging.piece}`,
-                                refutations: [refUci, refSan],
-                                bestSan: refSan,
-                                type: 'hanging'
-                            };
-                        }
-                    }
-
-                    if (preferTactics && repEx) {
-                        const replyBoard = new this.Chess(testBoard.fen());
+                    // Check for Mate Threat / Checkmate
+                    let replyBoard = null;
+                    if (repEx) {
+                        replyBoard = new this.Chess(testBoard.fen());
                         replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
-                        const fork = Recognizer.detectFork(replyBoard, repEx);
-                        if (fork) {
-                            return {
-                                move: candMove,
-                                san: moveExecuted.san,
-                                motif: 'Tactical Fork',
-                                refutations: [refUci, repEx.san],
-                                bestSan: repEx.san,
-                                type: 'fork'
-                            };
-                        }
+                    }
+                    const isMated = replyBoard && replyBoard.in_checkmate && replyBoard.in_checkmate();
+                    const isMateScore = (line.mate !== undefined && line.mate !== null && line.mate < 0);
+                    if (isMated || isMateScore) {
+                        candidates.push({
+                            move: candMove,
+                            san: moveExecuted.san,
+                            motif: 'Mate Threat',
+                            refutations: [refUci, repEx ? repEx.san : refSan],
+                            bestSan: repEx ? repEx.san : refSan,
+                            type: 'mateThreat',
+                            refutationMove: repEx ? { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci } : null,
+                            keySquares: { targets: [candMove.to] },
+                            followUp
+                        });
+                        continue;
                     }
 
                     // 1. Hanging Piece Blunder
                     const hanging = Recognizer.detectHangingPieceBlunder(boardBefore, testBoard, moveExecuted);
                     if (hanging) {
-                        return {
+                        candidates.push({
                             move: candMove,
                             san: moveExecuted.san,
                             motif: `Hanging ${hanging.piece}`,
                             refutations: [refUci, refSan],
                             bestSan: refSan,
-                            type: 'hanging'
-                        };
+                            type: 'hanging',
+                            refutationMove: repEx ? { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci } : null,
+                            keySquares: { targets: [moveExecuted.to] },
+                            followUp
+                        });
+                        continue;
                     }
 
                     // 2. Walking into a tactical fork
-                    if (repEx) {
-                        const replyBoard = new this.Chess(testBoard.fen());
-                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                    if (repEx && replyBoard) {
                         const fork = Recognizer.detectFork(replyBoard, repEx);
                         if (fork) {
-                            return {
+                            candidates.push({
                                 move: candMove,
                                 san: moveExecuted.san,
                                 motif: 'Tactical Fork',
                                 refutations: [refUci, repEx.san],
                                 bestSan: repEx.san,
-                                type: 'fork'
-                            };
+                                type: 'fork',
+                                refutationMove: { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci },
+                                keySquares: { targets: fork.targetSquares || [], attackerSquare: fork.attackerSquare || repEx.to },
+                                followUp
+                            });
+                            continue;
                         }
                     }
 
                     // 3. Walking into a pin
-                    if (repEx) {
-                        const replyBoard = new this.Chess(testBoard.fen());
-                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                    if (repEx && replyBoard) {
                         const pin = Recognizer.detectPin(replyBoard, repEx);
                         if (pin) {
-                            return {
+                            candidates.push({
                                 move: candMove,
                                 san: moveExecuted.san,
                                 motif: 'Pin',
                                 refutations: [refUci, repEx.san],
                                 bestSan: repEx.san,
-                                type: 'pin'
-                            };
+                                type: 'pin',
+                                refutationMove: { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci },
+                                keySquares: { targets: [pin.pinnedSquare].filter(Boolean), pinnedSquare: pin.pinnedSquare, behindSquare: pin.behindSquare, line: pin.line || [] },
+                                followUp
+                            });
+                            continue;
                         }
                     }
+
+                    // 4. Walking into a skewer
+                    if (repEx && replyBoard && typeof Recognizer.detectSkewer === 'function') {
+                        const skewer = Recognizer.detectSkewer(replyBoard, repEx);
+                        if (skewer) {
+                            candidates.push({
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Skewer',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'skewer',
+                                refutationMove: { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci },
+                                keySquares: { targets: [skewer.frontSquare, skewer.backSquare].filter(Boolean), frontSquare: skewer.frontSquare, backSquare: skewer.backSquare },
+                                followUp
+                            });
+                            continue;
+                        }
+                    }
+
+                    // 5. Walking into a discovered attack
+                    if (repEx && replyBoard && typeof Recognizer.detectDiscoveredAttack === 'function') {
+                        const disc = Recognizer.detectDiscoveredAttack(testBoard, replyBoard, repEx);
+                        if (disc) {
+                            candidates.push({
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Discovered Attack',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'discovered',
+                                refutationMove: { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci },
+                                keySquares: { targets: disc.targetSquare ? [disc.targetSquare] : [], blockerSquare: disc.blockerSquare, sliderSquare: disc.sliderSquare, targetSquare: disc.targetSquare },
+                                followUp
+                            });
+                            continue;
+                        }
+                    }
+
+                    // 6. King Safety / Check
+                    if (repEx && replyBoard && replyBoard.in_check && replyBoard.in_check()) {
+                        candidates.push({
+                            move: candMove,
+                            san: moveExecuted.san,
+                            motif: 'Exposed King',
+                            refutations: [refUci, repEx.san],
+                            bestSan: repEx.san,
+                            type: 'kingSafety',
+                            refutationMove: { from: repEx.from, to: repEx.to, san: repEx.san, uci: refUci },
+                            keySquares: { targets: [repEx.to] },
+                            followUp
+                        });
+                        continue;
+                    }
                 }
+
+                if (candidates.length === 0) return null;
+
+                // Prioritize weaknesses from learner error profile
+                const preferTactics = Boolean(this.errorProfile && (this.errorProfile.missedFork >= 2 || this.errorProfile.tacticalBlunder >= 2));
+                const preferHanging = Boolean(this.errorProfile && this.errorProfile.hangingPiece >= 2);
+                const preferKingSafety = Boolean(this.errorProfile && this.errorProfile.kingSafety >= 2);
+
+                if (preferTactics) {
+                    const tactical = candidates.find(c => ['fork', 'skewer', 'discovered'].includes(c.type));
+                    if (tactical && (!this.lastBaitType || tactical.type !== this.lastBaitType)) return tactical;
+                }
+                if (preferHanging) {
+                    const hanging = candidates.find(c => c.type === 'hanging');
+                    if (hanging && (!this.lastBaitType || hanging.type !== this.lastBaitType)) return hanging;
+                }
+                if (preferKingSafety) {
+                    const ks = candidates.find(c => ['kingSafety', 'mateThreat'].includes(c.type));
+                    if (ks && (!this.lastBaitType || ks.type !== this.lastBaitType)) return ks;
+                }
+
+                // Motif rotation: avoid picking the same motif type twice in a row
+                if (this.lastBaitType) {
+                    const rotated = candidates.find(c => c.type !== this.lastBaitType);
+                    if (rotated) return rotated;
+                }
+
+                return candidates[0];
             } catch (e) {
                 console.debug?.('[coach] _findInstructiveBlunder error:', e);
             }
@@ -1789,7 +2386,13 @@
 
             if (isChallenge) {
                 coachMoveDesc = `I played ${move.san}...`;
-                challengeText = `Wait, take a close look at the board! ${pickRandom(this.persona.voice.challengeBlunderBait)}`;
+                let baitVoiceList = null;
+                if (challengeData && challengeData.type && this.persona.voice && this.persona.voice.baitByMotif && this.persona.voice.baitByMotif[challengeData.type]) {
+                    baitVoiceList = this.persona.voice.baitByMotif[challengeData.type];
+                }
+                challengeText = (baitVoiceList && baitVoiceList.length > 0)
+                    ? pickRandom(baitVoiceList)
+                    : `Wait, take a close look at the board! ${pickRandom(this.persona.voice.challengeBlunderBait)}`;
                 return {
                     bubble1: `I played ${move.san}. Spot the tactical punish!`,
                     bubble2: `${coachMoveDesc} ${challengeText}`
@@ -2055,156 +2658,417 @@
         }
 
         /**
-         * Generate a pedagogical hint without giving away the exact move.
-         * @returns {object} { hintText, highlightSquares, candidateSan }
+         * Builds a structured HintPlan for the given FEN.
+         * Priority:
+         * 1. pendingChallenge
+         * 2. pendingOpportunity
+         * 3. lastSuggestedMove
+         * 4. cached verified engine move
+         * 5. on-demand evaluatePosition (MultiPV 2, depth 10)
+         * 6. heuristic fallbacks (SEE-positive capture, fork, pin, center, first legal)
+         * @param {string} fen
+         * @returns {Promise<object|null>}
          */
-        generateHint() {
-            if (this.isGameOver || !this.isPlayerTurn()) {
-                return { hintText: "No hints needed right now.", highlightSquares: [] };
-            }
-
+        async _buildHintPlan(fen) {
             const Recognizer = getRecognizer();
             const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
-            const legalMoves = this.chess.moves({ verbose: true });
-            if (legalMoves.length === 0) return { hintText: "No legal moves available.", highlightSquares: [] };
+            const posKey = this._normalizeFen(fen);
+            const testB = new this.Chess(fen);
+            const legalMoves = testB.moves({ verbose: true });
+            if (legalMoves.length === 0) return null;
 
-            // If an active challenge is pending, guide user toward the punished square
+            // 1. Pending Challenge (Player refutes an intentional pedagogical blunder)
             if (this.pendingChallenge) {
-                const targetSquare = this.pendingChallenge.move ? this.pendingChallenge.move.to : null;
-                return {
-                    hintText: `Coach Hint: Look closely at the ${this.pendingChallenge.motif}. Can you exploit my ${targetSquare ? 'piece on ' + targetSquare : 'last move'}?`,
-                    highlightSquares: targetSquare ? [targetSquare] : []
-                };
+                let moveObj = null;
+                if (this.pendingChallenge.bestSan) {
+                    testB.load(fen);
+                    moveObj = testB.move(this.pendingChallenge.bestSan);
+                }
+                if (!moveObj && this.pendingChallenge.refutations) {
+                    for (const ref of this.pendingChallenge.refutations) {
+                        testB.load(fen);
+                        moveObj = testB.move(ref);
+                        if (moveObj) break;
+                        if (typeof ref === 'string' && ref.length >= 4) {
+                            moveObj = testB.move({ from: ref.slice(0, 2), to: ref.slice(2, 4), promotion: ref[4] });
+                            if (moveObj) break;
+                        }
+                    }
+                }
+                if (!moveObj && this.pendingChallenge.refutationMove) {
+                    testB.load(fen);
+                    moveObj = testB.move(this.pendingChallenge.refutationMove);
+                }
+                if (moveObj) {
+                    testB.undo();
+                    const classified = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                        ? Recognizer.classifyTacticalMotif(testB, moveObj)
+                        : { motif: 'hanging', keySquares: { targets: [] } };
+                    const motif = (this.pendingChallenge.type && this.pendingChallenge.type !== 'tacticalBlunder')
+                        ? this.pendingChallenge.type
+                        : classified.motif;
+                    const keySquares = Object.assign({}, classified.keySquares, this.pendingChallenge.keySquares || {});
+                    return {
+                        source: 'challenge',
+                        motif: motif || 'hanging',
+                        move: { from: moveObj.from, to: moveObj.to, san: moveObj.san, uci: moveObj.from + moveObj.to + (moveObj.promotion || ''), piece: moveObj.piece },
+                        keySquares,
+                        followUp: this.pendingChallenge.followUp || null
+                    };
+                }
             }
 
-            // Check if player has any profitable tactical capture available (verified by SEE)
+            // 2. Pending Opportunity
+            if (this.pendingOpportunity && this.pendingOpportunity.posKey === posKey && this.pendingOpportunity.plan) {
+                return this.pendingOpportunity.plan;
+            }
+
+            // 3. Last Suggested Move (e.g. after takeback)
+            if (this.lastSuggestedMove && (this.lastSuggestedMove.posKey === posKey || this._normalizeFen(this.lastSuggestedMove.fen) === posKey) && this.lastSuggestedMove.san) {
+                testB.load(fen);
+                const sm = testB.move(this.lastSuggestedMove.san);
+                if (sm) {
+                    testB.undo();
+                    const classified = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                        ? Recognizer.classifyTacticalMotif(testB, sm)
+                        : { motif: 'positional', keySquares: { targets: [] } };
+                    return {
+                        source: 'suggestion',
+                        motif: classified.motif,
+                        move: { from: sm.from, to: sm.to, san: sm.san, uci: sm.from + sm.to + (sm.promotion || ''), piece: sm.piece },
+                        keySquares: classified.keySquares,
+                        followUp: null
+                    };
+                }
+            }
+
+            // 4. Cached engine best move
+            const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(fen);
+            const verifiedSan = (cached && (cached.bestSan || (cached.verifiedBestMove && cached.verifiedBestMove.san)));
+            if (verifiedSan) {
+                testB.load(fen);
+                const cm = testB.move(verifiedSan);
+                if (cm) {
+                    testB.undo();
+                    const classified = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                        ? Recognizer.classifyTacticalMotif(testB, cm)
+                        : { motif: 'positional', keySquares: { targets: [] } };
+                    return {
+                        source: 'engine',
+                        motif: classified.motif,
+                        move: { from: cm.from, to: cm.to, san: cm.san, uci: cm.from + cm.to + (cm.promotion || ''), piece: cm.piece },
+                        keySquares: classified.keySquares,
+                        followUp: (cached.lines && cached.lines[1] && cached.lines[1].pv && cached.lines[1].pv[1]) || null
+                    };
+                }
+            }
+
+            // 5. On-demand engine evaluation (MultiPV 2, depth 10)
+            if (this.worker && typeof this.worker.evaluate === 'function') {
+                try {
+                    const evalRes = await this._evaluatePosition(fen, 10, 2);
+                    if (evalRes && evalRes.lines && evalRes.lines[1] && evalRes.lines[1].pv && evalRes.lines[1].pv[0]) {
+                        const verified = await this._findVerifiedBestMove(fen, evalRes);
+                        if (verified) {
+                            testB.load(fen);
+                            const cm = testB.move(verified.san || verified.uci);
+                            if (cm) {
+                                testB.undo();
+                                const classified = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                                    ? Recognizer.classifyTacticalMotif(testB, cm)
+                                    : { motif: 'positional', keySquares: { targets: [] } };
+                                let followUp = null;
+                                if (evalRes.lines[1].pv[1]) {
+                                    const folUci = evalRes.lines[1].pv[1];
+                                    testB.load(fen);
+                                    testB.move(cm);
+                                    const folMove = testB.move({ from: folUci.slice(0, 2), to: folUci.slice(2, 4), promotion: folUci[4] });
+                                    if (folMove) followUp = folMove.san;
+                                }
+                                return {
+                                    source: 'engine',
+                                    motif: classified.motif,
+                                    move: { from: cm.from, to: cm.to, san: cm.san, uci: cm.from + cm.to + (cm.promotion || ''), piece: cm.piece },
+                                    keySquares: classified.keySquares,
+                                    followUp
+                                };
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.debug?.('[coach] _buildHintPlan on-demand eval error:', e);
+                }
+            }
+
+            // 6. Heuristic fallbacks
+            // a) Profitable tactical capture (strictly verified by SEE > 0)
             if (Recognizer) {
-                const playerColor = this.chess.turn();
+                const playerColor = testB.turn();
                 for (const m of legalMoves) {
-                    if (m.captured && ['q', 'r', 'b', 'n'].includes(m.captured)) {
+                    if (m.captured && ['q', 'r', 'b', 'n', 'p'].includes(m.captured)) {
                         const isSound = (typeof Recognizer.staticExchangeEval === 'function')
-                            ? (Recognizer.staticExchangeEval(this.chess, m.to, playerColor) > 0)
+                            ? (Recognizer.staticExchangeEval(testB, m.to, playerColor) > 0)
                             : true;
                         if (isSound) {
                             return {
-                                hintText: `Coach Hint: You have a tactical capture available! Inspect your attacks around ${m.to}.`,
-                                highlightSquares: [m.from, m.to]
+                                source: 'heuristic',
+                                motif: 'hanging',
+                                move: { from: m.from, to: m.to, san: m.san, uci: m.from + m.to, piece: m.piece },
+                                keySquares: { targets: [m.to] },
+                                followUp: null
                             };
                         }
                     }
                 }
             }
 
-            // If coach just suggested a move after takeback, align hint directly with that move
-            const currentFen = this.chess.fen();
-            const posKey = this._normalizeFen(currentFen);
-            if (this.lastSuggestedMove && (this.lastSuggestedMove.posKey === posKey || this._normalizeFen(this.lastSuggestedMove.fen) === posKey) && this.lastSuggestedMove.san) {
-                const tempB = new this.Chess(currentFen);
-                const sm = tempB.move(this.lastSuggestedMove.san);
-                if (sm) {
-                    const pName = PIECE_NAMES[sm.piece] || 'piece';
-                    let sugMsg = `Coach Hint: Consider mobilizing your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}) as we discussed!`;
-                    if (this.persona.elo <= 900) {
-                        sugMsg = `Coach Hint: Let's try your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san})!`;
-                    } else if (this.persona.elo >= 2000) {
-                        sugMsg = `Coach Hint: Revisit our strategic theme: reposition your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}).`;
-                    }
-                    return {
-                        hintText: sugMsg,
-                        highlightSquares: [sm.from]
-                    };
-                }
-            }
-
-            // Check if a forcing check or tactical fork/pin is available
-            const checkMove = legalMoves.find(m => m.san && m.san.includes('+'));
-            if (checkMove) {
-                const pName = PIECE_NAMES[checkMove.piece] || 'piece';
-                let checkMsg = `Coach Hint: Look for an active check! Can your ${pName} put direct pressure on my King?`;
-                if (this.persona.elo <= 900) {
-                    checkMsg = `Coach Hint: You can give a check! Look at your ${pName} aiming at my King.`;
-                } else if (this.persona.elo >= 2000) {
-                    checkMsg = `Coach Hint: Calculate forcing lines: there is an aggressive check available against the King.`;
-                }
-                return {
-                    hintText: checkMsg,
-                    highlightSquares: [checkMove.from]
-                };
-            }
-
+            // b) Tactical fork
             if (Recognizer) {
                 for (const m of legalMoves) {
                     if (['n', 'b', 'r', 'q'].includes(m.piece)) {
-                        try {
-                            const testB = new this.Chess(currentFen);
-                            const executed = testB.move(m);
-                            if (executed && Recognizer.detectFork && Recognizer.detectFork(testB, executed)) {
-                                const pName = PIECE_NAMES[m.piece] || 'piece';
-                                let forkMsg = `Coach Hint: Double attack! Look for squares where your ${pName} can fork multiple targets.`;
-                                if (this.persona.elo <= 900) {
-                                    forkMsg = `Coach Hint: Look at your ${pName} on ${m.from}. It can attack two pieces at once!`;
-                                } else if (this.persona.elo >= 2000) {
-                                    forkMsg = `Coach Hint: Geometric motif: your ${pName} can exploit loose enemy pieces with a tactical fork.`;
-                                }
+                        testB.load(fen);
+                        const executed = testB.move(m);
+                        if (executed && Recognizer.detectFork) {
+                            const fork = Recognizer.detectFork(testB, executed);
+                            if (fork) {
                                 return {
-                                    hintText: forkMsg,
-                                    highlightSquares: [m.from]
+                                    source: 'heuristic',
+                                    motif: 'fork',
+                                    move: { from: m.from, to: m.to, san: m.san, uci: m.from + m.to, piece: m.piece },
+                                    keySquares: { targets: fork.targetSquares || [], attackerSquare: m.to },
+                                    followUp: null
                                 };
                             }
-                        } catch (e) {}
+                        }
                     }
                 }
             }
 
-            // If a verified best move is cached for current FEN, use its piece
-            const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(currentFen);
-            const verifiedSan = (cached && (cached.bestSan || (cached.verifiedBestMove && cached.verifiedBestMove.san)));
-            if (verifiedSan) {
-                const tempB = new this.Chess(currentFen);
-                const cm = tempB.move(verifiedSan);
-                if (cm) {
-                    const pName = PIECE_NAMES[cm.piece] || 'piece';
-                    let bestMsg = `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName} toward ${cm.to}.`;
-                    if (this.persona.elo <= 900) {
-                        bestMsg = `Coach Hint: Look at your ${pName} on ${cm.from}. Can you move it toward ${cm.to}?`;
-                    } else if (this.persona.elo >= 2000) {
-                        bestMsg = `Coach Hint: Positional harmony: look to improve your ${pName} and contest key squares.`;
+            // c) Tactical pin
+            if (Recognizer) {
+                for (const m of legalMoves) {
+                    if (['b', 'r', 'q'].includes(m.piece)) {
+                        testB.load(fen);
+                        const executed = testB.move(m);
+                        if (executed && Recognizer.detectPin) {
+                            const pin = Recognizer.detectPin(testB, executed);
+                            if (pin) {
+                                return {
+                                    source: 'heuristic',
+                                    motif: 'pin',
+                                    move: { from: m.from, to: m.to, san: m.san, uci: m.from + m.to, piece: m.piece },
+                                    keySquares: { targets: [pin.pinnedSquare].filter(Boolean), pinnedSquare: pin.pinnedSquare, behindSquare: pin.behindSquare, line: pin.line || [] },
+                                    followUp: null
+                                };
+                            }
+                        }
                     }
-                    return {
-                        hintText: bestMsg,
-                        highlightSquares: [cm.from]
-                    };
                 }
             }
 
-            // General hint: suggest moving a piece toward the center
+            // d) Center move
             const centerMoves = legalMoves.filter(m => ['d4', 'd5', 'e4', 'e5', 'c4', 'c5', 'f4', 'f5'].includes(m.to));
             if (centerMoves.length > 0) {
                 const cm = centerMoves[0];
-                const pieceName = PIECE_NAMES[cm.piece] || 'piece';
-                let centerHint = `Coach Hint: Look for control in the center. Consider mobilizing your ${pieceName}.`;
-                if (this.persona.elo <= 900) {
-                    centerHint = `Coach Hint: Try advancing your ${pieceName} toward the center squares!`;
-                } else if (this.persona.elo >= 2000) {
-                    centerHint = `Coach Hint: Positional space: contest the central squares and restrict opponent piece activity.`;
-                }
                 return {
-                    hintText: centerHint,
-                    highlightSquares: [cm.from]
+                    source: 'heuristic',
+                    motif: 'positional',
+                    move: { from: cm.from, to: cm.to, san: cm.san, uci: cm.from + cm.to, piece: cm.piece },
+                    keySquares: { targets: [cm.to] },
+                    followUp: null
                 };
             }
 
+            // e) First legal move
             const first = legalMoves[0];
-            const firstPieceName = PIECE_NAMES[first.piece] || 'piece';
-            let defaultHint = `Coach Hint: Take your time. Inspect candidate squares for your ${firstPieceName}.`;
-            if (this.persona.elo <= 900) {
-                defaultHint = `Coach Hint: Look at your ${firstPieceName} on ${first.from}. Where could it move safely?`;
-            } else if (this.persona.elo >= 2000) {
-                defaultHint = `Coach Hint: Evaluate the pawn structure and look to improve your least active piece.`;
+            return {
+                source: 'heuristic',
+                motif: 'positional',
+                move: { from: first.from, to: first.to, san: first.san, uci: first.from + first.to, piece: first.piece },
+                keySquares: { targets: [first.to] },
+                followUp: null
+            };
+        }
+
+        /**
+         * Renders a specific level of the hint plan into text, highlighted squares, and arrows.
+         * @param {object} plan - HintPlan from _buildHintPlan
+         * @param {number} level - 1 to 4
+         * @returns {object}
+         */
+        _renderHintLevel(plan, level) {
+            const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+            const pName = PIECE_NAMES[plan.move.piece] || 'piece';
+            const motifKey = HINT_TEMPLATES[plan.motif] ? plan.motif : 'positional';
+            const levelKey = Math.min(Math.max(level, 1), 4);
+
+            let tier = 'default';
+            if (this.persona.elo <= 900) tier = 'beginner';
+            else if (this.persona.elo >= 2000) tier = 'master';
+
+            // Format target names
+            let targetNames = "enemy pieces";
+            const targets = (plan.keySquares && plan.keySquares.targets) ? plan.keySquares.targets : [];
+            if (targets.length > 0) {
+                const names = targets.map(sq => {
+                    const pieceObj = this.chess.get(sq);
+                    if (pieceObj) {
+                        return (PIECE_NAMES[pieceObj.type] || pieceObj.type) + ' on ' + sq;
+                    }
+                    return sq;
+                });
+                if (names.length === 1) targetNames = names[0];
+                else if (names.length === 2) targetNames = names[0] + ' and ' + names[1];
+                else targetNames = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+            }
+
+            let followUpText = "";
+            if (plan.followUp) {
+                followUpText = ` Next you have ${plan.followUp}.`;
+            }
+
+            let template = HINT_TEMPLATES[motifKey][levelKey][tier] || HINT_TEMPLATES[motifKey][levelKey].default;
+
+            // Suggested move override for backwards compatibility with tests
+            if (plan.source === 'suggestion' && levelKey === 1) {
+                template = `Coach Hint: Consider mobilizing your {piece} toward {to} ({san}) as we discussed!`;
+            }
+
+            const hintText = template
+                .replace(/{piece}/g, pName)
+                .replace(/{from}/g, plan.move.from)
+                .replace(/{to}/g, plan.move.to)
+                .replace(/{san}/g, plan.move.san)
+                .replace(/{targetNames}/g, targetNames)
+                .replace(/{followUpText}/g, followUpText);
+
+            let highlightSquares = [plan.move.from];
+            let targetSquares = [];
+            let arrow = null;
+
+            if (levelKey === 1) {
+                highlightSquares = [plan.move.from];
+                targetSquares = [];
+                if (plan.motif === 'hanging' && plan.move.to) {
+                    targetSquares = [plan.move.to];
+                }
+            } else if (levelKey === 2) {
+                highlightSquares = [plan.move.from];
+                targetSquares = [...targets];
+                if (plan.motif === 'hanging' && targetSquares.length === 0 && plan.move.to) {
+                    targetSquares = [plan.move.to];
+                }
+            } else if (levelKey === 3) {
+                highlightSquares = [plan.move.from, plan.move.to];
+                targetSquares = [...targets];
+                if (plan.motif === 'hanging' && targetSquares.length === 0 && plan.move.to) {
+                    targetSquares = [plan.move.to];
+                }
+            } else if (levelKey === 4) {
+                highlightSquares = [plan.move.from, plan.move.to];
+                targetSquares = [...targets];
+                if (plan.motif === 'hanging' && targetSquares.length === 0 && plan.move.to) {
+                    targetSquares = [plan.move.to];
+                }
+                arrow = { from: plan.move.from, to: plan.move.to };
+            }
+
+            return {
+                hintText,
+                highlightSquares,
+                targetSquares,
+                arrow,
+                level: levelKey,
+                maxLevel: 4,
+                motif: plan.motif,
+                source: plan.source,
+                moveSAN: plan.move.san,
+                isChallenge: plan.source === 'challenge'
+            };
+        }
+
+        /**
+         * Generate a progressive pedagogical hint that escalates with each press.
+         * Level 1: Motif + piece ({from})
+         * Level 2: Targets ({targets})
+         * Level 3: Destination ({to})
+         * Level 4: Full reveal + arrow + follow-up ({san}, arrow)
+         * @returns {Promise<object>}
+         */
+        async generateHint() {
+            if (this.isGameOver || !this.isPlayerTurn()) {
+                return {
+                    hintText: "No hints needed right now.",
+                    highlightSquares: [],
+                    targetSquares: [],
+                    arrow: null,
+                    level: 0,
+                    maxLevel: 4,
+                    motif: null,
+                    source: null
+                };
+            }
+
+            const currentFen = this.chess.fen();
+            const posKey = this._normalizeFen(currentFen);
+
+            // Rebuild plan if position changed or not initialized
+            if (!this.hintState || this.hintState.posKey !== posKey || !this.hintState.plan) {
+                const plan = await this._buildHintPlan(currentFen);
+                this.hintState = {
+                    posKey,
+                    level: 0,
+                    plan
+                };
+            }
+
+            if (!this.hintState.plan) {
+                return {
+                    hintText: "No hints available for this position.",
+                    highlightSquares: [],
+                    targetSquares: [],
+                    arrow: null,
+                    level: 0,
+                    maxLevel: 4,
+                    motif: null,
+                    source: null
+                };
+            }
+
+            if (this.hintState.level < 4) {
+                this.hintState.level++;
+            }
+
+            this.hintStats.totalPresses++;
+            if (this.hintState.level === 1) {
+                this.hintStats.movesWithHints++;
+            } else if (this.hintState.level === 4) {
+                this.hintStats.fullReveals++;
+            }
+
+            return this._renderHintLevel(this.hintState.plan, this.hintState.level);
+        }
+
+        /**
+         * Returns current hint status for UI indicators/badges.
+         * @returns {object} { level, maxLevel, motif, source }
+         */
+        getHintState() {
+            const currentFen = this.chess.fen();
+            const posKey = this._normalizeFen(currentFen);
+            if (!this.hintState || this.hintState.posKey !== posKey) {
+                return {
+                    level: 0,
+                    maxLevel: 4,
+                    motif: null,
+                    source: null
+                };
             }
             return {
-                hintText: defaultHint,
-                highlightSquares: [first.from]
+                level: this.hintState.level,
+                maxLevel: 4,
+                motif: this.hintState.plan ? this.hintState.plan.motif : null,
+                source: this.hintState.plan ? this.hintState.plan.source : null
             };
         }
 
@@ -2242,6 +3106,8 @@
 
             const effectiveSan = suggestedSan || (undonePlayerMove && undonePlayerMove.bestSan) || null;
             this.lastSuggestedMove = this._resolveSuggestion(currentFen, effectiveSan);
+            this._resetHintState();
+            this.pendingOpportunity = null;
 
             this.currentBubble1 = "Good instinct to take that back!";
             this.currentBubble2 = effectiveSan
@@ -2294,6 +3160,8 @@
             const cached = this._positionEvalCache.get(posKey) || this._positionEvalCache.get(currentFen);
             const suggestedSan = (undonePlayerMove && undonePlayerMove.bestSan) || (cached && cached.bestSan) || (cached && cached.verifiedBestMove && cached.verifiedBestMove.san) || null;
             this.lastSuggestedMove = this._resolveSuggestion(currentFen, suggestedSan);
+            this._resetHintState();
+            this.pendingOpportunity = null;
 
             this.currentBubble1 = "Takeback granted! Let's try that position again.";
             this.currentBubble2 = suggestedSan
@@ -2343,6 +3211,12 @@
                 baseMsg = "Stalemate! The game ends in a peaceful draw.";
             } else if (this.chess.in_draw()) {
                 baseMsg = "Draw! A well-fought battle on both sides.";
+            }
+
+            if (this.hintStats && this.hintStats.totalPresses > 0) {
+                const pCount = this.hintStats.totalPresses;
+                const mCount = this.hintStats.movesWithHints;
+                baseMsg += ` You used ${pCount} hint${pCount === 1 ? '' : 's'} across ${mCount} move${mCount === 1 ? '' : 's'}.`;
             }
 
             const topErrors = this.getErrorSummary();

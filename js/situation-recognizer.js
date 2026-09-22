@@ -687,7 +687,9 @@
         return {
             type: 'fork',
             attacker: PIECE_NAMES[piece.type] || 'piece',
+            attackerSquare: move.to,
             targets: names,
+            targetSquares: [t1.square, t2.square],
             description: `forking the ${names[0]} and ${names[1]}`
         };
     }
@@ -746,20 +748,25 @@
         let currF = f1 + stepF;
         let currR = r1 + stepR;
         let pinnedPiece = null;
+        let pinnedSquare = null;
         let pieceCount = 0;
+        const line = [];
 
         while (currF !== f2 || currR !== r2) {
             const sq = fileRankToSquare(currF, currR);
+            line.push(sq);
             const p = boardAfter.get(sq);
             if (p) {
                 pieceCount++;
                 if (p.color === oppColor) {
                     pinnedPiece = p;
+                    pinnedSquare = sq;
                 }
             }
             currF += stepF;
             currR += stepR;
         }
+        line.push(kingSq);
 
         // Exactly one piece between slider and king, and that piece is an opponent piece
         if (pieceCount === 1 && pinnedPiece) {
@@ -767,6 +774,9 @@
             return {
                 type: 'pin',
                 pinned: name,
+                pinnedSquare: pinnedSquare,
+                behindSquare: kingSq,
+                line: line,
                 description: `pinning the enemy ${name} to the King`
             };
         }
@@ -844,6 +854,8 @@
                         type: 'skewer',
                         front: n1,
                         back: n2,
+                        frontSquare: firstTarget.square,
+                        backSquare: secondTarget.square,
                         description: `skewering the ${n1} and ${n2}`
                     };
                 }
@@ -867,6 +879,7 @@
             let backF = fromF - df;
             let backR = fromR - dr;
             let friendlySlider = null;
+            let friendlySliderSquare = null;
 
             while (backF >= 0 && backF <= 7 && backR >= 0 && backR <= 7) {
                 const sq = fileRankToSquare(backF, backR);
@@ -878,6 +891,7 @@
                         if ((isDiag && (p.type === 'b' || p.type === 'q')) ||
                             (isStraight && (p.type === 'r' || p.type === 'q'))) {
                             friendlySlider = p;
+                            friendlySliderSquare = sq;
                         }
                     }
                     break;
@@ -913,12 +927,18 @@
                     return {
                         type: 'discovered_check',
                         target: 'king',
+                        blockerSquare: move.from,
+                        sliderSquare: friendlySliderSquare,
+                        targetSquare: targetSq,
                         description: `unleashing a discovered check against the King`
                     };
                 } else if (targetPiece.type === 'q' || targetPiece.type === 'r' || !isSquareAttackedBy(boardAfter, oppColor, targetSq) || PIECE_VALUES[targetPiece.type] > PIECE_VALUES[friendlySlider.type]) {
                     return {
                         type: 'discovered_attack',
                         target: targetName,
+                        blockerSquare: move.from,
+                        sliderSquare: friendlySliderSquare,
+                        targetSquare: targetSq,
                         description: `unleashing a discovered attack on the ${targetName}`
                     };
                 }
@@ -2780,6 +2800,170 @@
         };
     }
 
+    /**
+     * Classifies the primary tactical or positional motif of a candidate move.
+     * Evaluates candidate move on a cloned board to run detectors in priority order.
+     * @param {object|string} boardBefore - Chess instance or FEN string before the move
+     * @param {object|string} move - Move object ({from, to, promotion}) or SAN/UCI string
+     * @returns {object} { motif, keySquares, description }
+     */
+    function classifyTacticalMotif(boardBefore, move) {
+        if (!boardBefore || !move) {
+            return { motif: 'positional', keySquares: { targets: [] }, description: 'repositions piece for harmony' };
+        }
+
+        const ChessCtor = getChessConstructor();
+        if (!ChessCtor) {
+            return { motif: 'positional', keySquares: { targets: [] }, description: 'piece movement' };
+        }
+
+        const simBefore = (typeof boardBefore === 'string')
+            ? new ChessCtor(boardBefore)
+            : new ChessCtor(boardBefore.fen());
+
+        const color = simBefore.turn();
+        const oppColor = oppositeColor(color);
+
+        let moveObj = null;
+        if (typeof move === 'string') {
+            // Try as SAN first, then UCI
+            moveObj = simBefore.move(move);
+            if (!moveObj && move.length >= 4) {
+                moveObj = simBefore.move({
+                    from: move.slice(0, 2),
+                    to: move.slice(2, 4),
+                    promotion: move[4] || undefined
+                });
+            }
+        } else {
+            moveObj = simBefore.move(move);
+        }
+
+        if (!moveObj) {
+            return { motif: 'positional', keySquares: { targets: [] }, description: 'maintains solid coordination' };
+        }
+
+        const simAfter = new ChessCtor(simBefore.fen());
+        // Restore simBefore
+        simBefore.undo();
+
+        // 1. Checkmate or Mate Threat
+        if (simAfter.in_checkmate && simAfter.in_checkmate()) {
+            const kingSq = findKingSquare(simAfter, oppColor);
+            return {
+                motif: 'mateThreat',
+                keySquares: { targets: kingSq ? [kingSq] : [], weakSquare: moveObj.to },
+                description: 'delivering checkmate'
+            };
+        }
+
+        // 2. Fork / Double Attack
+        const fork = detectFork(simAfter, moveObj);
+        if (fork) {
+            return {
+                motif: 'fork',
+                keySquares: {
+                    targets: fork.targetSquares || [],
+                    attackerSquare: fork.attackerSquare || moveObj.to
+                },
+                description: fork.description
+            };
+        }
+
+        // 3. Pin
+        const pin = detectPin(simAfter, moveObj);
+        if (pin) {
+            return {
+                motif: 'pin',
+                keySquares: {
+                    targets: [pin.pinnedSquare].filter(Boolean),
+                    pinnedSquare: pin.pinnedSquare,
+                    behindSquare: pin.behindSquare,
+                    line: pin.line || []
+                },
+                description: pin.description
+            };
+        }
+
+        // 4. Skewer
+        const skewer = detectSkewer(simAfter, moveObj);
+        if (skewer) {
+            return {
+                motif: 'skewer',
+                keySquares: {
+                    targets: [skewer.frontSquare, skewer.backSquare].filter(Boolean),
+                    frontSquare: skewer.frontSquare,
+                    backSquare: skewer.backSquare
+                },
+                description: skewer.description
+            };
+        }
+
+        // 5. Discovered Attack / Discovered Check
+        const disc = detectDiscoveredAttack(simBefore, simAfter, moveObj);
+        if (disc) {
+            return {
+                motif: 'discovered',
+                keySquares: {
+                    targets: disc.targetSquare ? [disc.targetSquare] : (disc.target === 'king' ? [findKingSquare(simAfter, oppColor)].filter(Boolean) : []),
+                    blockerSquare: disc.blockerSquare,
+                    sliderSquare: disc.sliderSquare,
+                    targetSquare: disc.targetSquare
+                },
+                description: disc.description
+            };
+        }
+
+        // 6. Tactical Capture / Hanging piece (verified by SEE > 0)
+        if (moveObj.captured || simBefore.get(moveObj.to)) {
+            const seeGain = staticExchangeEval(simBefore, moveObj.to, color);
+            if (seeGain > 0) {
+                return {
+                    motif: 'hanging',
+                    keySquares: {
+                        targets: [moveObj.to]
+                    },
+                    description: `capturing loose material on ${moveObj.to}`
+                };
+            }
+        }
+
+        // 7. Forcing Check
+        if (simAfter.in_check && simAfter.in_check()) {
+            const kingSq = findKingSquare(simAfter, oppColor);
+            return {
+                motif: 'check',
+                keySquares: {
+                    targets: kingSq ? [kingSq] : []
+                },
+                description: 'checking the enemy King'
+            };
+        }
+
+        // 8. Trapped Piece
+        if (typeof detectTrappedPiece === 'function') {
+            const trapped = detectTrappedPiece(simAfter, moveObj);
+            if (trapped) {
+                return {
+                    motif: 'trapped',
+                    keySquares: {
+                        targets: trapped.targetSquare ? [trapped.targetSquare] : []
+                    },
+                    description: trapped.description || 'trapping an enemy piece'
+                };
+            }
+        }
+
+        // 9. Positional Fallback
+        return {
+            motif: 'positional',
+            keySquares: {
+                targets: []
+            },
+            description: 'improving piece placement and coordination'
+        };
+    }
+
     return {
         PIECE_VALUES,
         PIECE_NAMES,
@@ -2796,6 +2980,7 @@
         detectPin,
         detectSkewer,
         detectDiscoveredAttack,
+        classifyTacticalMotif,
         detectCenterStrike,
         detectDefensiveMove,
         detectMinorDevelopment,

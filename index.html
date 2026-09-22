@@ -1035,6 +1035,9 @@
         .arrow-threat {
             fill: rgba(235, 125, 20, 0.75);
         }
+        .arrow-hint {
+            fill: rgba(88, 151, 46, 0.78);
+        }
 
         /* Lichess Move Square Highlights */
         .square-highlight-from, .square-highlight-to {
@@ -3063,6 +3066,40 @@
             box-shadow: inset 0 0 3px 3px rgba(98, 153, 36, 0.8) !important;
             background-color: rgba(98, 153, 36, 0.3) !important;
         }
+        .highlight-hint-target {
+            box-shadow: inset 0 0 3px 3px rgba(235, 125, 20, 0.85) !important;
+            background-color: rgba(235, 125, 20, 0.35) !important;
+        }
+        .coach-hint-indicator {
+            font-size: 0.72rem;
+            color: #f7c948;
+            margin-left: 4px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+        }
+        .btn-coach-hint {
+            position: relative;
+        }
+        .btn-coach-hint.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .btn-coach-hint .hint-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #e27d20;
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 8px;
+            line-height: 1.1;
+            pointer-events: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
         .highlight-last-coach {
             box-shadow: inset 0 0 0 100px rgba(246, 228, 92, 0.45) !important;
         }
@@ -4189,6 +4226,7 @@
                         </button>
                         <button type="button" id="btnCoachHint" class="coach-action-btn btn-coach-hint" title="Ask Coach for a Hint">
                             <i class="bi bi-lightbulb-fill"></i>
+                            <span id="coachHintBadge" class="hint-badge d-none"></span>
                         </button>
                         <button type="button" id="btnCoachReview" class="coach-action-btn btn-coach-review d-none" title="Game Review (Analyze in Analysis Mode)">
                             <i class="bi bi-graph-up-arrow me-1"></i> Game Review
@@ -8105,13 +8143,44 @@
                 }
             }
 
+            function clearCoachHintArrow() {
+                if (!arrowSvg) return;
+                const hintArrows = arrowSvg.querySelectorAll('.arrow-hint');
+                hintArrows.forEach(el => el.remove());
+            }
+
+            function drawCoachHintArrow(from, to) {
+                if (!from || !to || !arrowSvg) return;
+                clearCoachHintArrow();
+                updateSvgDimensions();
+                drawArrow(from, to, 'hint');
+            }
+
+            function updateCoachHintBadge() {
+                const hintBadge = document.getElementById('coachHintBadge');
+                if (!hintBadge) return;
+                if (!coachManager || !coachManager.getHintState) {
+                    hintBadge.classList.add('d-none');
+                    return;
+                }
+                const st = coachManager.getHintState();
+                if (st.level > 0 && coachManager.isPlayerTurn() && !coachManager.isGameOver) {
+                    hintBadge.textContent = (st.level >= 4) ? "Answer" : `${st.level}/4`;
+                    hintBadge.classList.remove('d-none');
+                } else {
+                    hintBadge.classList.add('d-none');
+                }
+            }
+
             function clearHintHighlights() {
                 if (typeof clearClickMoveHighlights === 'function') {
                     clearClickMoveHighlights();
                 }
-                document.querySelectorAll('#board .highlight-hint').forEach(sq => {
-                    sq.classList.remove('highlight-hint');
+                document.querySelectorAll('#board .highlight-hint, #board .highlight-hint-target').forEach(sq => {
+                    sq.classList.remove('highlight-hint', 'highlight-hint-target');
                 });
+                clearCoachHintArrow();
+                updateCoachHintBadge();
             }
 
             function setCoachSheetSummary() {
@@ -8250,10 +8319,14 @@
                                 ? formatSanWithFigurines(baseSan, isWhite)
                                 : escapeHtml(baseSan);
                             const glyphBadge = glyph ? `<span class="coach-move-glyph ${qClass}">${glyph}</span>` : '';
+                            const hintBadge = (m.isPlayer && m.hintsUsed > 0)
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                : '';
                             const isActive = (coachCurrentMoveIndex === moveIndex);
                             return `<span class="coach-move-san ${isActive ? 'active' : ''} ${qClass}" data-coach-index="${moveIndex}" title="Move ${Math.floor(moveIndex / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
                                 <span class="move-san-wrap">${sanFormatted}</span>
                                 ${glyphBadge}
+                                ${hintBadge}
                             </span>`;
                         };
 
@@ -8328,9 +8401,14 @@
                                 badgeCls = 'ticker-badge-brilliant';
                             }
 
+                            const hintBadge = (m.isPlayer && m.hintsUsed > 0)
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                : '';
+
                             tickerHtml += `<button type="button" class="ticker-chip ${qClass} ${isActive ? 'active' : ''}" data-coach-index="${idx}" title="Move ${Math.floor(idx / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
                                 <span class="ticker-chip-san">${sanFormatted}</span>
                                 ${badgeText ? `<span class="ticker-badge ${badgeCls}">${badgeText}</span>` : ''}
+                                ${hintBadge}
                             </button>`;
                         });
                         tickerScroll.innerHTML = tickerHtml;
@@ -8956,22 +9034,49 @@
 
             const btnCoachHint = document.getElementById('btnCoachHint');
             if (btnCoachHint) {
-                btnCoachHint.addEventListener('click', () => {
-                    if (!coachManager || currentAppMode !== 'coach') return;
-                    const hint = coachManager.generateHint();
+                let hintLoading = false;
+                btnCoachHint.addEventListener('click', async () => {
+                    if (!coachManager || currentAppMode !== 'coach' || hintLoading) return;
+                    if (coachManager.isGameOver || !coachManager.isPlayerTurn()) return;
+
+                    hintLoading = true;
+                    btnCoachHint.classList.add('loading');
                     const bubble = document.getElementById('coachBubble');
-                    if (bubble) {
-                        bubble.textContent = hint.hintText;
-                        bubble.classList.remove('expanded');
+                    if (bubble && (!coachManager.hintState || coachManager.hintState.level === 0)) {
+                        bubble.textContent = "Coach is calculating a hint...";
                     }
 
-                    clearHintHighlights();
-                    if (hint.highlightSquares && hint.highlightSquares.length > 0) {
-                        hint.highlightSquares.forEach(sq => {
-                            const el = document.querySelector(`#board .square-${sq}`);
-                            if (el) el.classList.add('highlight-hint');
-                        });
-                        setTimeout(clearHintHighlights, 3000);
+                    try {
+                        const hint = await coachManager.generateHint();
+                        if (bubble) {
+                            bubble.textContent = hint.hintText;
+                            bubble.classList.remove('expanded');
+                        }
+
+                        clearHintHighlights();
+                        updateCoachHintBadge();
+
+                        if (hint.highlightSquares && hint.highlightSquares.length > 0) {
+                            hint.highlightSquares.forEach(sq => {
+                                const el = document.querySelector(`#board .square-${sq}`);
+                                if (el) el.classList.add('highlight-hint');
+                            });
+                        }
+                        if (hint.targetSquares && hint.targetSquares.length > 0) {
+                            hint.targetSquares.forEach(sq => {
+                                const el = document.querySelector(`#board .square-${sq}`);
+                                if (el) el.classList.add('highlight-hint-target');
+                            });
+                        }
+
+                        if (hint.level >= 4 && hint.arrow) {
+                            drawCoachHintArrow(hint.arrow.from, hint.arrow.to);
+                        }
+                    } catch (e) {
+                        console.error('[coach] hint error:', e);
+                    } finally {
+                        hintLoading = false;
+                        btnCoachHint.classList.remove('loading');
                     }
                 });
             }
