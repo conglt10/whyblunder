@@ -3127,6 +3127,10 @@
                 min-height: 0;
                 gap: var(--m-gap);
             }
+            .col-analysis,
+            body.coach-mode .col-coach {
+                display: none !important;
+            }
         }
 
         /* --- App Bar (.lic-header) --- */
@@ -3175,6 +3179,9 @@
                 font-size: var(--m-fs-ui);
                 display: inline-flex;
                 align-items: center;
+            }
+            #importGameGroup .dropdown-toggle-split {
+                display: none !important;
             }
             #btnHeaderNewCoachGame {
                 height: 36px;
@@ -3526,6 +3533,9 @@
                 color: var(--lic-text-secondary);
             }
 
+            body.coach-mode .mobile-nav-toolbar {
+                display: grid !important;
+            }
             body.coach-mode .mobile-slot-analysis {
                 display: none !important;
             }
@@ -3656,26 +3666,51 @@
             :root {
                 --m-appbar-h: 40px;
             }
+            body {
+                overflow: hidden !important;
+            }
+            .studio-container {
+                padding-right: 328px !important;
+                height: calc(var(--app-h) - var(--m-appbar-h)) !important;
+            }
             .studio-grid {
-                display: grid !important;
-                grid-template-columns: 1fr 320px !important;
-                flex-direction: unset !important;
-                gap: 8px;
+                display: flex !important;
+                justify-content: center !important;
+                height: 100% !important;
+            }
+            .col-board {
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
             .board-container-card {
                 max-width: calc(var(--app-h) - var(--m-appbar-h) - 16px) !important;
+                max-height: calc(var(--app-h) - var(--m-appbar-h) - 16px) !important;
             }
             .m-sheet {
-                position: static !important;
-                height: 100% !important;
-                border-radius: var(--m-radius) !important;
+                position: fixed !important;
+                top: var(--m-appbar-h) !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: auto !important;
+                width: 320px !important;
+                height: calc(var(--app-h) - var(--m-appbar-h)) !important;
+                border-radius: 0 !important;
+                border-left: 1px solid var(--lic-border) !important;
                 box-shadow: none !important;
+                transform: none !important;
+                display: flex !important;
+                flex-direction: column !important;
             }
             .m-sheet-grip {
                 display: none !important;
             }
             .m-sheet-body {
                 display: block !important;
+                flex: 1 !important;
+                overflow-y: auto !important;
                 padding: 10px !important;
             }
             .mobile-nav-toolbar {
