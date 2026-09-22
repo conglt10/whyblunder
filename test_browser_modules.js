@@ -1864,6 +1864,93 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert.strictEqual(mockHintVisible, true, "Hint button must be restored upon takeback");
     assert.strictEqual(mockReviewVisible, false, "Game Review button must be hidden upon takeback");
 
+    // 10. Coach Learner Model & ErrorProfile Escalation Tests
+    console.log("Testing Coach Learner Model & ErrorProfile Escalation...");
+    const learnerCoach = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    assert(learnerCoach.errorProfile, "CoachManager must have errorProfile");
+    assert.strictEqual(learnerCoach.errorProfile.hangingPiece, 0);
+    assert.strictEqual(learnerCoach.errorProfile.tacticalBlunder, 0);
+    assert.strictEqual(learnerCoach.errorProfile.kingSafety, 0);
+    assert.strictEqual(learnerCoach.errorProfile.endgameTechnique, 0);
+    assert.strictEqual(learnerCoach.errorProfile.openingPrinciple, 0);
+
+    // Simulate repeated hanging piece errors
+    learnerCoach.errorProfile.hangingPiece = 2;
+    const challengeMsg = learnerCoach._getContextualChallenge(learnerCoach.chess);
+    assert(challengeMsg.includes('scan') || challengeMsg.includes('pieces') || challengeMsg.includes('loose'),
+        `Contextual challenge should target loose/hanging pieces, got: ${challengeMsg}`);
+
+    learnerCoach.errorProfile.hangingPiece = 3;
+    const errorSummary = learnerCoach.getErrorSummary();
+    assert(errorSummary.length > 0, "Error summary should contain top recurring errors");
+    assert.strictEqual(errorSummary[0].key, 'hangingPiece');
+    assert.strictEqual(errorSummary[0].count, 3);
+
+    learnerCoach.resigned = true;
+    learnerCoach.resignedColor = 'w';
+    const gameOverSummary = learnerCoach._getGameOverMessage();
+    assert(gameOverSummary.includes('hanging pieces'),
+        `Game over message should summarize recurring hanging piece errors, got: ${gameOverSummary}`);
+
+    // 11. Coach Hint SEE Verification Tests
+    console.log("Testing Coach Hint SEE Verification...");
+    // A. Defended knight: capturing with Queen is unsound (SEE <= 0), must NOT suggest tactical capture
+    const coachDefended = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    coachDefended.chess.load('r1bqkb1r/ppp2ppp/3p4/4n3/4Q3/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1');
+    const defendedHint = coachDefended.generateHint();
+    assert(!defendedHint.hintText.includes('tactical capture available'),
+        `Hint must NOT suggest unsound capture with negative SEE, got: ${defendedHint.hintText}`);
+
+    // B. Undefended piece: capturing with Queen is sound (SEE > 0), MUST suggest tactical capture
+    const coachUndefended = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    coachUndefended.chess.load('r1bqkb1r/pppp1ppp/8/4n3/4Q3/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1');
+    const undefendedHint = coachUndefended.generateHint();
+    assert(undefendedHint.hintText.includes('tactical capture available'),
+        `Hint MUST announce tactical capture when SEE > 0, got: ${undefendedHint.hintText}`);
+    assert(undefendedHint.highlightSquares.includes('e5'), "Hint must highlight target square e5");
+
+    // 12. MoveDiagnostics Unified Module Tests
+    console.log("Testing MoveDiagnostics module...");
+    const MoveDiagnosticsModule = require('./js/move-diagnostics.js');
+    assert(MoveDiagnosticsModule, "MoveDiagnostics module must be exported");
+    assert.strictEqual(typeof MoveDiagnosticsModule.diagnose, 'function');
+    assert.strictEqual(typeof MoveDiagnosticsModule.uciToSan, 'function');
+    assert.strictEqual(typeof MoveDiagnosticsModule.formatPv, 'function');
+
+    // Diagnose best move
+    const goodDiagRes = MoveDiagnosticsModule.diagnose({
+        fenBefore: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+        playedMove: 'e7e5',
+        engine: {
+            bestUci: 'e7e5',
+            lines: {
+                1: { cp: 20, pv: ['e7e5', 'g1f3'] }
+            }
+        },
+        context: { ply: 2, mode: 'coach' }
+    });
+    assert.strictEqual(goodDiagRes.playedIsBest, true);
+    assert.strictEqual(goodDiagRes.classification.uiQuality, 'good move');
+    assert(goodDiagRes.narrative.explanation.length > 0);
+
+    // Diagnose blunder
+    const blunderDiagRes = MoveDiagnosticsModule.diagnose({
+        fenBefore: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+        playedMove: 'g8h6',
+        engine: {
+            bestUci: 'b8c6',
+            lines: {
+                1: { cp: 30, pv: ['b8c6', 'f1c4'] },
+                2: { cp: -250, pv: ['g8h6', 'd2d4'] }
+            }
+        },
+        context: { ply: 4, mode: 'analysis' }
+    });
+    assert.strictEqual(blunderDiagRes.playedIsBest, false);
+    assert(blunderDiagRes.wpLoss > 0.15, "Substantial wpLoss expected");
+    assert(blunderDiagRes.classification.uiQuality === 'blunder' || blunderDiagRes.classification.uiQuality === 'mistake');
+    assert(blunderDiagRes.narrative.explanation.length > 0);
+
     console.log("✓ Coach Mode Responsive Move List & Game Review tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");

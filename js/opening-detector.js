@@ -13,7 +13,13 @@
 
     const COMMON_OPENINGS = {
         "e4 e5 Nf3 Nc6 Bc4": ["C50", "Italian Game"],
+        "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O": ["C53", "Italian Game: Giuoco Piano"],
+        "e4 e5 Nf3 Nc6 Bc4 Nf6 d3 Bc5 O-O O-O": ["C55", "Two Knights Defense"],
         "e4 e5 Nf3 Nc6 Bb5": ["C60", "Ruy Lopez"],
+        "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O": ["C88", "Ruy Lopez: Closed"],
+        "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1": ["C84", "Ruy Lopez: Closed"],
+        "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Nxe4 d4 b5 Bb3 d5 dxe5 Be6": ["C80", "Ruy Lopez: Open"],
+        "e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Nxe4 d4 Nd6 Bxc6 dxc6 dxe5 Nf5 Qxd8+ Kxd8": ["C67", "Ruy Lopez: Berlin Defense"],
         "e4 e5 Nf3 Nc6 d4": ["C44", "Scotch Game"],
         "e4 e5 Nf3 Nf6": ["C42", "Petrov's Defense"],
         "e4 e5 f4": ["C30", "King's Gambit"],

@@ -554,83 +554,43 @@
                     refTo = refUci.substring(2, 4);
                 }
 
-                // 3. Win probabilities & Move classification
-                const bestCp = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.scoreToCp(bestScoreObj) : (bestScoreObj.cp || 0);
-                const playedCp = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.scoreToCp(playedScoreObj) : (playedScoreObj.cp || 0);
-
-                const wpBefore = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.cpToWinProb(bestCp) : 0.5;
-                const wpAfter = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.cpToWinProb(playedCp) : 0.5;
-
-                const isBook = (typeof OpeningDetector !== 'undefined') ? OpeningDetector.isBookMove(sanMoves, ply + 1) : false;
-
-                const classification = (typeof ChessEvaluator !== 'undefined')
-                    ? ChessEvaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook })
-                    : { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 };
-
-                // 4. Situation Recognition & Explanations
-                let explanation = '';
-                let tags = [];
-                let flaw = null;
-                let missedChance = null;
-                let betterLine = null;
-
-                if (typeof SituationRecognizer !== 'undefined') {
-                    if (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake' || classification.uiQuality === 'inaccuracy') {
-                        let opViolation = null;
-                        if (typeof OpeningDetector !== 'undefined') {
-                            opViolation = OpeningDetector.detectOpeningPrincipleViolation(boardBefore, moveObj, ply + 1);
-                        }
-
-                        const refMoveObj = (refFrom && refTo) ? { from: refFrom, to: refTo } : null;
-                        const blunderExpl = SituationRecognizer.explainBlunderOrMistake({
-                            boardBefore,
-                            boardAfter,
-                            playedMove: moveObj,
-                            bestMove: bestUci ? {
-                                from: bestUci.substring(0, 2),
-                                to: bestUci.substring(2, 4),
-                                promotion: bestUci.length > 4 ? bestUci[4] : undefined
-                            } : null,
-                            refutationMove: refMoveObj,
-                            sanPlayed: moveObj.san,
-                            sanBest: bestSan,
-                            sanRef: refSan,
-                            bestScore: bestScoreObj,
-                            playedScore: playedScoreObj,
-                            bestPv: (bestLine && bestLine.pv) ? bestLine.pv : [],
-                            refPv: refPv,
-                            bestPvFormatted: bestPvFormatted,
-                            refPvFormatted: refPvFormatted,
-                            quality: classification.uiQuality,
-                            detailedQuality: classification.detailedQuality,
-                            wpLoss: classification.wpLoss,
+                // 3. Win probabilities, Classification & Situation Recognition via MoveDiagnostics
+                const Diagnostics = (typeof MoveDiagnostics !== 'undefined') ? MoveDiagnostics : null;
+                let diag = null;
+                if (Diagnostics && typeof Diagnostics.diagnose === 'function') {
+                    diag = Diagnostics.diagnose({
+                        fenBefore,
+                        fenAfter,
+                        playedMove: moveObj,
+                        engine: {
+                            bestUci,
+                            lines: preEval.lines,
+                            post: postEval,
+                            depthPre: 18,
+                            depthPost: 16
+                        },
+                        context: {
                             ply: ply + 1,
-                            openingPrincipleViolation: opViolation
-                        });
-                        explanation = blunderExpl.explanation;
-                        tags = blunderExpl.tags;
-                        flaw = blunderExpl.flaw;
-                        missedChance = blunderExpl.missedChance;
-                        betterLine = blunderExpl.betterLine;
-
-                        if (opViolation && !tags.includes('Opening Principle')) {
-                            tags.push('Opening Principle');
+                            sanHistory: sanMoves,
+                            mode: 'analysis'
                         }
-                    } else {
-                        const goodExpl = SituationRecognizer.explainGoodMove({
-                            boardBefore,
-                            boardAfter,
-                            move: moveObj,
-                            san: moveObj.san,
-                            isBest: playedIsBest
-                        });
-                        explanation = goodExpl.explanation;
-                        tags = goodExpl.tags;
-                        flaw = goodExpl.flaw;
-                        missedChance = goodExpl.missedChance;
-                        betterLine = goodExpl.betterLine;
-                    }
+                    });
                 }
+
+                const bestCp = diag ? (diag.bestScore?.cp || 0) : ((typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.scoreToCp(bestScoreObj) : (bestScoreObj.cp || 0));
+                const playedCp = diag ? (diag.playedScore?.cp || 0) : ((typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.scoreToCp(playedScoreObj) : (playedScoreObj.cp || 0));
+                const wpBefore = diag ? diag.wpBefore : ((typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.cpToWinProb(bestCp) : 0.5);
+                const wpAfter = diag ? diag.wpAfter : ((typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.cpToWinProb(playedCp) : 0.5);
+                const isBook = diag ? diag.isBook : ((typeof OpeningDetector !== 'undefined') ? OpeningDetector.isBookMove(sanMoves, ply + 1) : false);
+                const classification = diag ? diag.classification : ((typeof ChessEvaluator !== 'undefined')
+                    ? ChessEvaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook })
+                    : { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 });
+
+                const explanation = diag ? diag.explanation : '';
+                const tags = diag ? diag.tags : [];
+                const flaw = diag ? diag.flaw : null;
+                const missedChance = diag ? diag.missedChance : null;
+                const betterLine = diag ? diag.betterLine : null;
 
                 // Threats created by played move
                 const threatsCreated = (typeof SituationRecognizer !== 'undefined')

@@ -56,6 +56,16 @@
         }
     }
 
+    function getDiagnostics() {
+        if (typeof MoveDiagnostics !== 'undefined') return MoveDiagnostics;
+        if (typeof window !== 'undefined' && window.MoveDiagnostics) return window.MoveDiagnostics;
+        try {
+            return require('./move-diagnostics.js');
+        } catch (e) {
+            return null;
+        }
+    }
+
     /**
      * Parody Coach Personas with distinct Elo ratings and conversational voices.
      */
@@ -586,6 +596,14 @@
             this.announcedOpening = false;
             this.lastSuggestedMove = null; // Track coach suggestion for takeback follow-up { fen, san, uci }
             this._positionEvalCache = new Map(); // Cache deep evaluations by FEN to prevent search swing
+            this.errorProfile = {
+                hangingPiece: 0,
+                tacticalBlunder: 0,
+                missedFork: 0,
+                kingSafety: 0,
+                endgameTechnique: 0,
+                openingPrinciple: 0
+            };
 
             // Current speech commentary
             this.currentBubble1 = this.persona.voice.intro;
@@ -906,23 +924,25 @@
                 }
             }
 
-            let classification = { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 };
+            let classification = { uiQuality: 'good move', detailedQuality: wasSuggested ? 'best' : 'good', wpLoss: 0 };
             let isBlunder = false;
             let blunderAnalysis = null;
             let bestSan = null;
             let bestMoveObj = null;
             let refMoveObj = null;
+            let diag = null;
+            let tags = [];
 
             const Evaluator = getEvaluator();
             const Recognizer = getRecognizer();
             const Detector = getOpeningDetector();
+            const Diagnostics = getDiagnostics();
 
             if (wasSuggested) {
-                // User played the exact move the coach recommended or the position's verified best move!
-                classification = { uiQuality: 'good move', detailedQuality: 'best', wpLoss: 0.0 };
-                isBlunder = false;
                 this.lastSuggestedMove = null;
-            } else if (this.worker && Evaluator) {
+            }
+
+            if (this.worker && Evaluator) {
                 try {
                     this._setWorkerAnalysisMode();
 
@@ -999,82 +1019,188 @@
                         }
                     }
 
-                    classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
-
-                    // Trigger blunder advice and takeback prompt for blunders and mistakes
-                    const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake');
-                    if (!isBook && isBlunderOrMistake) {
-                        isBlunder = true;
-                        if (!verifiedBest) {
-                            const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
-                            if (verified) {
-                                bestSan = verified.san;
-                                bestMoveObj = verified.moveObj;
-                                if (cachedEntry) {
-                                    cachedEntry.verifiedBestMove = verified;
-                                    cachedEntry.bestSan = verified.san;
-                                    cachedEntry.bestMoveObj = verified.moveObj;
-                                }
-                            }
-                        }
-
-                        if (!evalAfter) {
-                            evalAfter = await this._evaluatePosition(fenAfter, 12, 1);
-                        }
-                        if (Recognizer && Recognizer.explainBlunderOrMistake) {
-                            const boardBefore = new this.Chess(fenBefore);
-                            const boardAfter = new this.Chess(fenAfter);
-                            const refUci = (evalAfter.lines[1]?.pv && evalAfter.lines[1].pv[0]) || '';
-                            let sanRef = null;
-                            if (refUci && refUci.length >= 4) {
-                                const refBoard = new this.Chess(fenAfter);
-                                const rm = refBoard.move({
-                                    from: refUci.slice(0, 2),
-                                    to: refUci.slice(2, 4),
-                                    promotion: refUci[4]
-                                });
-                                if (rm) {
-                                    refMoveObj = rm;
-                                    sanRef = rm.san;
-                                }
-                            }
-
-                            let opViolation = null;
-                            if (Detector && typeof Detector.detectOpeningPrincipleViolation === 'function') {
-                                try {
-                                    opViolation = Detector.detectOpeningPrincipleViolation(boardBefore, legalMove, ply);
-                                } catch (e) {
-                                    console.debug?.('[coach] detectOpeningPrincipleViolation error:', e);
-                                }
-                            }
-
-                            const diag = Recognizer.explainBlunderOrMistake({
-                                boardBefore,
-                                boardAfter,
-                                playedMove: legalMove,
-                                bestMove: bestMoveObj,
-                                refutationMove: refMoveObj,
-                                sanPlayed: legalMove.san,
-                                sanBest: bestSan || 'a better move',
-                                sanRef: sanRef,
-                                bestScore: { cp: bestCp },
-                                playedScore: { cp: playedCp },
-                                bestPv: evalBefore?.lines?.[1]?.pv || [],
-                                refPv: evalAfter?.lines?.[1]?.pv || [],
-                                quality: classification.uiQuality,
-                                detailedQuality: classification.detailedQuality,
-                                wpLoss: classification.wpLoss,
+                    if (Diagnostics && typeof Diagnostics.diagnose === 'function') {
+                        diag = Diagnostics.diagnose({
+                            fenBefore,
+                            fenAfter,
+                            playedMove: legalMove,
+                            engine: {
+                                bestUci,
+                                lines: evalBefore ? evalBefore.lines : {},
+                                post: evalAfter,
+                                depthPre: 12,
+                                depthPost: 12
+                            },
+                            context: {
                                 ply,
-                                openingPrincipleViolation: opViolation
-                            });
-                            blunderAnalysis = diag ? diag.explanation : null;
+                                sanHistory: historySans,
+                                playerElo: this.persona.elo,
+                                mode: 'coach',
+                                verifiedBest,
+                                wasSuggested
+                            }
+                        });
+
+                        classification = diag.classification;
+                        tags = diag.tags || [];
+                        bestSan = diag.bestSan || bestSan;
+
+                        const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake');
+                        if (!isBook && isBlunderOrMistake) {
+                            isBlunder = true;
+                            if (!verifiedBest) {
+                                const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
+                                if (verified) {
+                                    bestSan = verified.san;
+                                    bestMoveObj = verified.moveObj;
+                                    if (cachedEntry) {
+                                        cachedEntry.verifiedBestMove = verified;
+                                        cachedEntry.bestSan = verified.san;
+                                        cachedEntry.bestMoveObj = verified.moveObj;
+                                    }
+                                }
+                            }
+                            if (!evalAfter) {
+                                evalAfter = await this._evaluatePosition(fenAfter, 12, 1);
+                                diag = Diagnostics.diagnose({
+                                    fenBefore,
+                                    fenAfter,
+                                    playedMove: legalMove,
+                                    engine: {
+                                        bestUci,
+                                        lines: evalBefore ? evalBefore.lines : {},
+                                        post: evalAfter,
+                                        depthPre: 12,
+                                        depthPost: 12
+                                    },
+                                    context: {
+                                        ply,
+                                        sanHistory: historySans,
+                                        playerElo: this.persona.elo,
+                                        mode: 'coach',
+                                        verifiedBest,
+                                        wasSuggested
+                                    }
+                                });
+                                classification = diag.classification;
+                                tags = diag.tags || [];
+                            }
+                            blunderAnalysis = diag.explanation;
+                        }
+
+                        if (diag.refUci && diag.refUci.length >= 4) {
+                            try {
+                                const refBoard = new this.Chess(fenAfter);
+                                refMoveObj = refBoard.move({
+                                    from: diag.refUci.slice(0, 2),
+                                    to: diag.refUci.slice(2, 4),
+                                    promotion: diag.refUci[4]
+                                });
+                            } catch (e) {}
+                        }
+                    } else {
+                        classification = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook });
+                        const isBlunderOrMistake = (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake');
+                        if (!isBook && isBlunderOrMistake) {
+                            isBlunder = true;
+                            if (!verifiedBest) {
+                                const verified = await this._findVerifiedBestMove(fenBefore, evalBefore);
+                                if (verified) {
+                                    bestSan = verified.san;
+                                    bestMoveObj = verified.moveObj;
+                                    if (cachedEntry) {
+                                        cachedEntry.verifiedBestMove = verified;
+                                        cachedEntry.bestSan = verified.san;
+                                        cachedEntry.bestMoveObj = verified.moveObj;
+                                    }
+                                }
+                            }
+                            if (!evalAfter) {
+                                evalAfter = await this._evaluatePosition(fenAfter, 12, 1);
+                            }
+                            if (Recognizer && Recognizer.explainBlunderOrMistake) {
+                                const boardBefore = new this.Chess(fenBefore);
+                                const boardAfter = new this.Chess(fenAfter);
+                                const refUci = (evalAfter.lines[1]?.pv && evalAfter.lines[1].pv[0]) || '';
+                                let sanRef = null;
+                                if (refUci && refUci.length >= 4) {
+                                    const refBoard = new this.Chess(fenAfter);
+                                    const rm = refBoard.move({
+                                        from: refUci.slice(0, 2),
+                                        to: refUci.slice(2, 4),
+                                        promotion: refUci[4]
+                                    });
+                                    if (rm) {
+                                        refMoveObj = rm;
+                                        sanRef = rm.san;
+                                    }
+                                }
+                                let opViolation = null;
+                                if (Detector && typeof Detector.detectOpeningPrincipleViolation === 'function') {
+                                    try {
+                                        opViolation = Detector.detectOpeningPrincipleViolation(boardBefore, legalMove, ply);
+                                    } catch (e) {}
+                                }
+                                const fallbackDiag = Recognizer.explainBlunderOrMistake({
+                                    boardBefore,
+                                    boardAfter,
+                                    playedMove: legalMove,
+                                    bestMove: bestMoveObj,
+                                    refutationMove: refMoveObj,
+                                    sanPlayed: legalMove.san,
+                                    sanBest: bestSan || 'a better move',
+                                    sanRef: sanRef,
+                                    bestScore: { cp: bestCp },
+                                    playedScore: { cp: playedCp },
+                                    bestPv: evalBefore?.lines?.[1]?.pv || [],
+                                    refPv: evalAfter?.lines?.[1]?.pv || [],
+                                    quality: classification.uiQuality,
+                                    detailedQuality: classification.detailedQuality,
+                                    wpLoss: classification.wpLoss,
+                                    ply,
+                                    openingPrincipleViolation: opViolation
+                                });
+                                blunderAnalysis = fallbackDiag ? fallbackDiag.explanation : null;
+                                tags = fallbackDiag ? fallbackDiag.tags || [] : [];
+                            }
                         }
                     }
                 } catch (e) {
                     console.debug?.('[coach] handleUserMove eval error:', e);
                 }
             }
+
+            if (wasSuggested) {
+                isBlunder = false;
+                if (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake') {
+                    classification.uiQuality = 'good move';
+                }
+                if (classification.wpLoss === undefined) classification.wpLoss = 0.0;
+            }
+
             this.lastMoveQuality = classification;
+
+            // Update learner errorProfile on mistakes and blunders
+            if (isBlunder || classification.uiQuality === 'mistake') {
+                if (tags.includes('Hanging Piece')) {
+                    this.errorProfile.hangingPiece = (this.errorProfile.hangingPiece || 0) + 1;
+                }
+                if (tags.includes('Tactical Blunder') || tags.includes('Missed Tactic') || tags.includes('Pin') || tags.includes('Skewer') || tags.includes('Discovered Attack')) {
+                    this.errorProfile.tacticalBlunder = (this.errorProfile.tacticalBlunder || 0) + 1;
+                }
+                if (tags.includes('Tactical Fork') || tags.includes('Missed Fork')) {
+                    this.errorProfile.missedFork = (this.errorProfile.missedFork || 0) + 1;
+                }
+                if (tags.includes('King Safety') || tags.includes('Checkmate') || tags.includes('Missed Mate')) {
+                    this.errorProfile.kingSafety = (this.errorProfile.kingSafety || 0) + 1;
+                }
+                if (tags.includes('Endgame Technique') || tags.includes('Opposition') || tags.includes('King Activity') || tags.includes('Stalemate') || tags.includes('Pawn Promotion')) {
+                    this.errorProfile.endgameTechnique = (this.errorProfile.endgameTechnique || 0) + 1;
+                }
+                if (tags.includes('Opening Principle') || tags.includes('Development')) {
+                    this.errorProfile.openingPrinciple = (this.errorProfile.openingPrinciple || 0) + 1;
+                }
+            }
 
             // 3. Check for game termination
             this._checkGameTermination();
@@ -1090,7 +1216,15 @@
                 bubble1 = `Great adjustment! Playing ${legalMove.san} keeps your position solid and maintains control.`;
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             } else if (isBlunder) {
-                bubble1 = pickRandom(this.persona.voice.playerBlunder);
+                let blunderVoice = pickRandom(this.persona.voice.playerBlunder);
+                if (this.errorProfile.hangingPiece >= 3 && tags.includes('Hanging Piece')) {
+                    blunderVoice = "Careful! That's another piece left hanging. Scan every undefended piece before committing!";
+                } else if (this.errorProfile.tacticalBlunder >= 3 && (tags.includes('Tactical Blunder') || tags.includes('Tactical Fork'))) {
+                    blunderVoice = "Tactical danger again! Always look for opponent forcing replies before making your move.";
+                } else if (this.errorProfile.openingPrinciple >= 2 && tags.includes('Opening Principle')) {
+                    blunderVoice = "Watch the opening fundamentals: complete development and avoid unnecessary early piece maneuvers.";
+                }
+                bubble1 = blunderVoice;
                 bubble2 = blunderAnalysis || "That move might be a mistake. Review the tactical oversight card below!";
             } else if (classification.detailedQuality === 'book') {
                 bubble1 = `Book move! ${legalMove.san} follows standard opening theory.`;
@@ -1099,9 +1233,9 @@
                 bubble1 = `${legalMove.san} is playable, but slightly inaccurate. Let's see how you handle my counterplay.`;
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
             } else {
-                let goodReason = "";
+                let goodReason = (diag && diag.explanation) ? diag.explanation : "";
                 const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
-                if (Recognizer && Recognizer.explainGoodMove) {
+                if (!goodReason && Recognizer && Recognizer.explainGoodMove) {
                     try {
                         const boardBefore = new this.Chess(fenBefore);
                         const boardAfter = new this.Chess(fenAfter);
@@ -1134,6 +1268,20 @@
                     bubble1 = `Good move with ${legalMove.san}!`;
                 }
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+            }
+
+            // Persona-scaled explanation tuning for bubble2 / dialogue
+            if (isBlunder && blunderAnalysis) {
+                if (this.persona.elo <= 1000) {
+                    // Plain, concrete single-sentence summary for novice coaches
+                    const firstSentence = blunderAnalysis.split('. ')[0];
+                    blunderAnalysis = firstSentence.endsWith('.') ? firstSentence : firstSentence + '.';
+                    bubble2 = blunderAnalysis;
+                } else if (this.persona.elo >= 2000 && diag && diag.bestPvFormatted) {
+                    // Deep GM-level variation added for advanced personas
+                    blunderAnalysis = `${blunderAnalysis} Better continuation: ${diag.bestPvFormatted}`;
+                    bubble2 = blunderAnalysis;
+                }
             }
 
             this.currentBubble1 = bubble1;
@@ -1169,6 +1317,8 @@
                 bestSan,
                 bestMoveObj,
                 refMoveObj,
+                tags,
+                explanation: diag ? diag.explanation : (blunderAnalysis || bubble1),
                 fen: this.chess.fen()
             };
             this.moveHistory.push(record);
@@ -1180,13 +1330,12 @@
                 bubble2,
                 dialogue: this.currentDialogue,
                 quality: classification,
-                detailedQuality: classification.detailedQuality,
-                uiQuality: classification.uiQuality,
                 isBlunder,
                 blunderAnalysis,
                 bestSan,
                 bestMoveObj,
                 refMoveObj,
+                tags,
                 isGameOver: this.isGameOver
             };
         }
@@ -1344,6 +1493,24 @@
                         repEx = replyBoard.move(replyMove);
                         if (repEx) {
                             refSan = repEx.san;
+                        }
+                    }
+
+                    // If player error profile shows recurring tactical/fork issues, prioritize forks/pins
+                    const preferTactics = Boolean(this.errorProfile && (this.errorProfile.missedFork >= 2 || this.errorProfile.tacticalBlunder >= 2));
+                    if (preferTactics && repEx) {
+                        const replyBoard = new this.Chess(testBoard.fen());
+                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                        const fork = Recognizer.detectFork(replyBoard, repEx);
+                        if (fork) {
+                            return {
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Tactical Fork',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'fork'
+                            };
                         }
                     }
 
@@ -1780,6 +1947,32 @@
             const playerColor = this.playerColor;
             const homeRank = (playerColor === 'w') ? 0 : 7;
 
+            // Prioritize recurring weaknesses from learner errorProfile
+            if (this.errorProfile && this.errorProfile.hangingPiece >= 2) {
+                return pickRandom([
+                    "Remember to scan all your pieces: are any undefended or vulnerable?",
+                    "Check your loose pieces before you move! An undefended piece is a tactical target."
+                ]);
+            }
+            if (this.errorProfile && (this.errorProfile.tacticalBlunder >= 2 || this.errorProfile.missedFork >= 2)) {
+                return pickRandom([
+                    "Look out for tactical motifs! Watch for checks, forks, and pins.",
+                    "Calculate forcing moves carefully here. Can you spot any tactics for either side?"
+                ]);
+            }
+            if (this.errorProfile && this.errorProfile.kingSafety >= 2) {
+                return pickRandom([
+                    "Keep an eye on your king safety! Look for shelter and watch open lines.",
+                    "Is your king safe from checks and mating threats right now?"
+                ]);
+            }
+            if (this.errorProfile && this.errorProfile.openingPrinciple >= 2 && this.moveHistory.length < 16) {
+                return pickRandom([
+                    "Focus on opening fundamentals: develop every piece before attacking.",
+                    "Are all your pieces actively developed and coordinated?"
+                ]);
+            }
+
             // Check if player has back-rank sleeping knights or bishops
             let sleepingMinors = 0;
             const files = ['b', 'c', 'f', 'g'];
@@ -1841,14 +2034,20 @@
                 };
             }
 
-            // Check if player has any piece under immediate attack
+            // Check if player has any profitable tactical capture available (verified by SEE)
             if (Recognizer) {
+                const playerColor = this.chess.turn();
                 for (const m of legalMoves) {
                     if (m.captured && ['q', 'r', 'b', 'n'].includes(m.captured)) {
-                        return {
-                            hintText: `Coach Hint: You have a tactical capture available! Inspect your attacks around ${m.to}.`,
-                            highlightSquares: [m.from, m.to]
-                        };
+                        const isSound = (typeof Recognizer.staticExchangeEval === 'function')
+                            ? (Recognizer.staticExchangeEval(this.chess, m.to, playerColor) > 0)
+                            : true;
+                        if (isSound) {
+                            return {
+                                hintText: `Coach Hint: You have a tactical capture available! Inspect your attacks around ${m.to}.`,
+                                highlightSquares: [m.from, m.to]
+                            };
+                        }
                     }
                 }
             }
@@ -2009,24 +2208,42 @@
             }
         }
 
+        getErrorSummary() {
+            if (!this.errorProfile) return [];
+            const themes = [
+                { key: 'hangingPiece', count: this.errorProfile.hangingPiece || 0, label: 'hanging pieces' },
+                { key: 'tacticalBlunder', count: this.errorProfile.tacticalBlunder || 0, label: 'tactical oversights' },
+                { key: 'missedFork', count: this.errorProfile.missedFork || 0, label: 'missed tactical forks' },
+                { key: 'kingSafety', count: this.errorProfile.kingSafety || 0, label: 'king safety vulnerabilities' },
+                { key: 'endgameTechnique', count: this.errorProfile.endgameTechnique || 0, label: 'endgame technique' },
+                { key: 'openingPrinciple', count: this.errorProfile.openingPrinciple || 0, label: 'opening principles' }
+            ].filter(t => t.count > 0).sort((a, b) => b.count - a.count);
+
+            return themes.slice(0, 2);
+        }
+
         _getGameOverMessage() {
+            let baseMsg = "Game over!";
             if (this.resigned) {
-                return (this.resignedColor === this.playerColor)
+                baseMsg = (this.resignedColor === this.playerColor)
                     ? "You resigned. No worries, every game is a learning opportunity!"
                     : "Coach resigned! Outstanding play!";
-            }
-            if (this.chess.in_checkmate()) {
-                return (this.chess.turn() === this.playerColor)
+            } else if (this.chess.in_checkmate()) {
+                baseMsg = (this.chess.turn() === this.playerColor)
                     ? "Checkmate! Good game! Don't worry, every loss is a lesson."
                     : "Checkmate! Spectacular play! You won the game!";
+            } else if (this.chess.in_stalemate()) {
+                baseMsg = "Stalemate! The game ends in a peaceful draw.";
+            } else if (this.chess.in_draw()) {
+                baseMsg = "Draw! A well-fought battle on both sides.";
             }
-            if (this.chess.in_stalemate()) {
-                return "Stalemate! The game ends in a peaceful draw.";
+
+            const topErrors = this.getErrorSummary();
+            if (topErrors.length > 0) {
+                const summaryStr = topErrors.map(e => `${e.count} ${e.label}`).join(' and ');
+                baseMsg += ` Key takeaways from this game: watch out for ${summaryStr}.`;
             }
-            if (this.chess.in_draw()) {
-                return "Draw! A well-fought battle on both sides.";
-            }
-            return "Game over!";
+            return baseMsg;
         }
 
         /**

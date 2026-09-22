@@ -352,6 +352,9 @@
         const ordered = normalizeLines(lines);
         if (ordered.length === 0) return false;
         if (ordered.length === 1) return true;
+        if (ordered.length >= 2 && cpToWinProb(ordered[1].cp) > 0.60) {
+            return false;
+        }
         const threshold = (typeof options.threshold === 'number' && isFinite(options.threshold))
             ? options.threshold : 0.8;
         return positionSharpness(lines) >= threshold;
@@ -468,7 +471,7 @@
         }
         if (applied < 2) return false;
 
-        return (minBalance <= before - minMaterial) && (current <= before - minMaterial);
+        return (minBalance <= before - minMaterial) && (current <= before - minMaterial || minBalance <= before - 2);
     }
 
 
@@ -490,7 +493,7 @@
             if (isSacrifice && wpAfter >= 0.60) {
                 return { uiQuality: 'good move', detailedQuality: 'brilliant', wpLoss };
             }
-            if (isOnlyMove && wpAfter >= 0.50) {
+            if (isOnlyMove && (wpAfter >= 0.20 || wpLoss <= 0.01)) {
                 return { uiQuality: 'good move', detailedQuality: 'great', wpLoss };
             }
             if (wpLoss <= 0.01) {
@@ -545,7 +548,7 @@
             if (isSacrifice && wpAfter >= 0.60) {
                 return { uiQuality: 'good move', detailedQuality: 'brilliant', wpLoss };
             }
-            if (isOnlyMove && wpAfter >= 0.50) {
+            if (isOnlyMove && (wpAfter >= 0.20 || wpLoss <= 0.01)) {
                 return { uiQuality: 'good move', detailedQuality: 'great', wpLoss };
             }
             if (wpLoss <= 0.01) {

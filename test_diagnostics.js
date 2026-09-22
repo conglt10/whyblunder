@@ -36,6 +36,7 @@ const Chess = require('./js/chess.min.js').Chess || require('./js/chess.min.js')
 const ChessEvaluator = require('./js/chess-evaluator.js');
 const OpeningDetector = require('./js/opening-detector.js');
 const SituationRecognizer = require('./js/situation-recognizer.js');
+const MoveDiagnostics = require('./js/move-diagnostics.js');
 
 // ---------------------------------------------------------------------------
 // Engine-stub helpers
@@ -151,8 +152,7 @@ const FIXTURES = [
             },
             post: post('b7b5', cpLine(-30, ['b7b5', 'a4b3']))
         },
-        expect: { detailedQuality: 'book' },
-        knownFail: 'F9 - opening book is 37 prefix-matched lines, stops firing by ply 4-10'
+        expect: { detailedQuality: 'book' }
     },
 
     // -------------------------------------------------------------------
@@ -252,8 +252,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'brilliant',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F2 - isSacrifice is never passed to classifyMove, so brilliant is dead code'
+        }
     },
     {
         // Fried Liver Attack: 6.Nxf7! sacrifices the knight for a raging attack.
@@ -275,8 +274,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'brilliant',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F2 - isSacrifice is never passed to classifyMove, so brilliant is dead code'
+        }
     },
     {
         // Greek gift: Bxh7+ Kxh7 Ng5+ Kg8 Qh5 with a winning attack.
@@ -298,8 +296,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'brilliant',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F2 - isSacrifice is never passed to classifyMove, so brilliant is dead code'
+        }
     },
     {
         // Sicilian-style exchange sacrifice on c3: rook for knight, shattering
@@ -322,8 +319,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'brilliant',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F2 - isSacrifice is never passed to classifyMove, so brilliant is dead code'
+        }
     },
     {
         // Same Greek gift, but the stub makes it the SECOND-best move, so the
@@ -347,8 +343,7 @@ const FIXTURES = [
         expect: {
             uiQuality: 'inaccuracy',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F5 - detectHangingPieceBlunder is geometric, no SEE and no refutation corroboration'
+        }
     },
     {
         // Same for the exchange sacrifice: Rxc3 is "attacked by a cheaper pawn",
@@ -371,8 +366,7 @@ const FIXTURES = [
         expect: {
             uiQuality: 'inaccuracy',
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
-        },
-        knownFail: 'F5 - detectHangingPieceBlunder is geometric, no SEE and no refutation corroboration'
+        }
     },
 
     // -------------------------------------------------------------------
@@ -393,8 +387,7 @@ const FIXTURES = [
             },
             post: post('a8a7', cpLine(30, ['a8a7', 'f7f6']))
         },
-        expect: { detailedQuality: 'great' },
-        knownFail: 'F2 - isOnlyMove is never derived or passed, so great is dead code'
+        expect: { detailedQuality: 'great' }
     },
     {
         // Only ...h6 parries the Qxh7# threat; everything else loses on the spot.
@@ -413,8 +406,7 @@ const FIXTURES = [
             },
             post: post('g5e4', cpLine(40, ['g5e4', 'g8h7']))
         },
-        expect: { detailedQuality: 'great' },
-        knownFail: 'F2 - isOnlyMove is never derived from the MultiPV spread'
+        expect: { detailedQuality: 'great' }
     },
     {
         // The same position, but the only defence is missed and it is mate.
@@ -436,8 +428,7 @@ const FIXTURES = [
         expect: {
             uiQuality: 'blunder',
             mustContain: ['Kh8']
-        },
-        knownFail: 'F6 - Part-C templates append punctuation blindly, producing "Qxh7##"'
+        }
     },
 
     // -------------------------------------------------------------------
@@ -509,8 +500,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'missed win',
             mustContain: ['stalemate']
-        },
-        knownFail: 'F8 - no game-phase awareness and no endgame vocabulary (stalemate is never detected)'
+        }
     },
     {
         // The positive control: the mate actually gets played.
@@ -603,8 +593,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'best',
             mustNotContain: ['maintains a solid position and harmonious coordination']
-        },
-        knownFail: 'F7 - explainGoodMove is engine-blind, so quiet best moves get positional boilerplate'
+        }
     },
     {
         // a3 (Samisch) denies b4 to the bishop before anything else happens.
@@ -786,8 +775,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'best',
             mustContain: ['opposition']
-        },
-        knownFail: 'F8 - no gamePhase helper and no endgame vocabulary (opposition, king activity)'
+        }
     },
     {
         // Pushing the pawn first throws the opposition away and draws.
@@ -809,8 +797,7 @@ const FIXTURES = [
         expect: {
             uiQuality: 'mistake',
             mustContain: ['d4', 'opposition']
-        },
-        knownFail: 'F8 - endgame technique (opposition / king before pawn) is never described'
+        }
     },
     {
         // Centralising the king in a symmetrical pawn endgame.
@@ -832,8 +819,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'best',
             mustContain: ['king']
-        },
-        knownFail: 'F8 - king activity is not part of the explanation vocabulary'
+        }
     },
     {
         name: 'endgame-promotion-e8Q',
@@ -854,8 +840,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'best',
             mustContain: ['promot']
-        },
-        knownFail: 'F8 - promotion/endgame conversion has no dedicated vocabulary'
+        }
     },
     {
         // Lucena: Rc4 builds the bridge and converts.
@@ -877,8 +862,7 @@ const FIXTURES = [
         expect: {
             detailedQuality: 'best',
             mustContain: ['rook']
-        },
-        knownFail: 'F8 - no endgame detectors (rook behind the passer, building a bridge)'
+        }
     },
     {
         // Rook to the seventh in a rook endgame.
@@ -958,164 +942,35 @@ function formatPv(chessInstance, uciMoves, maxMoves) {
  * Returns { classification, explanation, tags, flaw, missedChance, betterLine, ... }.
  */
 function runDiagnosis(fx) {
-    const boardBefore = new Chess(fx.fenBefore);
-    const playing = new Chess(fx.fenBefore);
-    const moveObj = playing.move({
-        from: fx.playedUci.substring(0, 2),
-        to: fx.playedUci.substring(2, 4),
-        promotion: fx.playedUci.length > 4 ? fx.playedUci[4] : undefined
-    });
-    assert(moveObj, `${fx.name}: playedUci ${fx.playedUci} is not legal in ${fx.fenBefore}`);
-    const boardAfter = new Chess(playing.fen());
-
-    const preEval = fx.engine;
-    const postEval = fx.engine.post || { bestMove: '', lines: {} };
-
-    const bestUci = preEval.bestMove;
-    const bestLine = preEval.lines[1] || { cp: 0, pv: [] };
-    const bestScoreObj = { cp: bestLine.cp, mate: bestLine.mate };
-    const bestSan = uciToSan(boardBefore, bestUci);
-    const bestPvFormatted = formatPv(boardBefore, bestLine.pv);
-
-    const playedUci = moveObj.from + moveObj.to + (moveObj.promotion || '');
-    const playedIsBest = (playedUci === bestUci);
-
-    let playedScoreObj = bestScoreObj;
-    let refUci = null;
-    let refSan = null;
-    let refFrom = null;
-    let refTo = null;
-    let refPv = [];
-    let refPvFormatted = '';
-
-    if (playedIsBest) {
-        playedScoreObj = bestScoreObj;
-        if (bestLine.pv && bestLine.pv.length > 1) {
-            refUci = bestLine.pv[1];
-            refPv = bestLine.pv.slice(1);
-        }
-    } else {
-        let foundInMultipv = false;
-        for (let m = 2; m <= 3; m++) {
-            if (preEval.lines[m] && preEval.lines[m].pv && preEval.lines[m].pv[0] === playedUci) {
-                playedScoreObj = { cp: preEval.lines[m].cp, mate: preEval.lines[m].mate };
-                foundInMultipv = true;
-                break;
-            }
-        }
-
-        const postBest = postEval.lines[1] || {};
-        refUci = postEval.bestMove;
-
-        if (!foundInMultipv) {
-            if (postBest.mate !== undefined) {
-                playedScoreObj = { mate: -postBest.mate };
-            } else {
-                playedScoreObj = { cp: -(postBest.cp || 0) };
-            }
-        }
-        if (postBest.pv) {
-            refPv = postBest.pv;
-            refPvFormatted = formatPv(boardAfter, postBest.pv);
-        }
-    }
-
-    if (refUci && refUci.length >= 4) {
-        refSan = uciToSan(boardAfter, refUci);
-        refFrom = refUci.substring(0, 2);
-        refTo = refUci.substring(2, 4);
-    }
-
-    const bestCp = ChessEvaluator.scoreToCp(bestScoreObj);
-    const playedCp = ChessEvaluator.scoreToCp(playedScoreObj);
-    const wpBefore = ChessEvaluator.cpToWinProb(bestCp);
-    const wpAfter = ChessEvaluator.cpToWinProb(playedCp);
-
-    const sanMoves = fx.sanHistory || [];
-    const isBook = OpeningDetector.isBookMove(sanMoves, fx.ply);
-
-    const classification = ChessEvaluator.classifyMove(wpBefore, wpAfter, {
-        playedIsBest: playedIsBest,
-        isBook: isBook
-    });
-
-    let explanation = '';
-    let tags = [];
-    let flaw = null;
-    let missedChance = null;
-    let betterLine = null;
-    let path = 'good';
-
-    const isBad = (classification.uiQuality === 'blunder'
-        || classification.uiQuality === 'mistake'
-        || classification.uiQuality === 'inaccuracy');
-
-    if (isBad) {
-        path = 'blunder';
-        const opViolation = OpeningDetector.detectOpeningPrincipleViolation(boardBefore, moveObj, fx.ply);
-        const refMoveObj = (refFrom && refTo) ? { from: refFrom, to: refTo } : null;
-        const res = SituationRecognizer.explainBlunderOrMistake({
-            boardBefore: boardBefore,
-            boardAfter: boardAfter,
-            playedMove: moveObj,
-            bestMove: bestUci ? {
-                from: bestUci.substring(0, 2),
-                to: bestUci.substring(2, 4),
-                promotion: bestUci.length > 4 ? bestUci[4] : undefined
-            } : null,
-            refutationMove: refMoveObj,
-            sanPlayed: moveObj.san,
-            sanBest: bestSan,
-            sanRef: refSan,
-            bestScore: bestScoreObj,
-            playedScore: playedScoreObj,
-            bestPv: bestLine.pv || [],
-            refPv: refPv,
-            bestPvFormatted: bestPvFormatted,
-            refPvFormatted: refPvFormatted,
-            quality: classification.uiQuality,
-            detailedQuality: classification.detailedQuality,
-            wpLoss: classification.wpLoss,
+    const res = MoveDiagnostics.diagnose({
+        fenBefore: fx.fenBefore,
+        playedMove: fx.playedUci,
+        engine: fx.engine,
+        context: {
             ply: fx.ply,
-            openingPrincipleViolation: opViolation
-        });
-        explanation = res.explanation;
-        tags = res.tags;
-        flaw = res.flaw;
-        missedChance = res.missedChance;
-        betterLine = res.betterLine;
-        if (opViolation && !tags.includes('Opening Principle')) {
-            tags.push('Opening Principle');
+            sanHistory: fx.sanHistory || [],
+            phase: fx.phase
         }
-    } else {
-        const res = SituationRecognizer.explainGoodMove({
-            boardBefore: boardBefore,
-            boardAfter: boardAfter,
-            move: moveObj,
-            san: moveObj.san,
-            isBest: playedIsBest
-        });
-        explanation = res.explanation;
-        tags = res.tags;
-        flaw = res.flaw;
-        missedChance = res.missedChance;
-        betterLine = res.betterLine;
-    }
+    });
+
+    const isBad = (res.classification.uiQuality === 'blunder'
+        || res.classification.uiQuality === 'mistake'
+        || res.classification.uiQuality === 'inaccuracy');
 
     return {
-        path: path,
-        classification: classification,
-        explanation: explanation,
-        tags: tags,
-        flaw: flaw,
-        missedChance: missedChance,
-        betterLine: betterLine,
-        isBook: isBook,
-        playedIsBest: playedIsBest,
-        wpBefore: wpBefore,
-        wpAfter: wpAfter,
-        sanPlayed: moveObj.san,
-        sanBest: bestSan
+        path: isBad ? 'blunder' : 'good',
+        classification: res.classification,
+        explanation: res.explanation,
+        tags: res.tags,
+        flaw: res.flaw,
+        missedChance: res.missedChance,
+        betterLine: res.betterLine,
+        isBook: res.isBook,
+        playedIsBest: res.playedIsBest,
+        wpBefore: res.wpBefore,
+        wpAfter: res.wpAfter,
+        sanPlayed: res.sanPlayed,
+        sanBest: res.bestSan
     };
 }
 

@@ -1406,9 +1406,9 @@
         }
 
         if (friendlyPawns === 0 && oppPawns === 0) {
-            return 'taking control of the open file';
+            return (piece.type === 'r') ? 'activating the rook on the open file' : 'taking control of the open file';
         } else if (friendlyPawns === 0 && oppPawns > 0) {
-            return 'controlling the semi-open file';
+            return (piece.type === 'r') ? 'activating the rook on the semi-open file' : 'controlling the semi-open file';
         }
         return null;
     }
@@ -1457,6 +1457,17 @@
             return castling.includes('k') || castling.includes('q');
         }
         return false;
+    }
+
+    function isKingAndPawnEnding(board) {
+        if (!board) return false;
+        for (let r = 0; r < 8; r++) {
+            for (let f = 0; f < 8; f++) {
+                const p = board.get(fileRankToSquare(f, r));
+                if (p && p.type !== 'k' && p.type !== 'p') return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1720,6 +1731,7 @@
             detailedQuality = null,
             wpLoss = null,
             ply = null,
+            phase = null,
             openingPrincipleViolation = null
         } = options;
 
@@ -1978,11 +1990,13 @@
             }
 
             // A15: Minor Piece Development
-            const dev = detectMinorDevelopment(boardBefore, bestMove);
-            if (dev) {
-                tags.push('Development');
-                if (!bestReason) {
-                    bestReason = dev;
+            if (phase !== 'endgame') {
+                const dev = detectMinorDevelopment(boardBefore, bestMove);
+                if (dev) {
+                    tags.push('Development');
+                    if (!bestReason) {
+                        bestReason = dev;
+                    }
                 }
             }
 
@@ -1997,14 +2011,26 @@
             // A17: Specific Positional Fallback
             if (!bestReason) {
                 const p = boardBefore.get(bestMove.from);
-                if (p && p.type === 'p') {
-                    bestReason = 'solidifies pawn structure and central control';
-                } else if (p && p.type === 'k') {
-                    bestReason = 'moves the King to a safer square';
-                } else if (p && (p.type === 'r' || p.type === 'q')) {
-                    bestReason = 'activates the piece to control open lines';
+                if (phase === 'endgame') {
+                    if (p && p.type === 'k') {
+                        bestReason = 'activates the King for the endgame';
+                    } else if (p && p.type === 'r') {
+                        bestReason = 'activates the Rook to control open lines and support the pawns';
+                    } else if (p && p.type === 'p') {
+                        bestReason = 'advances the pawn toward promotion';
+                    } else {
+                        bestReason = 'improves piece activity in the endgame';
+                    }
                 } else {
-                    bestReason = 'improves piece activity and central coordination';
+                    if (p && p.type === 'p') {
+                        bestReason = 'solidifies pawn structure and central control';
+                    } else if (p && p.type === 'k') {
+                        bestReason = 'moves the King to a safer square';
+                    } else if (p && (p.type === 'r' || p.type === 'q')) {
+                        bestReason = 'activates the piece to control open lines';
+                    } else {
+                        bestReason = 'improves piece activity and central coordination';
+                    }
                 }
             }
         }
@@ -2014,12 +2040,33 @@
         let refutationEffect = null;
         let flaw = null;
 
-        // B1: Hanging Piece Blunder
-        const hanging = detectHangingPieceBlunder(boardBefore, boardAfter, playedMove);
+        // B1: Hanging Piece Blunder (demoted for low-severity inaccuracies or small eval drop)
+        const isLowSeverity = (quality === 'inaccuracy' || (typeof wpLoss === 'number' && wpLoss < 0.10));
+        const hanging = (!isLowSeverity) ? detectHangingPieceBlunder(boardBefore, boardAfter, playedMove, refutationMove) : null;
         if (hanging) {
             tags.push('Hanging Piece');
             blunderReason = hanging.description;
             flaw = hanging.description;
+        }
+
+        // Endgame Technique & Opposition Blunder
+        if (phase === 'endgame' && isKingAndPawnEnding(boardBefore)) {
+            const playedP = boardBefore.get(playedMove.from);
+            const bestP = bestMove ? boardBefore.get(bestMove.from) : null;
+            if (playedP && playedP.type === 'p' && bestP && bestP.type === 'k') {
+                tags.push('Opposition', 'Endgame Technique');
+                blunderReason = 'pushes the pawn prematurely and concedes the opposition';
+                flaw = 'pushes the pawn prematurely and concedes the opposition';
+                bestReason = 'maintains the opposition with the King before advancing the pawn';
+            }
+        }
+
+        // Stalemate detection
+        if (boardAfter.in_stalemate && boardAfter.in_stalemate()) {
+            tags.push('Stalemate');
+            blunderReason = 'allows stalemate, throwing away the win';
+            flaw = 'allows stalemate, throwing away the win';
+            refutationEffect = 'allows stalemate, turning a win into a draw';
         }
 
         // B2: King Safety Flaw
@@ -2037,7 +2084,8 @@
             const isCheckmate = !!(options.refutationIsCheckmate) || (boardAfterRef && boardAfterRef.in_checkmate && boardAfterRef.in_checkmate());
             if (isCheckmate) {
                 tags.push('Checkmate', 'Tactical Blunder');
-                refutationEffect = `allows ${sanRef || 'refutation'}# delivering checkmate`;
+                const checkmateSan = sanRef ? (sanRef.endsWith('#') ? sanRef : (sanRef.replace(/\+$/, '') + '#')) : 'refutation#';
+                refutationEffect = `allows ${checkmateSan} delivering checkmate`;
             } else if (boardAfterRef) {
                 // Check deep refutation material loss in PV first (avoids stopping at simple 1-ply capture)
                 if (refPv && refPv.length > 0) {
@@ -2161,7 +2209,11 @@
 
         if (isMissedTactic) {
             if (tags.includes('Missed Mate')) {
-                explanation = `${sanPlayed} misses checkmate! ${sanBest} would have finished the game immediately. Instead, ${sanPlayed} lets ${oppName} stay in the game.`;
+                if (boardAfter.in_stalemate && boardAfter.in_stalemate()) {
+                    explanation = `${sanPlayed} misses checkmate! ${sanBest} would have finished the game immediately. Instead, ${sanPlayed} allows stalemate, throwing away the win.`;
+                } else {
+                    explanation = `${sanPlayed} misses checkmate! ${sanBest} would have finished the game immediately. Instead, ${sanPlayed} lets ${oppName} stay in the game.`;
+                }
             } else {
                 const missExtra = missedChance ? ` and ${missedChance}` : '';
                 explanation = `${sanPlayed} overlooks a tactical opportunity${missExtra}. ${sanBest} was winning because it ${bestReason}. Instead, ${sanPlayed} ${refutationEffect || 'hands over the initiative'}.`;
@@ -2203,6 +2255,11 @@
             isBest = false
         } = options;
 
+        const phase = options.phase || (typeof ChessEvaluator !== 'undefined' && ChessEvaluator.gamePhase ? ChessEvaluator.gamePhase(boardBefore.fen()) : 'middlegame');
+        const detailedQuality = options.detailedQuality || null;
+        const isOnlyMove = Boolean(options.isOnlyMove);
+        const isSacrifice = Boolean(options.isSacrifice);
+
         const color = boardBefore.turn();
         const tags = [];
         const reasons = [];
@@ -2226,6 +2283,47 @@
         if (san.includes('+')) {
             tags.push('Check');
             reasons.push('gives a forcing check');
+        }
+
+        if (move.promotion || (san && san.includes('='))) {
+            tags.push('Pawn Promotion', 'Promotion');
+            const promoChar = move.promotion || (san.includes('=') ? san.split('=')[1].charAt(0).toLowerCase() : 'q');
+            const promoName = PIECE_NAMES[promoChar] || 'queen';
+            reasons.push(`promotes the pawn to a ${promoName}`);
+        }
+
+        const p = boardBefore.get(move.from);
+        if (p && p.type === 'k' && phase === 'endgame') {
+            if (isKingAndPawnEnding(boardBefore)) {
+                tags.push('Opposition', 'King Activity');
+                reasons.push('seizes the opposition and activates the king');
+            } else {
+                tags.push('King Activity');
+                reasons.push('activates the king for the endgame');
+            }
+        }
+
+        if (p && p.type === 'r' && phase === 'endgame') {
+            tags.push('Rook Activity');
+            reasons.push('activates the rook to prepare the winning bridge');
+        }
+
+        if (p && p.type === 'p') {
+            const file = move.to[0];
+            const rank = move.to[1];
+            if ((file === 'a' || file === 'h') && (rank === '3' || rank === '6')) {
+                const targetFile = (file === 'a') ? 'b' : 'g';
+                const targetRank = (rank === '3') ? '4' : '5';
+                tags.push('Prophylaxis');
+                reasons.push(`controls ${targetFile}${targetRank} to prevent enemy piece infiltration and create an escape square`);
+            }
+        }
+
+        if (isSacrifice) {
+            tags.push('Sacrifice');
+        }
+        if (isOnlyMove) {
+            tags.push('Only Move');
         }
 
         const captured = boardBefore.get(move.to);
@@ -2272,7 +2370,7 @@
         }
 
         const bcd = detectBoardControlDominance(boardBefore, boardAfter, move);
-        if (bcd) {
+        if (bcd && phase !== 'endgame') {
             tags.push(...bcd.tags);
             reasons.push(bcd.description);
         }
@@ -2293,8 +2391,7 @@
             reasons.push('advances a passed pawn toward promotion');
         }
 
-        const p = boardBefore.get(move.from);
-        if (p && (p.type === 'n' || p.type === 'b')) {
+        if (p && (p.type === 'n' || p.type === 'b') && phase !== 'endgame') {
             const homeRank = (color === 'w' ? 0 : 7);
             if (squareToRank(move.from) === homeRank) {
                 tags.push('Development');
@@ -2302,7 +2399,13 @@
             }
         }
 
-        const prefix = isBest ? 'Best move! ' : 'Strong move. ';
+        let prefix = isBest ? 'Best move! ' : 'Strong move. ';
+        if (detailedQuality === 'brilliant' || isSacrifice) {
+            prefix = 'Brilliant move! ';
+        } else if (detailedQuality === 'great' || isOnlyMove) {
+            prefix = 'Great move! ';
+        }
+
         const reasonsDedup = Array.from(new Set(reasons));
         if (reasonsDedup.length > 0) {
             return {
