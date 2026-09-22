@@ -2210,6 +2210,103 @@ console.log("✓ Coach board flicker fix regressions passed!");
     });
     assert(mangooseDiag.narrative.explanation.includes('Better continuation:'), 'Mangoose deep explanation should include continuation variation');
 
+    
+    // -------------------------------------------------------------------------
+    // NEW PLAN UNIT TESTS: deriveIsSacrifice sampling, detectOfferedPiece, missed opportunity
+    // -------------------------------------------------------------------------
+
+    console.log("Testing strict brilliant detection...");
+    const MoveDiagnosticsExt = require('./js/move-diagnostics.js');
+
+    // 1. Exchange sac Rxc3 nets only one pawn of "offer" (R for N+P), so it is
+    //    not an offered piece; the PV-settled material path is what flags it.
+    const boardBeforeSac = new Chess('2r1k2r/pp1bnppp/4p3/q7/3P4/2N1BN2/PP2BPPP/2RQ1RK1 b k - 0 1');
+    const boardAfterSac = new Chess('2r1k2r/pp1bnppp/4p3/q7/3P4/2r1BN2/PP2BPPP/2RQ1RK1 w k - 0 2');
+    const sacMoveObj = { from: 'c8', to: 'c3', piece: 'r', captured: 'n' };
+    assert.strictEqual(!!MoveDiagnosticsExt._detectOfferedPiece(boardBeforeSac, boardAfterSac, sacMoveObj, SituationRecognizer), false,
+        'Rxc3 alone is not an offered piece (net offer is one pawn)');
+    assert.strictEqual(ChessEvaluator.deriveIsSacrifice(boardBeforeSac.fen(), 'c8c3', ['c8c3', 'b2c3', 'a5c3']), true,
+        'Rxc3 bxc3 Qxc3 is a sustained exchange sacrifice');
+
+    // 2. deriveIsSacrifice: settled sampling ignores even trades, pawn sacs, and unrelated PVs
+    const tradeFen = 'r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4';
+    assert.strictEqual(ChessEvaluator.deriveIsSacrifice(tradeFen, 'c3d5', ['c3d5', 'f6d5', 'e4d5']), false,
+        'Nd5 Nxd5 exd5 is an even trade, not a sacrifice');
+    assert.strictEqual(ChessEvaluator.deriveIsSacrifice(tradeFen, 'c3d5', ['f1c4', 'f8c5']), false,
+        'PV that does not start with the played move is never evidence of a sacrifice');
+    const gambitFen = 'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2';
+    assert.strictEqual(ChessEvaluator.deriveIsSacrifice(gambitFen, 'c2c4', ['c2c4', 'd5c4', 'e2e3']), false,
+        'Queen\'s Gambit pawn offer is not a piece sacrifice');
+
+    // 3. detectOfferedPiece: Legal's Nxe5 leaves the queen on d1 en prise
+    const legalBefore = new Chess('r2qkbnr/ppp2ppp/2np4/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 2 5');
+    const legalAfter = new Chess(legalBefore.fen());
+    const legalMove = legalAfter.move({ from: 'f3', to: 'e5' });
+    const legalOffer = MoveDiagnosticsExt._detectOfferedPiece(legalBefore, legalAfter, legalMove, SituationRecognizer);
+    assert.ok(legalOffer, "Legal's Nxe5 offers a piece");
+    assert.strictEqual(legalOffer.piece, 'q', "Legal's Nxe5 offers the queen");
+    assert.strictEqual(legalOffer.square, 'd1');
+
+    // 4. detectOfferedPiece respects check: after the discovered check Nc5+,
+    //    Qxc5 is illegal, so the knight is not really offered.
+    const chkBefore = new Chess('4k3/pppp1ppp/8/q7/4N3/8/PPPP1PPP/4R1K1 w - - 0 1');
+    const chkAfter = new Chess(chkBefore.fen());
+    const chkMove = chkAfter.move({ from: 'e4', to: 'c5' });
+    assert.ok(chkAfter.in_check(), 'Nc5 is a discovered check');
+    assert.strictEqual(!!MoveDiagnosticsExt._detectOfferedPiece(chkBefore, chkAfter, chkMove, SituationRecognizer), false,
+        'A capture that is illegal because of check does not count as an offer');
+    const noChkBefore = new Chess('4k3/pppp1ppp/8/q7/4N3/8/PPPP1PPP/6K1 w - - 0 1');
+    const noChkAfter = new Chess(noChkBefore.fen());
+    const noChkMove = noChkAfter.move({ from: 'e4', to: 'c5' });
+    assert.strictEqual(!!MoveDiagnosticsExt._detectOfferedPiece(noChkBefore, noChkAfter, noChkMove, SituationRecognizer), true,
+        'Without the check the knight on c5 is simply offered');
+
+    // 3. Coach missed-opportunity takeback logic
+    const oppWorker = {
+        options: {},
+        setOption: function(name, val) { this.options[name] = val; },
+        evaluate: async (fen, depth, multipv) => {
+            if (fen === 'r1bqk2r/ppp2ppp/2n1pn2/3p4/1b1P4/2NBPN2/PPP2PPP/R1BQK2R w KQkq - 0 1') {
+                return {
+                    bestMove: 'c3d5',
+                    lines: {
+                        1: { cp: 150, pv: ['c3d5'] },
+                        2: { cp: 20, pv: ['e1g1'] }
+                    }
+                };
+            }
+            if (fen === 'r1bqk2r/ppp2ppp/2n1pn2/3p4/1b1P4/2N1PN2/PPP2PPP/R1BQKB1R b KQkq - 0 1') {
+                return {
+                    bestMove: 'b4c3',
+                    lines: {
+                        1: { cp: 300, pv: ['b4c3'] }, // brilliant candidate!
+                        2: { cp: 200, pv: ['e8g8'] }
+                    }
+                };
+            }
+            return { bestMove: 'e1g1', lines: { 1: { cp: 0, pv: ['e1g1'] } } };
+        }
+    };
+    
+    const oppCoach = new CoachManager({ personaId: 'sophy', playerColor: 'b', worker: oppWorker });
+    oppCoach.chess.load('r1bqk2r/ppp2ppp/2n1pn2/3p4/1b1P4/2N1PN2/PPP2PPP/R1BQKB1R b KQkq - 0 1');
+    
+    // Line 2 (O-O) drops ~0.09 WP versus the pending brilliant line 1 (Bxc3+).
+    oppCoach.pendingOpportunity = { kind: 'brilliant', posKey: oppCoach._normalizeFen(oppCoach.chess.fen()), plan: { source: 'brilliant', motif: 'sacrifice', move: { from: 'b4', to: 'c3', san: 'Bxc3+' } } };
+    const resOpp = await oppCoach.handleUserMove('O-O'); // plays e8g8
+    // console.log
+    assert.strictEqual(resOpp.isMissedOpportunity, true, "Should return isMissedOpportunity: true");
+    assert.strictEqual(resOpp.isBlunder, false, "Missed opportunity is not a blunder");
+    assert.strictEqual(resOpp.detailedQuality || resOpp.quality.detailedQuality, 'miss', "Missed opportunity is classified as a miss");
+    // (pendingOpportunity is cleared lazily by posKey mismatch in production)
+    
+    const okOpp = oppCoach.takebackPlayerMove(null);
+    assert.strictEqual(okOpp, true, "Takeback successful");
+    assert.ok(oppCoach.pendingOpportunity && oppCoach.pendingOpportunity.plan, "pendingOpportunity should be restored");
+    assert.strictEqual(oppCoach.pendingOpportunity.plan.motif, 'sacrifice', "restored plan keeps the sacrifice hint motif");
+    assert.strictEqual(oppCoach.lastSuggestedMove, null, "lastSuggestedMove should be null to encourage finding it");
+    
+
     console.log("✓ Coach Mode Responsive Move List & Game Review tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");

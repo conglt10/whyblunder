@@ -61,7 +61,7 @@ Mate scores are mapped to a bounded centipawn scale: $cp = \text{sign}(m) \times
 
 | Classification | Condition / Win Probability Drop ($\Delta WP$) | Fallback Safeguard |
 | :--- | :--- | :--- |
-| **Brilliant** | Played move is best $\land$ Piece Sacrifice $\land\ WP_{after} \ge 0.60$ | N/A |
+| **Brilliant** | Played move is best $\land$ True Sacrifice $\land\ WP_{after} \ge 0.60 \land WP_{secondBest} \le 0.90 \land (WP_{after} - WP_{secondBest}) \ge 0.05$ | N/A |
 | **Great / Best** | Played move is best $\land$ ($\text{isOnlyMove} \lor \Delta WP \le 0.01$) | N/A |
 | **Book** | Move sequence matches ECO database ($\le \text{ply } 16$) | N/A |
 | **Inaccuracy** | $0.04 \le \Delta WP < 0.10$ | Downgraded from mistake in winning conversions ($WP > 0.90$) |

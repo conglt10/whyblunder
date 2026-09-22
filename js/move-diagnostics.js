@@ -94,6 +94,70 @@
         return tokens.join(' ');
     }
 
+    function detectOfferedPiece(boardBefore, boardAfter, moveObj, Recognizer) {
+        if (!Recognizer || !Recognizer.staticExchangeEval) return false;
+        if (!moveObj || !moveObj.to) return false;
+
+        const oppTurn = boardAfter.turn();
+        const moverTurn = oppTurn === 'w' ? 'b' : 'w';
+
+        const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+        let capturedValue = 0;
+        if (moveObj.captured) {
+            capturedValue = pieceValues[moveObj.captured] || 0;
+        }
+
+        const fenBeforeTokens = boardBefore.fen().split(' ');
+        fenBeforeTokens[1] = oppTurn;
+        fenBeforeTokens[3] = '-'; 
+        const ChessCtor = getChessConstructor();
+        const boardBeforeFlipped = new ChessCtor(fenBeforeTokens.join(' '));
+
+        const moves = boardAfter.moves({ verbose: true });
+        let maxSee = 0;
+        let offeredPieceSquare = null;
+        let offeredPieceType = null;
+
+        for (const m of moves) {
+            if (m.flags.includes('c') || m.flags.includes('e')) {
+                const targetSq = m.to;
+                const targetPiece = boardAfter.get(targetSq);
+                if (!targetPiece) continue; 
+                
+                const type = targetPiece.type;
+                const val = pieceValues[type] || 0;
+                
+                if (val >= 3 && targetPiece.color === moverTurn) {
+                    let wasEnPrise = false;
+                    if (targetSq !== moveObj.to) {
+                        const seeBefore = Recognizer.staticExchangeEval(boardBeforeFlipped, targetSq, oppTurn);
+                        if (seeBefore > 0) {
+                            wasEnPrise = true;
+                        }
+                    }
+
+                    if (!wasEnPrise) {
+                        const seeAfter = Recognizer.staticExchangeEval(boardAfter, targetSq, oppTurn);
+                        if (seeAfter > maxSee) {
+                            maxSee = seeAfter;
+                            offeredPieceSquare = targetSq;
+                            offeredPieceType = type;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (maxSee - capturedValue >= 2) {
+            return {
+                isOffered: true,
+                piece: offeredPieceType,
+                square: offeredPieceSquare
+            };
+        }
+        return false;
+    }
+
     /**
      * Unified move diagnosis function.
      *
@@ -254,9 +318,33 @@
 
         const isBook = (Detector && Detector.isBookMove) ? Detector.isBookMove(sanHistory, ply, fenAfter) : false;
 
-        const isSacrifice = (Evaluator && Evaluator.deriveIsSacrifice)
-            ? Evaluator.deriveIsSacrifice(fenBefore, playedUci, bestLine.pv)
-            : false;
+        let secondBestWp = null;
+        if (playedIsBest && lines[1] && lines[1].pv && lines[1].pv[0] !== playedUci) {
+            // The played move was verified as best later, but the shallow search preferred lines[1].
+            // So lines[1] is the alternative.
+            if (lines[1]) {
+                const cp1 = Evaluator ? Evaluator.scoreToCp(lines[1]) : (lines[1].cp || 0);
+                secondBestWp = Evaluator ? Evaluator.cpToWinProb(cp1) : null;
+            }
+        } else if (lines[2]) {
+            const cp2 = Evaluator ? Evaluator.scoreToCp(lines[2]) : (lines[2].cp || 0);
+            secondBestWp = Evaluator ? Evaluator.cpToWinProb(cp2) : null;
+        }
+
+        let isSacrifice = false;
+        let offeredObj = false;
+        if (playedIsBest && Evaluator) {
+            let pvSacrifice = false;
+            let playedLinePv = null;
+            if (lines[1] && lines[1].pv && lines[1].pv[0] === playedUci) {
+                playedLinePv = lines[1].pv;
+            }
+            if (playedLinePv && Evaluator.deriveIsSacrifice) {
+                pvSacrifice = Evaluator.deriveIsSacrifice(fenBefore, playedUci, playedLinePv);
+            }
+            offeredObj = detectOfferedPiece(boardBefore, boardAfter, moveObj, Recognizer);
+            isSacrifice = !!(pvSacrifice || offeredObj);
+        }
 
         const isOnlyMove = (Evaluator && Evaluator.deriveIsOnlyMove)
             ? Evaluator.deriveIsOnlyMove(lines)
@@ -284,6 +372,7 @@
                 isSacrifice,
                 isOnlyMove,
                 mateMissed,
+                secondBestWp,
                 context: context.adaptive ? evalContext : null
             })
             : { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0, confidence: 'medium' };
@@ -414,7 +503,9 @@
             refPvFormatted,
             bestPvFormatted,
             phase,
-            sharpness
+            sharpness,
+            sacrificedPiece: offeredObj ? offeredObj.piece : undefined,
+            sacrificeSquare: offeredObj ? offeredObj.square : undefined
         };
     }
 
@@ -475,10 +566,61 @@
         return { depthPre, depthPost, multipv };
     }
 
+    function isBrilliantCandidate(fenBefore, lines) {
+        const Evaluator = getEvaluator();
+        const Recognizer = getRecognizer();
+        const ChessCtor = getChessConstructor();
+        if (!Evaluator || !Recognizer || !ChessCtor || !lines) return false;
+
+        let bestLine = null;
+        let secondBestLine = null;
+        if (lines[1]) bestLine = lines[1];
+        if (lines[2]) secondBestLine = lines[2];
+        if (!bestLine || !bestLine.pv || bestLine.pv.length === 0) return false;
+
+        const bestUci = bestLine.pv[0];
+        const bestCp = Evaluator.scoreToCp(bestLine);
+        const wpAfter = Evaluator.cpToWinProb(bestCp);
+
+        let secondBestWp = null;
+        if (secondBestLine) {
+            const cp2 = Evaluator.scoreToCp(secondBestLine);
+            secondBestWp = Evaluator.cpToWinProb(cp2);
+        }
+
+        const BRILLIANT = Evaluator.BRILLIANT_THRESHOLDS || { maxSecondBestWp: 0.90, minWpGap: 0.05 };
+
+        if (wpAfter < 0.60) return false;
+        if (secondBestWp === null) return false;
+        if (secondBestWp >= BRILLIANT.maxSecondBestWp) return false;
+        if ((wpAfter - secondBestWp) < BRILLIANT.minWpGap) return false;
+
+        let isSacrifice = false;
+        if (Evaluator.deriveIsSacrifice && Evaluator.deriveIsSacrifice(fenBefore, bestUci, bestLine.pv)) {
+            isSacrifice = true;
+        } else {
+            const boardBefore = new ChessCtor(fenBefore);
+            const boardAfter = new ChessCtor(fenBefore);
+            const moveObj = boardAfter.move({
+                from: bestUci.slice(0, 2),
+                to: bestUci.slice(2, 4),
+                promotion: bestUci.length > 4 ? bestUci[4] : undefined
+            });
+            if (moveObj) {
+                const offeredObj = detectOfferedPiece(boardBefore, boardAfter, moveObj, Recognizer);
+                if (offeredObj) isSacrifice = true;
+            }
+        }
+
+        return isSacrifice ? { bestUci, wpAfter, secondBestWp } : false;
+    }
+
     return {
         diagnose,
         uciToSan,
         formatPv,
-        searchBudget
+        searchBudget,
+        isBrilliantCandidate,
+        _detectOfferedPiece: detectOfferedPiece
     };
 }));

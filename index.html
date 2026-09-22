@@ -8277,7 +8277,7 @@
 
                 // If player just made a blunder that hasn't been replied to yet, show the blunder dialogue
                 const lastMove = coachManager.moveHistory[coachManager.moveHistory.length - 1];
-                if (lastMove && lastMove.isPlayer && lastMove.isBlunder) {
+                if (lastMove && lastMove.isPlayer && (lastMove.isBlunder || lastMove.isMissedOpportunity)) {
                     bubble.textContent = coachManager.getDialogue();
                     setCoachSheetSummary();
                     return;
@@ -8811,6 +8811,14 @@
             function showBlunderTakebackCard(userResult) {
                 const card = document.getElementById('coachBlunderCard');
                 if (!card) return;
+                const retryBtn = document.getElementById('btnCoachRetryMove');
+                if (retryBtn) {
+                    if (userResult && userResult.isMissedOpportunity) {
+                        retryBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Take Back & Find It';
+                    } else {
+                        retryBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Take Back & Try Again';
+                    }
+                }
                 card.classList.remove('d-none');
             }
 
@@ -8860,20 +8868,22 @@
                     return;
                 }
 
-                if (userResult.isBlunder) {
+                if (userResult.isBlunder || userResult.isMissedOpportunity) {
                     cancelPendingCoachResponse();
-                    playChessSound('blunder');
+                    playChessSound(userResult.isMissedOpportunity ? 'move' : 'blunder');
                     showBlunderTakebackCard(userResult);
 
                     // Display takeback explanatory arrows
                     clearArrows();
-                    // 1. Better alternative move arrow (green)
-                    if (userResult.bestMoveObj && userResult.bestMoveObj.from && userResult.bestMoveObj.to) {
-                        drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better');
-                    }
-                    // 2. Opponent's punishing refutation threat arrow (red)
-                    if (userResult.refMoveObj && userResult.refMoveObj.from && userResult.refMoveObj.to) {
-                        drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat');
+                    if (!userResult.isMissedOpportunity) {
+                        // 1. Better alternative move arrow (green)
+                        if (userResult.bestMoveObj && userResult.bestMoveObj.from && userResult.bestMoveObj.to) {
+                            drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better');
+                        }
+                        // 2. Opponent's punishing refutation threat arrow (red)
+                        if (userResult.refMoveObj && userResult.refMoveObj.from && userResult.refMoveObj.to) {
+                            drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat');
+                        }
                     }
                     return;
                 }
@@ -9191,7 +9201,8 @@
                     if (!coachManager || currentAppMode !== 'coach') return;
                     cancelPendingCoachResponse();
                     const lastMoveRecord = coachManager.moveHistory[coachManager.moveHistory.length - 1];
-                    const suggestedSan = (lastMoveRecord && lastMoveRecord.bestSan) || null;
+                    const isMiss = lastMoveRecord && lastMoveRecord.isMissedOpportunity;
+                    const suggestedSan = isMiss ? null : ((lastMoveRecord && lastMoveRecord.bestSan) || null);
                     const ok = coachManager.takebackPlayerMove(suggestedSan);
                     if (ok) {
                         coachCurrentMoveIndex = coachManager.moveHistory.length - 1;
@@ -9212,7 +9223,7 @@
                         updateKingCheckmateBadges(coachManager.chess);
                         updateCoachActionBarState();
 
-                        if (suggestedSan) {
+                        if (suggestedSan && !isMiss) {
                             try {
                                 const tempBoard = new coachManager.Chess(coachManager.chess.fen());
                                 const testM = tempBoard.move(suggestedSan);

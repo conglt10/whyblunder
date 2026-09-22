@@ -76,6 +76,127 @@ function post(bestMove, line) {
 // explanation text.
 
 const FIXTURES = [
+    // --- NEW STRICT BRILLIANT NEGATIVE FIXTURES ---
+    {
+        name: 'neg-brilliant-even-trade',
+        fenBefore: 'r1bqkb1r/ppp1pppp/2n2n2/3p4/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 0 4',
+        playedUci: 'c3d5',
+        sanHistory: [],
+        ply: 12,
+        phase: 'middlegame',
+        engine: {
+            bestMove: 'c3d5',
+            lines: {
+                1: cpLine(150, ['c3d5', 'f6d5', 'e4d5']),
+                2: cpLine(30, ['f1b5', 'a7a6']),
+                3: cpLine(20, ['a2a3', 'h7h6'])
+            },
+            post: post('f6d5', cpLine(-150, ['f6d5', 'e4d5']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+    {
+        name: 'neg-brilliant-pawn-gambit',
+        fenBefore: 'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2',
+        playedUci: 'e4d5',
+        sanHistory: [],
+        ply: 3,
+        phase: 'opening',
+        engine: {
+            bestMove: 'e4d5',
+            lines: {
+                1: cpLine(120, ['e4d5', 'g8f6', 'c2c4']),
+                2: cpLine(20, ['d2d3', 'e7e5']),
+                3: cpLine(10, ['b1c3', 'd5e4'])
+            },
+            post: post('g8f6', cpLine(-120, ['g8f6', 'c2c4']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+    {
+        name: 'neg-brilliant-already-crushing',
+        fenBefore: 'r1bq1rk1/ppp2ppp/2n1pn2/3p4/1b1P4/2NBPN2/PPP2PPP/R1BQK2R w KQ - 0 1',
+        playedUci: 'd3h7',
+        sanHistory: [],
+        ply: 20,
+        phase: 'middlegame',
+        engine: {
+            bestMove: 'd3h7',
+            lines: {
+                1: cpLine(800, ['d3h7', 'g8h7', 'f3g5']),
+                2: cpLine(600, ['e1g1', 'c8d7']),
+                3: cpLine(500, ['a2a3', 'b4c3'])
+            },
+            post: post('g8h7', cpLine(-800, ['g8h7', 'f3g5']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+    {
+        name: 'neg-brilliant-low-gap',
+        fenBefore: 'r1bq1rk1/ppp2ppp/2n1pn2/3p4/1b1P4/2NBPN2/PPP2PPP/R1BQK2R w KQ - 0 1',
+        playedUci: 'd3h7',
+        sanHistory: [],
+        ply: 20,
+        phase: 'middlegame',
+        engine: {
+            bestMove: 'd3h7',
+            lines: {
+                1: cpLine(200, ['d3h7', 'g8h7', 'f3g5']),
+                2: cpLine(190, ['e1g1', 'c8d7']),
+                3: cpLine(150, ['a2a3', 'b4c3'])
+            },
+            post: post('g8h7', cpLine(-200, ['g8h7', 'f3g5']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+    {
+        name: 'neg-brilliant-single-line',
+        fenBefore: 'r1bq1rk1/ppp2ppp/2n1pn2/3p4/1b1P4/2NBPN2/PPP2PPP/R1BQK2R w KQ - 0 1',
+        playedUci: 'd3h7',
+        sanHistory: [],
+        ply: 20,
+        phase: 'middlegame',
+        engine: {
+            bestMove: 'd3h7',
+            lines: {
+                1: cpLine(300, ['d3h7', 'g8h7', 'f3g5'])
+            },
+            post: post('g8h7', cpLine(-300, ['g8h7', 'f3g5']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+    {
+        name: 'neg-brilliant-coach-verifiedBest-mismatch',
+        fenBefore: 'r1bq1rk1/ppp2ppp/2n1pn2/3p4/1b1P4/2NBPN2/PPP2PPP/R1BQK2R w KQ - 0 1',
+        playedUci: 'd3h7',
+        sanHistory: [],
+        ply: 20,
+        phase: 'middlegame',
+        context: { verifiedBest: { uci: 'd3h7', san: 'Bxh7+' } },
+        engine: {
+            bestMove: 'd3h7',
+            lines: {
+                1: cpLine(250, ['e1g1', 'c8d7']),
+                2: cpLine(100, ['d3h7', 'g8h7']),
+                3: cpLine(80, ['a2a3', 'b4c3'])
+            },
+            post: post('g8h7', cpLine(-100, ['g8h7']))
+        },
+        expect: {
+            detailedQualityNot: 'brilliant'
+        }
+    },
+
 
     // -------------------------------------------------------------------
     // Book opening moves
@@ -1144,6 +1265,9 @@ function checkExpectations(fx, out) {
     }
     if (exp.detailedQuality !== undefined && out.classification.detailedQuality !== exp.detailedQuality) {
         problems.push(`detailedQuality: expected "${exp.detailedQuality}", got "${out.classification.detailedQuality}"`);
+    }
+    if (exp.detailedQualityNot !== undefined && out.classification.detailedQuality === exp.detailedQualityNot) {
+        problems.push(`detailedQualityNot: expected NOT "${exp.detailedQualityNot}", got "${out.classification.detailedQuality}"`);
     }
     if (exp.tags) {
         for (const tag of exp.tags) {

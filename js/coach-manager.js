@@ -82,6 +82,8 @@
             voice: {
                 intro: "Hey! Ready to play? I love passed pawns and fast play—let's do this!",
                 thinking: "Calculating my fastest counter-attack...",
+                brilliantNudge: ["There's a fireworks move here. Find it!"],
+                playerBrilliant: ["Wow, brilliant move! Fireworks on the board!"],
                 passedPawn: [
                     "Passed pawn! I'm hoping my new passed pawn will become a queen one day.",
                     "Passed pawn! That pawn is on a one-way trip to the 8th rank.",
@@ -245,6 +247,8 @@
             voice: {
                 intro: "Hi friend! I'm learning chess too! Let's have a great game together!",
                 thinking: "Thinking... let me make sure I don't hang my rook!",
+                brilliantNudge: ["Ooh, I sense something *bold* for you here…"],
+                playerBrilliant: ["Brilliant! You're a genius! I didn't see that!"],
                 passedPawn: [
                     "Yay, my pawn is moving forward! Go little buddy!",
                     "Is this a passed pawn? I think it wants to be a queen!"
@@ -407,6 +411,8 @@
             voice: {
                 intro: "Welcome to class! Let's focus on piece harmony, solid defense, and tactical awareness.",
                 thinking: "Assessing positional dynamics and king safety...",
+                brilliantNudge: ["There's a brilliant idea in this position; think about what you could give up."],
+                playerBrilliant: ["A brilliant sacrifice! Masterfully played."],
                 passedPawn: [
                     "Passed pawn! A passed pawn increases in value as the board clears.",
                     "Advancing the passed pawn to tie down your defensive pieces."
@@ -569,6 +575,8 @@
             voice: {
                 intro: "Let's play. Keep it clean, don't rush, and let's see how deep your endgame understanding goes.",
                 thinking: "Calculating... seeing deep into the endgame.",
+                brilliantNudge: ["A strong player would find the sacrifice here."],
+                playerBrilliant: ["A truly brilliant sacrifice. Excellent vision."],
                 passedPawn: [
                     "Passed pawn! In the endgame, passed pawns must be pushed.",
                     "Creating a passed pawn. Now the endgame conversion begins.",
@@ -932,6 +940,28 @@
                 beginner: "Coach Hint: Try playing {san}! It improves your piece placement.",
                 default: "Coach Hint: {san}! A harmonious positional move improving piece activity.{followUpText}",
                 master: "Coach Hint: {san} optimizes your coordination and maintains strategic control.{followUpText}"
+            }
+        },
+        sacrifice: {
+            1: {
+                beginner: "Coach Hint: Something bold works here! Sometimes giving up a piece wins even more.",
+                default: "Coach Hint: There's a brilliant sacrifice in this position. What could you give up to break through?",
+                master: "Coach Hint: Material is secondary here: look for a sacrifice that opens the position."
+            },
+            2: {
+                beginner: "Coach Hint: Look at your {piece} on {from}. It can be the hero of this move!",
+                default: "Coach Hint: Your {piece} on {from} is the piece to offer.",
+                master: "Coach Hint: The sacrificial candidate is your {piece} on {from}."
+            },
+            3: {
+                beginner: "Coach Hint: Move your {piece} to {to}, even if it looks like it can be taken!",
+                default: "Coach Hint: Put your {piece} on {to}. The opponent can take it, but it costs them.",
+                master: "Coach Hint: {to} is the key square for the sacrifice."
+            },
+            4: {
+                beginner: "Coach Hint: Play {san}! It's a brilliant sacrifice.",
+                default: "Coach Hint: {san}!! A brilliant sacrifice.{followUpText}",
+                master: "Coach Hint: {san}!! The sacrifice is sound.{followUpText}"
             }
         }
     };
@@ -1387,6 +1417,7 @@
             let refMoveObj = null;
             let diag = null;
             let tags = [];
+            let isBook = false;
 
             const Evaluator = getEvaluator();
             const Recognizer = getRecognizer();
@@ -1445,7 +1476,7 @@
 
                     // Check opening book to avoid false positive opening blunders
                     const historySans = this.moveHistory.map(m => m.san).concat([legalMove.san]);
-                    const isBook = (ply <= 12 && Detector && Detector.isBookMove) ? Detector.isBookMove(historySans, ply) : false;
+                    isBook = (ply <= 12 && Detector && Detector.isBookMove) ? Detector.isBookMove(historySans, ply) : false;
 
                     let playedCp = 0;
                     let wpAfter = wpBefore;
@@ -1631,12 +1662,47 @@
                 }
             }
 
+            let isMissedOpportunity = false;
+            let opportunityKind = null;
+            let opportunityPlan = null;
+
             if (wasSuggested) {
                 isBlunder = false;
                 if (classification.uiQuality === 'blunder' || classification.uiQuality === 'mistake') {
                     classification.uiQuality = 'good move';
                 }
                 if (classification.wpLoss === undefined) classification.wpLoss = 0.0;
+            } else if (!isBook && !isBlunder && !this.isGameOver) {
+                const wpLoss = classification.wpLoss || 0;
+                let opportunity = null;
+
+                if (this.pendingOpportunity && this.pendingOpportunity.posKey === this._normalizeFen(fenBefore)) {
+                    opportunity = this.pendingOpportunity;
+                } else if (cachedEntry && cachedEntry.evalBefore && cachedEntry.evalBefore.lines) {
+                    const l1 = cachedEntry.evalBefore.lines[1];
+                    const l2 = cachedEntry.evalBefore.lines[2];
+                    if (l1 && l2) {
+                        const Diag = getDiagnostics();
+                        const cand = (Diag && typeof Diag.isBrilliantCandidate === 'function') ? Diag.isBrilliantCandidate(fenBefore, cachedEntry.evalBefore.lines) : null;
+                        if (cand) {
+                            opportunity = { kind: 'brilliant' };
+                        } else {
+                            const cp1 = l1.cp !== undefined ? l1.cp : 0;
+                            const cp2 = l2.cp !== undefined ? l2.cp : 0;
+                            if ((cp1 - cp2 >= 150) || (l1.mate && !l2.mate)) {
+                                opportunity = { kind: 'tactic' };
+                            }
+                        }
+                    }
+                }
+
+                if (opportunity && classification.detailedQuality !== 'best' && classification.detailedQuality !== 'brilliant' && wpLoss >= 0.08) {
+                    classification.detailedQuality = 'miss';
+                    isMissedOpportunity = true;
+                    opportunityKind = opportunity.kind || 'tactic';
+                    opportunityPlan = opportunity.plan || this._buildOpportunityPlan(fenBefore, bestMoveObj, opportunityKind);
+                    this.errorProfile.missedOpportunity = (this.errorProfile.missedOpportunity || 0) + 1;
+                }
             }
 
             this.lastMoveQuality = classification;
@@ -1690,6 +1756,24 @@
             } else if (classification.detailedQuality === 'book') {
                 bubble1 = `Book move! ${legalMove.san} follows standard opening theory.`;
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+            } else if (classification.detailedQuality === 'miss') {
+                bubble1 = `You had something special here: ${opportunityKind === 'brilliant' ? 'a brilliant sacrifice' : 'a winning tactic'}. Want to take it back and find it?`;
+                bubble2 = "Don't rush! Let's look at that position again.";
+                if (opportunityKind === 'brilliant') {
+                    this.hintStats.brilliantMissed = (this.hintStats.brilliantMissed || 0) + 1;
+                }
+            } else if (classification.detailedQuality === 'brilliant') {
+                bubble1 = pickRandom(this.persona.voice.playerBrilliant || ["Brilliant move!"]);
+                if (diag && diag.sacrificedPiece) {
+                    const pieces = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen' };
+                    const pieceName = pieces[diag.sacrificedPiece] || 'piece';
+                    bubble2 = `You gave up your ${pieceName} on ${diag.sacrificeSquare} to rip open the position.`;
+                } else if (diag && diag.explanation) {
+                    bubble2 = diag.explanation;
+                } else {
+                    bubble2 = "A spectacular sacrifice.";
+                }
+                this.hintStats.brilliantFound = (this.hintStats.brilliantFound || 0) + 1;
             } else if (classification.uiQuality === 'inaccuracy') {
                 bubble1 = `${legalMove.san} is playable, but slightly inaccurate. Let's see how you handle my counterplay.`;
                 bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
@@ -1782,6 +1866,9 @@
                 detailedQuality: classification.detailedQuality,
                 uiQuality: classification.uiQuality,
                 isBlunder,
+                isMissedOpportunity,
+                opportunityKind,
+                opportunityPlan,
                 blunderAnalysis,
                 bestSan,
                 bestMoveObj,
@@ -1801,6 +1888,8 @@
                 dialogue: this.currentDialogue,
                 quality: classification,
                 isBlunder,
+                isMissedOpportunity,
+                opportunityKind,
                 blunderAnalysis,
                 bestSan,
                 bestMoveObj,
@@ -1874,17 +1963,72 @@
             const bubbles = this._generateCoachBubbles(boardBefore, boardAfter, executed, isChallenge, challengeData);
 
             // D. Opportunity Nudge (Section 3.6): Check for unprompted tactical opportunity
-            if (!isChallenge && !this.isGameOver) {
-                const shouldCheckOpp = (this.persona.id === 'mcmarty' || this.persona.id === 'sophy')
-                    ? true
-                    : (this.persona.id === 'pikaru')
-                        ? (ply % 2 === 0)
-                        : false;
-                if (shouldCheckOpp && this.worker && typeof this.worker.evaluate === 'function') {
-                    try {
-                        const oppFen = this.chess.fen();
-                        const oppEval = await this._evaluatePosition(oppFen, 8, 2);
-                        if (oppEval && oppEval.lines && oppEval.lines[1] && oppEval.lines[2]) {
+            if (!isChallenge && !this.isGameOver && this.worker && typeof this.worker.evaluate === 'function') {
+                try {
+                    const oppFen = this.chess.fen();
+                    const oppKey = this._normalizeFen(oppFen);
+                    // One search at the same depth/MultiPV handleUserMove uses, cached so
+                    // the player's reply is judged on exactly this evaluation.
+                    const oppEval = await this._evaluatePosition(oppFen, 12, 3);
+                    const oppLines = (oppEval && oppEval.lines) || {};
+                    const bestLine = oppLines[1];
+                    if (bestLine && bestLine.pv && bestLine.pv[0]) {
+                        this._positionEvalCache.set(oppKey, {
+                            evalBefore: oppEval,
+                            bestMove: oppEval.bestMove || bestLine.pv[0],
+                            bestSan: null,
+                            bestMoveObj: null,
+                            verifiedBestMove: null,
+                            cp: bestLine.cp || 0
+                        });
+                        if (this._positionEvalCache.size > 50) {
+                            const firstKey = this._positionEvalCache.keys().next().value;
+                            this._positionEvalCache.delete(firstKey);
+                        }
+                    }
+
+                    const Diagnostics = getDiagnostics();
+                    const cand = (Diagnostics && typeof Diagnostics.isBrilliantCandidate === 'function')
+                        ? Diagnostics.isBrilliantCandidate(oppFen, oppLines)
+                        : null;
+
+                    if (cand) {
+                        const oppBoard = new this.Chess(oppFen);
+                        const moveEx = oppBoard.move(cand.bestUci.length >= 4 ? {
+                            from: cand.bestUci.slice(0, 2),
+                            to: cand.bestUci.slice(2, 4),
+                            promotion: cand.bestUci.length > 4 ? cand.bestUci[4] : undefined
+                        } : cand.bestUci);
+                        if (moveEx) {
+                            this.pendingOpportunity = {
+                                posKey: oppKey,
+                                plan: {
+                                    source: 'brilliant',
+                                    motif: 'sacrifice',
+                                    move: { from: moveEx.from, to: moveEx.to, san: moveEx.san, uci: cand.bestUci, piece: moveEx.piece },
+                                    keySquares: { targets: [] },
+                                    followUp: null
+                                },
+                                kind: 'brilliant',
+                                bestUci: cand.bestUci,
+                                bestWp: cand.wpAfter
+                            };
+                            const voiceLines = this.persona.voice && this.persona.voice.brilliantNudge ? this.persona.voice.brilliantNudge : [];
+                            let nudgeText = "";
+                            if (voiceLines.length > 0) {
+                                nudgeText = " " + voiceLines[ply % voiceLines.length];
+                            } else {
+                                nudgeText = " A strong player would find the sacrifice here.";
+                            }
+                            bubbles.bubble2 = (bubbles.bubble2 || "") + nudgeText;
+                        }
+                    } else {
+                        const shouldCheckOpp = (this.persona.id === 'mcmarty' || this.persona.id === 'sophy')
+                            ? true
+                            : (this.persona.id === 'pikaru')
+                                ? (ply % 2 === 0)
+                                : false;
+                        if (shouldCheckOpp && oppEval && oppEval.lines && oppEval.lines[1] && oppEval.lines[2]) {
                             const l1 = oppEval.lines[1];
                             const l2 = oppEval.lines[2];
                             const cp1 = l1.cp !== undefined ? l1.cp : 0;
@@ -1899,16 +2043,15 @@
                                     const oppBoard = new this.Chess(oppFen);
                                     const moveEx = oppBoard.move(l1.pv[0].length >= 4 ? { from: l1.pv[0].slice(0, 2), to: l1.pv[0].slice(2, 4), promotion: l1.pv[0][4] } : l1.pv[0]);
                                     if (moveEx) {
-                                        const oppPlan = {
-                                            source: 'opportunity',
-                                            motif: motifRes.motif,
-                                            move: { from: moveEx.from, to: moveEx.to, san: moveEx.san, uci: l1.pv[0], piece: moveEx.piece },
-                                            keySquares: motifRes.keySquares || { targets: [] },
-                                            followUp: null
-                                        };
                                         this.pendingOpportunity = {
-                                            posKey: this._normalizeFen(oppFen),
-                                            plan: oppPlan
+                                            posKey: oppKey,
+                                            plan: {
+                                                source: 'opportunity',
+                                                motif: motifRes.motif,
+                                                move: { from: moveEx.from, to: moveEx.to, san: moveEx.san, uci: l1.pv[0], piece: moveEx.piece },
+                                                keySquares: motifRes.keySquares || { targets: [] },
+                                                followUp: null
+                                            }
                                         };
 
                                         let nudgeText = "";
@@ -1926,9 +2069,9 @@
                                 }
                             }
                         }
-                    } catch (e) {
-                        console.debug?.('[coach] opportunity nudge error:', e);
                     }
+                } catch (e) {
+                    console.debug?.('[coach] opportunity nudge error:', e);
                 }
             }
             
@@ -3073,6 +3216,42 @@
         }
 
         /**
+         * Build a hint plan for a missed opportunity when none was prepared in advance.
+         * @param {string} fen - position the opportunity was available in
+         * @param {object|null} bestMoveObj - { from, to, promotion }
+         * @param {string} kind - 'brilliant' | 'tactic'
+         * @returns {object|null}
+         */
+        _buildOpportunityPlan(fen, bestMoveObj, kind) {
+            if (!bestMoveObj || !bestMoveObj.from || !bestMoveObj.to) return null;
+            try {
+                const b = new this.Chess(fen);
+                const mv = b.move({ from: bestMoveObj.from, to: bestMoveObj.to, promotion: bestMoveObj.promotion });
+                if (!mv) return null;
+                b.undo();
+                let motif = 'sacrifice';
+                let keySquares = { targets: [] };
+                if (kind !== 'brilliant') {
+                    const Recognizer = getRecognizer();
+                    const classified = (Recognizer && typeof Recognizer.classifyTacticalMotif === 'function')
+                        ? Recognizer.classifyTacticalMotif(b, mv)
+                        : null;
+                    motif = (classified && classified.motif) || 'positional';
+                    keySquares = (classified && classified.keySquares) || keySquares;
+                }
+                return {
+                    source: kind === 'brilliant' ? 'brilliant' : 'opportunity',
+                    motif,
+                    move: { from: mv.from, to: mv.to, san: mv.san, uci: mv.from + mv.to + (mv.promotion || ''), piece: mv.piece },
+                    keySquares,
+                    followUp: null
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
          * Take back only the player's last move (e.g. after a blunder).
          * @param {string|null} suggestedSan - Suggested alternative move
          * @returns {boolean} Success
@@ -3104,18 +3283,35 @@
             const currentFen = this.chess.fen();
             const posKey = this._normalizeFen(currentFen);
 
-            const effectiveSan = suggestedSan || (undonePlayerMove && undonePlayerMove.bestSan) || null;
-            this.lastSuggestedMove = this._resolveSuggestion(currentFen, effectiveSan);
-            this._resetHintState();
-            this.pendingOpportunity = null;
+            if (undonePlayerMove && undonePlayerMove.isMissedOpportunity) {
+                this.lastSuggestedMove = null;
+                this._resetHintState();
+                
+                // Restore the opportunity so the hint ladder guides the player to it
+                // instead of revealing the move outright.
+                const restoredPlan = undonePlayerMove.opportunityPlan || null;
+                const restoredOpp = restoredPlan
+                    ? { posKey, plan: restoredPlan, kind: undonePlayerMove.opportunityKind || 'tactic' }
+                    : null;
 
-            this.currentBubble1 = "Good instinct to take that back!";
-            this.currentBubble2 = effectiveSan
-                ? `Take another look at the position. Consider moves like ${effectiveSan} instead!`
-                : "Take your time and search for a safer, more active continuation!";
-            this.currentDialogue = effectiveSan
-                ? `Good instinct to take that back! Consider moves like ${effectiveSan} instead.`
-                : "Good instinct to take that back! Take your time and search for a safer, more active continuation!";
+                this.pendingOpportunity = restoredOpp;
+                this.currentBubble1 = "Alright, look again. There's something strong here.";
+                this.currentBubble2 = "Use a hint if you need a nudge.";
+                this.currentDialogue = "Alright, look again. There's something strong here. Use a hint if you need a nudge.";
+            } else {
+                const effectiveSan = suggestedSan || (undonePlayerMove && undonePlayerMove.bestSan) || null;
+                this.lastSuggestedMove = this._resolveSuggestion(currentFen, effectiveSan);
+                this._resetHintState();
+                this.pendingOpportunity = null;
+
+                this.currentBubble1 = "Good instinct to take that back!";
+                this.currentBubble2 = effectiveSan
+                    ? `Take another look at the position. Consider moves like ${effectiveSan} instead!`
+                    : "Take your time and search for a safer, more active continuation!";
+                this.currentDialogue = effectiveSan
+                    ? `Good instinct to take that back! Consider moves like ${effectiveSan} instead.`
+                    : "Good instinct to take that back! Take your time and search for a safer, more active continuation!";
+            }
             return true;
         }
 

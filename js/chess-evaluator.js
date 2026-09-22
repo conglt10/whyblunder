@@ -80,6 +80,7 @@
 
     /** Legacy (context-free) classification bands. */
     const DEFAULT_THRESHOLDS = Object.freeze({ inaccuracy: 0.04, mistake: 0.10, blunder: 0.22 });
+    const BRILLIANT_THRESHOLDS = Object.freeze({ maxSecondBestWp: 0.90, minWpGap: 0.05 });
 
     const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
@@ -448,30 +449,55 @@
         const maxPlies = (typeof options.maxPlies === 'number') ? options.maxPlies : 8;
 
         const pvMoves = Array.isArray(pv) ? pv.filter(m => typeof m === 'string') : [];
-        let line;
-        if (pvMoves.length > 0 && pvMoves[0] === playedMove) {
-            line = pvMoves.slice(0, maxPlies);
-        } else {
-            line = [playedMove].concat(pvMoves).slice(0, maxPlies);
+        if (pvMoves.length === 0 || pvMoves[0] !== playedMove) {
+            return false;
         }
-        // A single ply gives no evidence: material only changes once the
-        // opponent takes what was offered.
+
+        const line = pvMoves.slice(0, maxPlies);
         if (line.length < 2) return false;
 
         const before = materialBalance(board, mover);
-        let minBalance = before;
         let current = before;
         let applied = 0;
+        let opponentCapturedNonPawn = false;
+        let settledSamples = [];
 
-        for (const move of line) {
+        for (let i = 0; i < line.length; i++) {
+            const move = line[i];
+            const isOpponentPly = (i % 2 === 1);
+
+            if (isOpponentPly) {
+                const toSq = move.slice(2, 4);
+                const targetPiece = board[toSq];
+                if (targetPiece) {
+                    const type = targetPiece.toLowerCase();
+                    const val = PIECE_VALUES[type];
+                    if (val >= 3 && colorOfPiece(targetPiece) === mover) {
+                        opponentCapturedNonPawn = true;
+                    }
+                }
+            }
+
             if (!applyUciMove(board, move)) break;
             applied++;
+            
             current = materialBalance(board, mover);
-            if (current < minBalance) minBalance = current;
+            
+            if (i >= 2 && i % 2 === 0) {
+                settledSamples.push(current);
+            }
         }
+        
         if (applied < 2) return false;
 
-        return (minBalance <= before - minMaterial) && (current <= before - minMaterial || minBalance <= before - 2);
+        let settled;
+        if (settledSamples.length > 0) {
+            settled = Math.min(...settledSamples);
+        } else {
+            settled = current;
+        }
+
+        return opponentCapturedNonPawn && (settled <= before - minMaterial) && (current <= before - 1);
     }
 
 
@@ -481,7 +507,7 @@
      * are bit-for-bit unchanged.
      */
     function classifyMoveLegacy(wpBefore, wpAfter, flags) {
-        const { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed } = flags;
+        const { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed, secondBestWp } = flags;
 
         if (isBook) {
             return { uiQuality: 'good move', detailedQuality: 'book', wpLoss: 0.0 };
@@ -490,7 +516,10 @@
         const wpLoss = Math.max(0.0, wpBefore - wpAfter);
 
         if (playedIsBest) {
-            if (isSacrifice && wpAfter >= 0.60) {
+            if (isSacrifice && wpAfter >= 0.60 &&
+                secondBestWp !== undefined && secondBestWp !== null &&
+                secondBestWp < BRILLIANT_THRESHOLDS.maxSecondBestWp &&
+                (wpAfter - secondBestWp) >= BRILLIANT_THRESHOLDS.minWpGap) {
                 return { uiQuality: 'good move', detailedQuality: 'brilliant', wpLoss };
             }
             if (isOnlyMove && (wpAfter >= 0.20 || wpLoss <= 0.01)) {
@@ -536,7 +565,7 @@
      * as wpBefore approaches 0 or 1.
      */
     function classifyMoveAdaptive(wpBefore, wpAfter, flags, thresholds) {
-        const { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed } = flags;
+        const { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed, secondBestWp } = flags;
 
         if (isBook) {
             return { uiQuality: 'good move', detailedQuality: 'book', wpLoss: 0.0 };
@@ -545,7 +574,10 @@
         const wpLoss = Math.max(0.0, wpBefore - wpAfter);
 
         if (playedIsBest) {
-            if (isSacrifice && wpAfter >= 0.60) {
+            if (isSacrifice && wpAfter >= 0.60 &&
+                secondBestWp !== undefined && secondBestWp !== null &&
+                secondBestWp < BRILLIANT_THRESHOLDS.maxSecondBestWp &&
+                (wpAfter - secondBestWp) >= BRILLIANT_THRESHOLDS.minWpGap) {
                 return { uiQuality: 'good move', detailedQuality: 'brilliant', wpLoss };
             }
             if (isOnlyMove && (wpAfter >= 0.20 || wpLoss <= 0.01)) {
@@ -599,10 +631,11 @@
             isSacrifice = false,
             isOnlyMove = false,
             mateMissed = false,
+            secondBestWp = null,
             context = null
         } = options;
 
-        const flags = { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed };
+        const flags = { playedIsBest, isBook, isSacrifice, isOnlyMove, mateMissed, secondBestWp };
         const ctx = (context && typeof context === 'object') ? context : null;
 
         let result;
@@ -725,6 +758,7 @@
     return {
         MATE_SCORE_CP,
         DEFAULT_THRESHOLDS,
+        BRILLIANT_THRESHOLDS,
         scoreToCp,
         cpToWinProb,
         formatScore,

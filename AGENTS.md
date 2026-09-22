@@ -165,6 +165,7 @@ Any changes to diagnostic fields must be **additive** (e.g. `evidence`, `confide
 - `MoveDiagnostics.diagnose(options)` is the single entry point used by both Analysis Mode and Coach Mode.
 - Win Probability model: $WP = \frac{1}{1 + 10^{-cp / 400}}$.
 - Standard loss bands: Inaccuracy ($\Delta WP \ge 0.04$), Mistake ($\Delta WP \ge 0.10$), Blunder ($\Delta WP \ge 0.22$).
+- Brilliant moves demand strict criteria: must be the best move, involve a true non-pawn sacrifice (verified by SEE and material deficit), result in a winning position ($WP \ge 0.60$), and be significantly better than the next best alternative ($WP_{secondBest} \le 0.90$, $\Delta WP_{gap} \ge 0.05$).
 - Adaptive classification (`ChessEvaluator.classificationThresholds`): Tunes thresholds based on game phase, position sharpness (gap between MultiPV line 1 and lines 2/3), and player Elo.
 - Game phase helper: `ChessEvaluator.gamePhase(fen)` calculates remaining non-pawn material to classify `'opening'`, `'middlegame'`, or `'endgame'`.
 
