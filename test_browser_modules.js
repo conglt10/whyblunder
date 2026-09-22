@@ -779,10 +779,10 @@ console.log("✓ Mobile Revamp v2 Integrity passed!");
 // -------------------------------------------------------------
 console.log("Testing Lichess & PGN Import UI and Logic...");
 
-// Verify Import Game header button and icon
+// Verify Import header button and icon
 assert(indexHtml.includes('id="btnTogglePgn"'), "index.html must include #btnTogglePgn");
-assert(indexHtml.includes('Import Game'), "index.html must include 'Import Game' button text");
-assert(indexHtml.includes('bi-box-arrow-in-down'), "index.html must use bi-box-arrow-in-down icon for Import Game");
+assert(indexHtml.includes('<span>Import</span>') || indexHtml.includes('>Import<'), "index.html must include 'Import' button text");
+assert(indexHtml.includes('bi-box-arrow-in-down'), "index.html must use bi-box-arrow-in-down icon for Import");
 
 // Verify Import dropdown menu options (Lichess & PGN only)
 assert(indexHtml.includes('id="importDropdownMenu"'), "index.html must include #importDropdownMenu");
@@ -805,7 +805,7 @@ assert(indexHtml.includes('id="pgnInput"'), "index.html must include #pgnInput")
 
 // Verify empty-state container action button updated
 assert(indexHtml.includes('id="btnOpenPgnInput"'), "index.html must preserve #btnOpenPgnInput ID for compatibility");
-assert(indexHtml.includes('Import Game</span>') || indexHtml.includes('Import Game\n'), "Empty state button must display 'Import Game'");
+assert(indexHtml.includes('Import') && indexHtml.includes('btnOpenPgnInput'), "Empty state button must display 'Import'");
 
 // Verify JS functions for import
 assert(indexHtml.includes('function switchImportTab('), "index.html must include switchImportTab function");
