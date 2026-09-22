@@ -86,6 +86,7 @@
             --m-playerbar-h:    32px;
             --m-sheet-peek-h:   76px;   /* collapsed sheet: header + one line */
             --m-bottombar-h:    56px;   /* excluding safe area */
+            --m-coachdock-h:    116px;
 
             /* Derived: total non-board chrome. Never hand-tune a board height again. */
             --m-chrome-h: calc(
@@ -2385,7 +2386,7 @@
             }
             body.coach-mode .board-container-card {
                 width: 100%;
-                max-width: min(100%, calc(var(--app-h) - var(--m-chrome-h)));
+                max-width: min(100%, calc(var(--app-h) - var(--m-chrome-h) - var(--m-coachdock-h)));
                 margin-inline: auto;
                 gap: var(--m-gap);
             }
@@ -2615,6 +2616,13 @@
 
         /* Coach Dialogue Card & Dual Speech Bubbles */
         .coach-dialogue-card {
+            --coach-bubble-bg: #ffffff;
+            --coach-bubble-fg: #1a1a1a;
+            --coach-bubble-fg-soft: #2b2b2b;
+            --coach-bubble-fg-muted: #6c757d;
+            --coach-bubble-rule: rgba(0,0,0,0.08);
+            --coach-bubble-scroll: rgba(0,0,0,0.25);
+            --coach-bubble-scroll-hover: rgba(0,0,0,0.45);
             display: flex;
             gap: 12px;
             align-items: flex-start;
@@ -2659,13 +2667,13 @@
             height: 0;
             border-top: 5px solid transparent;
             border-bottom: 5px solid transparent;
-            border-right: 7px solid #ffffff;
+            border-right: 7px solid var(--coach-bubble-bg);
             z-index: 2;
             pointer-events: none;
         }
         .coach-speech-bubble {
-            background: #ffffff;
-            color: #1a1a1a;
+            background: var(--coach-bubble-bg);
+            color: var(--coach-bubble-fg);
             border-radius: 12px;
             padding: 10px 14px;
             font-size: 0.83rem;
@@ -2680,7 +2688,7 @@
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
-            scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+            scrollbar-color: var(--coach-bubble-scroll) transparent;
             transition: max-height 0.25s ease, padding 0.2s ease, box-shadow 0.2s ease;
         }
         .coach-speech-bubble.expanded {
@@ -2693,26 +2701,29 @@
             background: transparent;
         }
         .coach-speech-bubble::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.25);
+            background: var(--coach-bubble-scroll);
             border-radius: 4px;
         }
         .coach-speech-bubble::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.45);
+            background: var(--coach-bubble-scroll-hover);
         }
         .coach-player-feedback {
             padding-bottom: 6px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            border-bottom: 1px solid var(--coach-bubble-rule);
             margin-bottom: 6px;
-            color: #1a1a1a;
+            color: var(--coach-bubble-fg);
             font-weight: 500;
         }
         .coach-reply-text {
-            color: #2b2b2b;
+            color: var(--coach-bubble-fg-soft);
             font-weight: 500;
         }
         .coach-thinking-status {
-            color: #6c757d;
+            color: var(--coach-bubble-fg-muted);
             font-style: italic;
+        }
+        .coach-strong-text {
+            color: var(--coach-bubble-fg);
         }
 
         /* Blunder / Takeback Action Bar */
@@ -3583,9 +3594,16 @@
 
         /* --- Coach Themed Speech Bubble --- */
         @media (max-width: 991.98px) {
+            body.coach-mode .coach-dialogue-card {
+                --coach-bubble-bg: var(--lic-bg-surface-hover);
+                --coach-bubble-fg: var(--lic-text-bright);
+                --coach-bubble-fg-soft: var(--lic-text-primary);
+                --coach-bubble-fg-muted: var(--lic-text-secondary);
+                --coach-bubble-rule: var(--lic-border);
+                --coach-bubble-scroll: rgba(255,255,255,0.22);
+                --coach-bubble-scroll-hover: rgba(255,255,255,0.38);
+            }
             body.coach-mode .coach-speech-bubble {
-                background: var(--lic-bg-surface-hover);
-                color: var(--lic-text-primary);
                 border: 1px solid var(--lic-border);
                 border-radius: 12px;
                 padding: 10px 12px;
@@ -3659,6 +3677,25 @@
             .ticker-badge {
                 font-size: var(--m-fs-chip);
             }
+            .coach-mobile-dock { display: none; }
+            body.coach-mode .coach-mobile-dock {
+                display: block; width: 100%; max-width: 100%; min-width: 0;
+                margin-top: var(--m-gap);
+                max-height: var(--m-coachdock-h);
+                overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+                border-radius: var(--m-radius);
+            }
+            body.coach-mode .coach-mobile-dock .coach-dialogue-card {
+                border-bottom: none; border-radius: var(--m-radius); background: var(--lic-bg-surface);
+            }
+            /* Takeback actions must stay reachable even when the dialogue scrolls */
+            body.coach-mode .coach-mobile-dock .coach-blunder-actions {
+                position: sticky;
+                bottom: 0;
+                z-index: 1;
+                padding-top: 4px;
+                background: var(--lic-bg-surface);
+            }
         }
 
         /* --- Landscape Mode (<= 991.98px, max-height: 500px) --- */
@@ -3717,6 +3754,9 @@
                 display: none !important;
             }
             .m-sheet-scrim {
+                display: none !important;
+            }
+            .coach-mobile-dock {
                 display: none !important;
             }
         }
@@ -3989,6 +4029,7 @@
                         </button>
                     </div>
                 </div>
+                <div class="coach-mobile-dock d-lg-none" id="coachMobileDock" aria-live="polite"></div>
             </div>
 
             <!-- COLUMN 3 (RIGHT): MOVE LIST & CONTROLS -->
@@ -4927,18 +4968,22 @@
 
                 if (!isMobile) {
                     restore(moveExp);
-                    restore(coachOpeningBar);
                     restore(coachBubbleCard);
+                    restore(coachOpeningBar);
                     restore(coachMovesWrapper);
                 } else {
                     if (mode === 'coach') {
                         restore(moveExp);
+                        const isLandscapeRail = window.matchMedia("(max-width: 991.98px) and (orientation: landscape) and (max-height: 500px)").matches;
+                        const dock = document.getElementById("coachMobileDock");
+                        const targetContainer = (isLandscapeRail || !dock) ? sheetBody : dock;
+
                         if (coachOpeningBar && coachOpeningBar.parentElement !== sheetBody) sheetBody.appendChild(coachOpeningBar);
-                        if (coachBubbleCard && coachBubbleCard.parentElement !== sheetBody) sheetBody.appendChild(coachBubbleCard);
+                        if (coachBubbleCard && coachBubbleCard.parentElement !== targetContainer) targetContainer.appendChild(coachBubbleCard);
                         if (coachMovesWrapper && coachMovesWrapper.parentElement !== sheetBody) sheetBody.appendChild(coachMovesWrapper);
                     } else {
-                        restore(coachOpeningBar);
                         restore(coachBubbleCard);
+                        restore(coachOpeningBar);
                         restore(coachMovesWrapper);
                         if (moveExp && moveExp.parentElement !== sheetBody) sheetBody.appendChild(moveExp);
                     }
@@ -4946,6 +4991,7 @@
             }
             relocateForViewport();
             window.addEventListener('resize', () => relocateForViewport());
+            window.addEventListener('orientationchange', () => relocateForViewport());
 
             setupArrowMarkers();
 
@@ -8064,6 +8110,23 @@
                 });
             }
 
+            function setCoachSheetSummary() {
+                if (!window.MobileSheet) return;
+                const opNameEl = document.getElementById('coachOpeningName');
+                const opEcoEl = document.getElementById('coachOpeningEco');
+                const name = opNameEl && opNameEl.textContent ? opNameEl.textContent.trim() : 'Coach game';
+                const eco = opEcoEl && opEcoEl.textContent ? opEcoEl.textContent.trim() : 'A00';
+                const count = (coachManager && coachManager.moveHistory) ? coachManager.moveHistory.length : 0;
+                const openingText = (eco !== 'A00') ? `${eco} ${name}` : name;
+                window.MobileSheet.setSummary(`
+                    <div class="d-flex align-items-center gap-2 text-truncate">
+                        <i class="bi bi-list-nested"></i>
+                        <span class="text-truncate">${escapeHtml(openingText)}</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size:var(--m-fs-chip);">${count} moves</span>
+                    </div>
+                `);
+            }
+
             function renderCoachDialogue() {
                 const bubble = document.getElementById('coachBubble');
                 if (!coachManager || !bubble) return;
@@ -8095,39 +8158,21 @@
                         <div class="coach-game-over-card">
                             <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                                 ${badgeHtml}
-                                <span class="fw-bold text-dark">${escapeHtml(mainMsg)}</span>
+                                <span class="fw-bold coach-strong-text">${escapeHtml(mainMsg)}</span>
                             </div>
-                            <div class="coach-reply-text small text-muted">
+                            <div class="coach-reply-text small">
                                 ${escapeHtml(subMsg)}
                             </div>
                         </div>
                     `;
-                    if (window.MobileSheet) {
-                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
-                        const emoji = (p && p.emoji) ? p.emoji : '😎';
-                        window.MobileSheet.setSummary(`
-                            <div class="d-flex align-items-center gap-2 text-truncate">
-                                <span>${emoji}</span>
-                                <span class="text-truncate">${escapeHtml(mainMsg)}</span>
-                            </div>
-                        `);
-                    }
+                    setCoachSheetSummary();
                     return;
                 }
 
                 // If initial state (no moves yet)
                 if (coachManager.moveHistory.length === 0) {
                     bubble.textContent = coachManager.getDialogue();
-                    if (window.MobileSheet) {
-                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
-                        const emoji = (p && p.emoji) ? p.emoji : '😎';
-                        window.MobileSheet.setSummary(`
-                            <div class="d-flex align-items-center gap-2 text-truncate">
-                                <span>${emoji}</span>
-                                <span class="text-truncate">${escapeHtml(bubble.textContent.trim())}</span>
-                            </div>
-                        `);
-                    }
+                    setCoachSheetSummary();
                     return;
                 }
 
@@ -8135,16 +8180,7 @@
                 const lastMove = coachManager.moveHistory[coachManager.moveHistory.length - 1];
                 if (lastMove && lastMove.isPlayer && lastMove.isBlunder) {
                     bubble.textContent = coachManager.getDialogue();
-                    if (window.MobileSheet) {
-                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
-                        const emoji = (p && p.emoji) ? p.emoji : '😎';
-                        window.MobileSheet.setSummary(`
-                            <div class="d-flex align-items-center gap-2 text-truncate">
-                                <span>${emoji}</span>
-                                <span class="text-truncate">${escapeHtml(bubble.textContent.trim())}</span>
-                            </div>
-                        `);
-                    }
+                    setCoachSheetSummary();
                     return;
                 }
 
@@ -8179,17 +8215,7 @@
                     bubble.textContent = text;
                 }
 
-                if (window.MobileSheet) {
-                    const p = coachManager.getPersona ? coachManager.getPersona() : null;
-                    const emoji = (p && p.emoji) ? p.emoji : '😎';
-                    const text = (bubble.innerText || bubble.textContent || '').replace(/\s+/g, ' ').trim();
-                    window.MobileSheet.setSummary(`
-                        <div class="d-flex align-items-center gap-2 text-truncate">
-                            <span>${emoji}</span>
-                            <span class="text-truncate">${escapeHtml(text)}</span>
-                        </div>
-                    `);
-                }
+                setCoachSheetSummary();
             }
 
             function renderCoachMoveSheet() {
@@ -8386,16 +8412,7 @@
                         bubble.textContent = record.dialogue;
                         bubble.classList.remove('expanded');
                     }
-                    if (window.MobileSheet) {
-                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
-                        const emoji = (p && p.emoji) ? p.emoji : '😎';
-                        window.MobileSheet.setSummary(`
-                            <div class="d-flex align-items-center gap-2 text-truncate">
-                                <span>${emoji}</span>
-                                <span class="text-truncate">${escapeHtml(record.dialogue)}</span>
-                            </div>
-                        `);
-                    }
+                    setCoachSheetSummary();
                 } else if (clampedIndex === maxIndex) {
                     renderCoachDialogue();
                 }
@@ -8620,7 +8637,7 @@
                         <div class="coach-player-feedback mb-2">
                             ${badge} <span>${escapeHtml(feedbackText)}</span>
                         </div>
-                        <div class="coach-thinking-status text-muted small d-flex align-items-center gap-1">
+                        <div class="coach-thinking-status small d-flex align-items-center gap-1">
                             <span class="spinner-grow spinner-grow-sm text-primary" style="width: 0.65rem; height: 0.65rem; vertical-align: middle;" role="status"></span>
                             <span>${escapeHtml(thinkingPhrase)}</span>
                         </div>
