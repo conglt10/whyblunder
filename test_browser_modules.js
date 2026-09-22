@@ -1586,6 +1586,12 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     const nonMateChess = new Chess();
     assert.strictEqual(simulateKingBadges(nonMateChess, false).length, 0, "Initial position must produce 0 badges");
 
+    // Verify index.html only displays king badges on the last move
+    assert(indexContent.includes('const isLastMove = (typeof moves !== \'undefined\' && Array.isArray(moves) && moves.length > 0 && index === moves.length - 1);'), "index.html drawMoveArrows must check isLastMove before updating king checkmate badges");
+    assert(indexContent.includes('if (isLastMove && typeof chess !== \'undefined\' && chess)'), "index.html drawMoveArrows must only call updateKingCheckmateBadges on the last move");
+    assert(indexContent.includes('currentAppMode === \'coach\' && typeof coachManager !== \'undefined\' && coachManager && coachManager.isGameOver && coachManager.resigned'), "index.html updateKingCheckmateBadges must scope coachManager resignation to coach mode");
+    assert(indexContent.includes('if (clampedIndex === maxIndex && coachManager && coachManager.isGameOver)'), "index.html selectCoachMove must only display king badges on the last move in coach review");
+
     console.log("✓ King Checkmate & Stalemate Badges (Winner ⭑, Loser ×, Stalemate/Draw ½) passed!");
 
     // =========================================================================
