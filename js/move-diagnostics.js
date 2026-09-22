@@ -252,7 +252,7 @@
         const sanHistory = context.sanHistory || [];
         const phase = context.phase || (Evaluator && Evaluator.gamePhase ? Evaluator.gamePhase(fenBefore) : 'middlegame');
 
-        const isBook = (Detector && Detector.isBookMove) ? Detector.isBookMove(sanHistory, ply) : false;
+        const isBook = (Detector && Detector.isBookMove) ? Detector.isBookMove(sanHistory, ply, fenAfter) : false;
 
         const isSacrifice = (Evaluator && Evaluator.deriveIsSacrifice)
             ? Evaluator.deriveIsSacrifice(fenBefore, playedUci, bestLine.pv)
@@ -302,7 +302,7 @@
         if (Recognizer) {
             if (isBad) {
                 const opViolation = (Detector && Detector.detectOpeningPrincipleViolation)
-                    ? Detector.detectOpeningPrincipleViolation(boardBefore, moveObj, ply)
+                    ? Detector.detectOpeningPrincipleViolation(boardBefore, moveObj, ply, { bestUci })
                     : null;
                 const refMoveObj = (refFrom && refTo) ? { from: refFrom, to: refTo } : null;
 
@@ -330,7 +330,12 @@
                     wpLoss: classification.wpLoss,
                     ply,
                     phase,
-                    openingPrincipleViolation: opViolation
+                    openingPrincipleViolation: opViolation,
+                    isOnlyMove,
+                    isSacrifice,
+                    personaId: context.personaId,
+                    playerElo: context.playerElo,
+                    depthDial: context.depthDial
                 });
 
                 explanation = res.explanation;
@@ -357,7 +362,10 @@
                     refutationMove: refMoveObj,
                     sanRef: refSan,
                     phase,
-                    ply
+                    ply,
+                    personaId: context.personaId,
+                    playerElo: context.playerElo,
+                    depthDial: context.depthDial
                 });
 
                 explanation = res.explanation;
@@ -410,9 +418,67 @@
         };
     }
 
+    /**
+     * Compute an adaptive search budget based on game phase, position sharpness, mode, and wall-clock time.
+     * @param {object} options
+     * @param {string} [options.phase='middlegame'] - 'opening' | 'middlegame' | 'endgame'
+     * @param {number} [options.sharpness=0.5] - 0.0 to 1.0
+     * @param {string} [options.mode='analysis'] - 'analysis' | 'coach'
+     * @param {number} [options.elapsedMs=0] - milliseconds spent on this turn
+     * @param {number} [options.baseDepth=18] - base depth for analysis mode
+     * @returns {object} { depthPre, depthPost, multipv }
+     */
+    function searchBudget(options = {}) {
+        const {
+            phase = 'middlegame',
+            sharpness = 0.5,
+            mode = 'analysis',
+            elapsedMs = 0,
+            baseDepth = (mode === 'coach' ? 12 : 18)
+        } = options;
+
+        if (mode === 'coach') {
+            let depthPre = 12;
+            let depthPost = 12;
+            let multipv = 3;
+
+            // Gracefully degrade search depth under wall-clock time pressure
+            if (elapsedMs > 3500) {
+                depthPre = 8;
+                depthPost = 8;
+            } else if (elapsedMs > 1800) {
+                depthPre = 10;
+                depthPost = 10;
+            } else if (phase === 'endgame') {
+                depthPre = 14;
+                depthPost = 12;
+            }
+
+            return { depthPre, depthPost, multipv };
+        }
+
+        // Analysis mode
+        let depthPre = baseDepth;
+        let depthPost = Math.max(8, baseDepth - 2);
+        let multipv = 3;
+
+        if (phase === 'endgame') {
+            // Endgames have fewer pieces; allow deeper tactical/conversion search
+            depthPre = Math.min(22, baseDepth + 2);
+            depthPost = Math.min(20, baseDepth);
+        } else if (sharpness > 0.75) {
+            // Razor-sharp tactical positions benefit from +1 ply
+            depthPre = Math.min(22, baseDepth + 1);
+            depthPost = Math.max(8, baseDepth - 1);
+        }
+
+        return { depthPre, depthPost, multipv };
+    }
+
     return {
         diagnose,
         uciToSan,
-        formatPv
+        formatPv,
+        searchBudget
     };
 }));

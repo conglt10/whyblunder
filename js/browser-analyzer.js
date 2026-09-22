@@ -475,10 +475,17 @@
                 const boardBefore = new Chess(fenBefore);
                 const boardAfter = new Chess(fenAfter);
 
-                // 1. MultiPV analysis of position BEFORE move
+                // 1. Adaptive search budget (phase + sharpness awareness)
+                const Diagnostics = (typeof MoveDiagnostics !== 'undefined') ? MoveDiagnostics : null;
+                const phase = (typeof ChessEvaluator !== 'undefined' && ChessEvaluator.gamePhase) ? ChessEvaluator.gamePhase(fenBefore) : 'middlegame';
+                const budget = (Diagnostics && typeof Diagnostics.searchBudget === 'function')
+                    ? Diagnostics.searchBudget({ phase, mode: 'analysis', baseDepth: depth })
+                    : { depthPre: depth, depthPost: Math.max(8, depth - 2), multipv: 3 };
+
+                // MultiPV analysis of position BEFORE move
                 let preEval;
                 try {
-                    preEval = await this.pool.evaluate(fenBefore, depth, 3);
+                    preEval = await this.pool.evaluate(fenBefore, budget.depthPre, budget.multipv);
                 } catch (e) {
                     if (this.isCancelled) return null;
                     throw e;
@@ -524,7 +531,7 @@
                     // Evaluate boardAfter to get opponent's refutation and exact score
                     let postEval;
                     try {
-                        postEval = await this.pool.evaluate(fenAfter, Math.max(8, depth - 2), 1);
+                        postEval = await this.pool.evaluate(fenAfter, budget.depthPost, 1);
                     } catch (e) {
                         if (this.isCancelled) return null;
                         throw e;
@@ -555,7 +562,6 @@
                 }
 
                 // 3. Win probabilities, Classification & Situation Recognition via MoveDiagnostics
-                const Diagnostics = (typeof MoveDiagnostics !== 'undefined') ? MoveDiagnostics : null;
                 let diag = null;
                 if (Diagnostics && typeof Diagnostics.diagnose === 'function') {
                     diag = Diagnostics.diagnose({
@@ -566,15 +572,61 @@
                             bestUci,
                             lines: preEval.lines,
                             post: postEval,
-                            depthPre: 18,
-                            depthPost: 16
+                            depthPre: budget.depthPre,
+                            depthPost: budget.depthPost
                         },
                         context: {
                             ply: ply + 1,
                             sanHistory: sanMoves,
-                            mode: 'analysis'
+                            mode: 'analysis',
+                            adaptive: true
                         }
                     });
+                }
+
+                // Threshold-boundary re-search:
+                // When |wpLoss - threshold| < 0.015 near a classification boundary,
+                // re-evaluate 2 plies deeper before committing to verdict.
+                if (diag && diag.classification && budget.depthPre <= 20 && !this.isCancelled) {
+                    const wpLoss = diag.classification.wpLoss || 0;
+                    const THRESHOLDS = [0.04, 0.10, 0.22];
+                    const isBoundary = THRESHOLDS.some(t => Math.abs(wpLoss - t) < 0.015);
+                    if (isBoundary) {
+                        try {
+                            const deepPre = await this.pool.evaluate(fenBefore, budget.depthPre + 2, budget.multipv);
+                            if (deepPre && deepPre.lines && deepPre.lines[1] && !this.isCancelled) {
+                                preEval = deepPre;
+                                const newBestUci = preEval.bestMove;
+                                const newPlayedIsBest = (playedUci === newBestUci);
+                                let newPostEval = postEval;
+                                if (!newPlayedIsBest) {
+                                    newPostEval = await this.pool.evaluate(fenAfter, budget.depthPost + 2, 1);
+                                }
+                                if (!this.isCancelled && Diagnostics && typeof Diagnostics.diagnose === 'function') {
+                                    diag = Diagnostics.diagnose({
+                                        fenBefore,
+                                        fenAfter,
+                                        playedMove: moveObj,
+                                        engine: {
+                                            bestUci: newBestUci,
+                                            lines: preEval.lines,
+                                            post: newPostEval,
+                                            depthPre: budget.depthPre + 2,
+                                            depthPost: budget.depthPost + 2
+                                        },
+                                        context: {
+                                            ply: ply + 1,
+                                            sanHistory: sanMoves,
+                                            mode: 'analysis',
+                                            adaptive: true
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            // Non-fatal: keep initial diag if re-search is interrupted or worker fails
+                        }
+                    }
                 }
 
                 const bestCp = diag ? (diag.bestScore?.cp || 0) : ((typeof ChessEvaluator !== 'undefined') ? ChessEvaluator.scoreToCp(bestScoreObj) : (bestScoreObj.cp || 0));
@@ -677,6 +729,9 @@
 
     BrowserWhyBlunder.StockfishWorker = StockfishWorker;
     BrowserWhyBlunder.StockfishWorkerPool = StockfishWorkerPool;
+    BrowserWhyBlunder.searchBudget = (typeof MoveDiagnostics !== 'undefined' && MoveDiagnostics.searchBudget)
+        ? MoveDiagnostics.searchBudget
+        : function(opts) { return { depthPre: opts?.baseDepth || 18, depthPost: Math.max(8, (opts?.baseDepth || 18) - 2), multipv: 3 }; };
 
     return BrowserWhyBlunder;
 }));

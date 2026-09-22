@@ -78,6 +78,7 @@
             flag: '🇺🇸',
             blunderInterval: 7, // Blunder candidate check every ~7 coach plies
             skillLevel: 14,
+            depthDial: 'dynamic',
             voice: {
                 intro: "Hey! Ready to play? I love passed pawns and fast play—let's do this!",
                 thinking: "Calculating my fastest counter-attack...",
@@ -200,6 +201,7 @@
             flag: '🇨🇦',
             blunderInterval: 4, // Blunders frequently
             skillLevel: 5,
+            depthDial: 'concise',
             voice: {
                 intro: "Hi friend! I'm learning chess too! Let's have a great game together!",
                 thinking: "Thinking... let me make sure I don't hang my rook!",
@@ -321,6 +323,7 @@
             flag: '🇬🇧',
             blunderInterval: 6,
             skillLevel: 10,
+            depthDial: 'instructional',
             voice: {
                 intro: "Welcome to class! Let's focus on piece harmony, solid defense, and tactical awareness.",
                 thinking: "Assessing positional dynamics and king safety...",
@@ -442,6 +445,7 @@
             flag: '🇳🇴',
             blunderInterval: 12, // Rarely blunders
             skillLevel: 20,
+            depthDial: 'deep',
             voice: {
                 intro: "Let's play. Keep it clean, don't rush, and let's see how deep your endgame understanding goes.",
                 thinking: "Calculating... seeing deep into the endgame.",
@@ -584,6 +588,7 @@
             this.worker = options.worker || null;
             this.playerColor = options.playerColor || 'w'; // 'w' or 'b'
             this.coachColor = (this.playerColor === 'w') ? 'b' : 'w';
+            this.adaptive = Boolean(options.adaptive);
 
             this.moveHistory = []; // Array of { ply, san, from, to, moveObj, isPlayer, bubble1, bubble2, eval }
             this.pendingChallenge = null; // Active blunder challenge object
@@ -1035,9 +1040,12 @@
                                 ply,
                                 sanHistory: historySans,
                                 playerElo: this.persona.elo,
+                                personaId: this.personaId,
+                                depthDial: this.persona.depthDial || (this.persona.elo <= 900 ? 'concise' : this.persona.elo >= 2000 ? 'deep' : 'dynamic'),
                                 mode: 'coach',
                                 verifiedBest,
-                                wasSuggested
+                                wasSuggested,
+                                adaptive: this.adaptive
                             }
                         });
 
@@ -1077,9 +1085,12 @@
                                         ply,
                                         sanHistory: historySans,
                                         playerElo: this.persona.elo,
+                                        personaId: this.personaId,
+                                        depthDial: this.persona.depthDial || (this.persona.elo <= 900 ? 'concise' : this.persona.elo >= 2000 ? 'deep' : 'dynamic'),
                                         mode: 'coach',
                                         verifiedBest,
-                                        wasSuggested
+                                        wasSuggested,
+                                        adaptive: this.adaptive
                                     }
                                 });
                                 classification = diag.classification;
@@ -1496,8 +1507,40 @@
                         }
                     }
 
-                    // If player error profile shows recurring tactical/fork issues, prioritize forks/pins
+                    // Prioritize weaknesses from learner error profile
                     const preferTactics = Boolean(this.errorProfile && (this.errorProfile.missedFork >= 2 || this.errorProfile.tacticalBlunder >= 2));
+                    const preferHanging = Boolean(this.errorProfile && this.errorProfile.hangingPiece >= 2);
+                    const preferKingSafety = Boolean(this.errorProfile && this.errorProfile.kingSafety >= 2);
+
+                    if (preferKingSafety && repEx) {
+                        const replyBoard = new this.Chess(testBoard.fen());
+                        replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
+                        if (replyBoard.in_check && replyBoard.in_check()) {
+                            return {
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: 'Exposed King',
+                                refutations: [refUci, repEx.san],
+                                bestSan: repEx.san,
+                                type: 'kingSafety'
+                            };
+                        }
+                    }
+
+                    if (preferHanging) {
+                        const hanging = Recognizer.detectHangingPieceBlunder(boardBefore, testBoard, moveExecuted);
+                        if (hanging) {
+                            return {
+                                move: candMove,
+                                san: moveExecuted.san,
+                                motif: `Hanging ${hanging.piece}`,
+                                refutations: [refUci, refSan],
+                                bestSan: refSan,
+                                type: 'hanging'
+                            };
+                        }
+                    }
+
                     if (preferTactics && repEx) {
                         const replyBoard = new this.Chess(testBoard.fen());
                         replyBoard.move({ from: refUci.slice(0, 2), to: refUci.slice(2, 4), promotion: refUci[4] });
@@ -2060,10 +2103,56 @@
                 const sm = tempB.move(this.lastSuggestedMove.san);
                 if (sm) {
                     const pName = PIECE_NAMES[sm.piece] || 'piece';
+                    let sugMsg = `Coach Hint: Consider mobilizing your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}) as we discussed!`;
+                    if (this.persona.elo <= 900) {
+                        sugMsg = `Coach Hint: Let's try your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san})!`;
+                    } else if (this.persona.elo >= 2000) {
+                        sugMsg = `Coach Hint: Revisit our strategic theme: reposition your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}).`;
+                    }
                     return {
-                        hintText: `Coach Hint: Consider mobilizing your ${pName} toward ${sm.to} (${this.lastSuggestedMove.san}) as we discussed!`,
+                        hintText: sugMsg,
                         highlightSquares: [sm.from]
                     };
+                }
+            }
+
+            // Check if a forcing check or tactical fork/pin is available
+            const checkMove = legalMoves.find(m => m.san && m.san.includes('+'));
+            if (checkMove) {
+                const pName = PIECE_NAMES[checkMove.piece] || 'piece';
+                let checkMsg = `Coach Hint: Look for an active check! Can your ${pName} put direct pressure on my King?`;
+                if (this.persona.elo <= 900) {
+                    checkMsg = `Coach Hint: You can give a check! Look at your ${pName} aiming at my King.`;
+                } else if (this.persona.elo >= 2000) {
+                    checkMsg = `Coach Hint: Calculate forcing lines: there is an aggressive check available against the King.`;
+                }
+                return {
+                    hintText: checkMsg,
+                    highlightSquares: [checkMove.from]
+                };
+            }
+
+            if (Recognizer) {
+                for (const m of legalMoves) {
+                    if (['n', 'b', 'r', 'q'].includes(m.piece)) {
+                        try {
+                            const testB = new this.Chess(currentFen);
+                            const executed = testB.move(m);
+                            if (executed && Recognizer.detectFork && Recognizer.detectFork(testB, executed)) {
+                                const pName = PIECE_NAMES[m.piece] || 'piece';
+                                let forkMsg = `Coach Hint: Double attack! Look for squares where your ${pName} can fork multiple targets.`;
+                                if (this.persona.elo <= 900) {
+                                    forkMsg = `Coach Hint: Look at your ${pName} on ${m.from}. It can attack two pieces at once!`;
+                                } else if (this.persona.elo >= 2000) {
+                                    forkMsg = `Coach Hint: Geometric motif: your ${pName} can exploit loose enemy pieces with a tactical fork.`;
+                                }
+                                return {
+                                    hintText: forkMsg,
+                                    highlightSquares: [m.from]
+                                };
+                            }
+                        } catch (e) {}
+                    }
                 }
             }
 
@@ -2075,8 +2164,14 @@
                 const cm = tempB.move(verifiedSan);
                 if (cm) {
                     const pName = PIECE_NAMES[cm.piece] || 'piece';
+                    let bestMsg = `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName} toward ${cm.to}.`;
+                    if (this.persona.elo <= 900) {
+                        bestMsg = `Coach Hint: Look at your ${pName} on ${cm.from}. Can you move it toward ${cm.to}?`;
+                    } else if (this.persona.elo >= 2000) {
+                        bestMsg = `Coach Hint: Positional harmony: look to improve your ${pName} and contest key squares.`;
+                    }
                     return {
-                        hintText: `Coach Hint: Look for strong piece activity. Consider mobilizing your ${pName} toward ${cm.to}.`,
+                        hintText: bestMsg,
                         highlightSquares: [cm.from]
                     };
                 }
@@ -2087,16 +2182,28 @@
             if (centerMoves.length > 0) {
                 const cm = centerMoves[0];
                 const pieceName = PIECE_NAMES[cm.piece] || 'piece';
+                let centerHint = `Coach Hint: Look for control in the center. Consider mobilizing your ${pieceName}.`;
+                if (this.persona.elo <= 900) {
+                    centerHint = `Coach Hint: Try advancing your ${pieceName} toward the center squares!`;
+                } else if (this.persona.elo >= 2000) {
+                    centerHint = `Coach Hint: Positional space: contest the central squares and restrict opponent piece activity.`;
+                }
                 return {
-                    hintText: `Coach Hint: Look for control in the center. Consider mobilizing your ${pieceName}.`,
+                    hintText: centerHint,
                     highlightSquares: [cm.from]
                 };
             }
 
             const first = legalMoves[0];
             const firstPieceName = PIECE_NAMES[first.piece] || 'piece';
+            let defaultHint = `Coach Hint: Take your time. Inspect candidate squares for your ${firstPieceName}.`;
+            if (this.persona.elo <= 900) {
+                defaultHint = `Coach Hint: Look at your ${firstPieceName} on ${first.from}. Where could it move safely?`;
+            } else if (this.persona.elo >= 2000) {
+                defaultHint = `Coach Hint: Evaluate the pawn structure and look to improve your least active piece.`;
+            }
             return {
-                hintText: `Coach Hint: Take your time. Inspect candidate squares for your ${firstPieceName}.`,
+                hintText: defaultHint,
                 highlightSquares: [first.from]
             };
         }

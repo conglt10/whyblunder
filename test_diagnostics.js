@@ -885,6 +885,71 @@ const FIXTURES = [
             detailedQuality: 'best',
             mustContain: ['Rd7']
         }
+    },
+    {
+        // Transposition into Queen's Gambit Declined (1. c4 e6 2. d4 d5 3. Nc3)
+        name: 'book-transposition-qgd',
+        fenBefore: 'rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3',
+        playedUci: 'b1c3',
+        sanHistory: ['c4', 'e6', 'd4', 'd5', 'Nc3'],
+        ply: 5,
+        phase: 'opening',
+        engine: {
+            bestMove: 'b1c3',
+            lines: {
+                1: cpLine(35, ['b1c3', 'g8f6', 'c4d5']),
+                2: cpLine(30, ['g1f3', 'g8f6', 'b1c3']),
+                3: cpLine(25, ['c4d5', 'e6d5', 'b1c3'])
+            },
+            post: post('g8f6', cpLine(-30, ['g8f6', 'c4d5']))
+        },
+        expect: { detailedQuality: 'book', uiQuality: 'good move' }
+    },
+    {
+        // Persona depth dial: McMarty (800 Elo) gives concise, single-sentence feedback
+        name: 'persona-dial-mcmarty-concise',
+        fenBefore: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+        playedUci: 'g8h6',
+        sanHistory: ['e4', 'e5', 'Nf3', 'Nh6'],
+        ply: 4,
+        phase: 'opening',
+        context: {
+            personaId: 'mcmarty',
+            depthDial: 'concise',
+            playerElo: 800
+        },
+        engine: {
+            bestMove: 'b8c6',
+            lines: {
+                1: cpLine(30, ['b8c6', 'f1c4']),
+                2: cpLine(-250, ['g8h6', 'd2d4'])
+            },
+            post: post('d2d4', cpLine(250, ['d2d4', 'e5d4']))
+        },
+        expect: { uiQuality: 'blunder' }
+    },
+    {
+        // Persona depth dial: Mangoose (2200 Elo) gives deep GM variation feedback
+        name: 'persona-dial-mangoose-deep',
+        fenBefore: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+        playedUci: 'g8h6',
+        sanHistory: ['e4', 'e5', 'Nf3', 'Nh6'],
+        ply: 4,
+        phase: 'opening',
+        context: {
+            personaId: 'mangoose',
+            depthDial: 'deep',
+            playerElo: 2200
+        },
+        engine: {
+            bestMove: 'b8c6',
+            lines: {
+                1: cpLine(30, ['b8c6', 'f1c4']),
+                2: cpLine(-250, ['g8h6', 'd2d4'])
+            },
+            post: post('d2d4', cpLine(250, ['d2d4', 'e5d4']))
+        },
+        expect: { uiQuality: 'blunder', mustContain: ['Better continuation:'] }
     }
 ];
 
@@ -949,7 +1014,10 @@ function runDiagnosis(fx) {
         context: {
             ply: fx.ply,
             sanHistory: fx.sanHistory || [],
-            phase: fx.phase
+            phase: fx.phase,
+            personaId: fx.context?.personaId,
+            depthDial: fx.context?.depthDial,
+            playerElo: fx.context?.playerElo
         }
     });
 
@@ -1018,7 +1086,7 @@ function auditPhrasing(fx, out) {
         if (/\s[.,!?]/.test(text)) problems.push(`${label} has a space before punctuation`);
         if (/\bby\s*[.,!?]/i.test(text)) problems.push(`${label} has an empty "by ." fragment`);
         if (/##|\+\+|\+#|#\+/.test(text)) problems.push(`${label} has doubled check/mate punctuation`);
-        if (/[.,]{2}(?!\.)/.test(text)) problems.push(`${label} has doubled punctuation`);
+        if (/(?<!\.)[.,]{2}(?!\.)/.test(text)) problems.push(`${label} has doubled punctuation`);
 
         // 4. Repeated identical sentence
         const sentences = text.split(/(?<=[.!?])\s+/)

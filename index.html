@@ -7636,7 +7636,8 @@
                 coachManager = new CoachManagerClass({
                     personaId: selectedCoachPersona,
                     worker: coachWorker,
-                    playerColor: selectedCoachColor
+                    playerColor: selectedCoachColor,
+                    adaptive: true
                 });
 
                 if (coachWorker && typeof coachWorker.init === 'function') {

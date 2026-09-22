@@ -291,3 +291,18 @@ opt-in per call site.
 - The output contract consumed by the UI (`move.analysis.{explanation, flaw, missed_chance,
   better_line}`, `move.tags`, `move.detailed_quality` — see `index.html:5085-5190`, `:6509`,
   `:6539`) must keep working; new fields (`confidence`, `evidence`) are additive.
+
+---
+
+## 6. Implementation Status (All Phases Complete)
+
+| Phase | Milestone | Status | Key Deliverables & Evidence |
+|---|---|---|---|
+| **Phase 0** | Test Harness & Regression Corpus | **Complete** | Portable test path, `test_diagnostics.js` (39 fixtures, legal moves verified), phrasing audit |
+| **Phase 1** | Shared `MoveDiagnostics.diagnose()` Core | **Complete** | `js/move-diagnostics.js` unified entry point, `isOnlyMove`/`isSacrifice`/`mateMissed` derivation, removed stale Coach shortcut |
+| **Phase 2** | Evidence-Ranked Narration Core | **Complete** | 3-stage pipeline (Collect $\to$ Rank & Corroborate $\to$ Compose), engine agreement check, severity/spread phrase scaling, engine-aware `explainGoodMove` |
+| **Phase 3** | Adaptive Classification Integration | **Complete** | `ChessEvaluator.classificationThresholds`, phase/sharpness/Elo tuning, smooth decided-position damping, enabled in analysis and coach modes |
+| **Phase 4** | Smarter, Phase-Aware Detectors | **Complete** | Static Exchange Evaluation (`staticExchangeEval` with swap-off/x-ray), refutation corroboration, `gamePhase(fen)` helper, endgame detectors (Tarrasch rook behind passer, opposition), position-keyed transposition book table (`BOOK_POSITION_MAP`), widened opening principle violation checks |
+| **Phase 5** | Coach Adaptivity & Persona Depth Dials | **Complete** | Coach learner model (`errorProfile` tracking repeated themes), escalation lines, motif/square hints with SEE verification, persona-scaled explanation depth dials (`mcmarty` concise, `sophy` instructional, `pikaru` dynamic, `mangoose` deep), theme-biased instructive blunders |
+| **Phase 6** | Adaptive Search Budgets & Boundary Re-Search | **Complete** | `MoveDiagnostics.searchBudget({ phase, sharpness, mode, elapsedMs })`, wall-clock time degradation in Coach, $\pm 0.015$ threshold-boundary 2-ply re-search in `browser-analyzer.js` |
+

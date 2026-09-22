@@ -1955,6 +1955,44 @@ assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
     assert(blunderDiagRes.classification.uiQuality === 'blunder' || blunderDiagRes.classification.uiQuality === 'mistake');
     assert(blunderDiagRes.narrative.explanation.length > 0);
 
+    // Test MoveDiagnostics.searchBudget
+    assert.strictEqual(typeof MoveDiagnosticsModule.searchBudget, 'function', 'searchBudget function must be exported');
+    const budgetEndgame = MoveDiagnosticsModule.searchBudget({ phase: 'endgame', mode: 'analysis', baseDepth: 18 });
+    assert(budgetEndgame.depthPre >= 20, 'Endgame search budget in analysis mode should increase depthPre');
+    const budgetCoachFast = MoveDiagnosticsModule.searchBudget({ mode: 'coach', elapsedMs: 100 });
+    assert.strictEqual(budgetCoachFast.depthPre, 12, 'Coach base depth should be 12 when time is fresh');
+    const budgetCoachDegraded = MoveDiagnosticsModule.searchBudget({ mode: 'coach', elapsedMs: 3800 });
+    assert(budgetCoachDegraded.depthPre <= 8, 'Coach depth should degrade to <= 8 under wall-clock time pressure');
+
+    // Test Persona depthDial on MoveDiagnostics
+    const mcmartyDiag = MoveDiagnosticsModule.diagnose({
+        fenBefore: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+        playedMove: 'g8h6',
+        engine: {
+            bestUci: 'b8c6',
+            lines: {
+                1: { cp: 30, pv: ['b8c6', 'f1c4'] },
+                2: { cp: -250, pv: ['g8h6', 'd2d4'] }
+            }
+        },
+        context: { ply: 4, mode: 'coach', personaId: 'mcmarty', depthDial: 'concise' }
+    });
+    assert.strictEqual(mcmartyDiag.narrative.explanation.split('. ').length, 1, 'McMarty concise explanation should be a single sentence');
+
+    const mangooseDiag = MoveDiagnosticsModule.diagnose({
+        fenBefore: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+        playedMove: 'g8h6',
+        engine: {
+            bestUci: 'b8c6',
+            lines: {
+                1: { cp: 30, pv: ['b8c6', 'f1c4'] },
+                2: { cp: -250, pv: ['g8h6', 'd2d4'] }
+            }
+        },
+        context: { ply: 4, mode: 'coach', personaId: 'mangoose', depthDial: 'deep' }
+    });
+    assert(mangooseDiag.narrative.explanation.includes('Better continuation:'), 'Mangoose deep explanation should include continuation variation');
+
     console.log("✓ Coach Mode Responsive Move List & Game Review tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
