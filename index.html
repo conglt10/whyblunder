@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>WhyBlunder - Chess Analysis</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="img/app-icon.svg">
@@ -70,7 +70,51 @@
             --q-inaccuracy: #c9a000;
             --q-mistake: #d97706;
             --q-blunder: #cc3333;
+
+            /* --- Mobile shell geometry (phone defaults; overridden per breakpoint) --- */
+            --app-h:            100svh;   /* JS overwrites with visualViewport.height */
+            --safe-top:         env(safe-area-inset-top, 0px);
+            --safe-bottom:      env(safe-area-inset-bottom, 0px);
+            --safe-left:        env(safe-area-inset-left, 0px);
+            --safe-right:       env(safe-area-inset-right, 0px);
+
+            --m-gutter:         8px;    /* horizontal page gutter on phone */
+            --m-gap:            6px;    /* vertical gap between shell regions */
+
+            --m-appbar-h:       48px;
+            --m-evalstrip-h:    10px;
+            --m-playerbar-h:    32px;
+            --m-sheet-peek-h:   76px;   /* collapsed sheet: header + one line */
+            --m-bottombar-h:    56px;   /* excluding safe area */
+
+            /* Derived: total non-board chrome. Never hand-tune a board height again. */
+            --m-chrome-h: calc(
+                var(--m-appbar-h)
+              + var(--m-evalstrip-h)
+              + (var(--m-playerbar-h) * 2)
+              + var(--m-sheet-peek-h)
+              + var(--m-bottombar-h)
+              + var(--safe-bottom)
+              + (var(--m-gap) * 5)
+            );
+
+            /* --- Mobile type scale (phone only; desktop scale unchanged) --- */
+            --m-fs-body:        0.9375rem;  /* 15px — diagnosis prose, coach speech */
+            --m-fs-ui:          0.875rem;   /* 14px — buttons, labels, list rows     */
+            --m-fs-meta:        0.75rem;    /* 12px — captions, counts               */
+            --m-fs-chip:        0.6875rem;  /* 11px — HARD FLOOR. Nothing smaller.   */
+
+            --m-tap:            44px;       /* minimum hit area */
+            --m-radius:         10px;
+            --m-radius-sheet:   16px;
+
+            --m-z-sheet:        1035;
+            --m-z-sheet-scrim:  1034;
+            --m-z-bottombar:    1040;
+            --m-z-appbar:       1020;
         }
+
+        body.mobile-header-hidden { --m-appbar-h: 0px; }
 
         *, *::before, *::after {
             box-sizing: border-box;
@@ -2045,8 +2089,9 @@
             }
             .board-container-card {
                 width: 100%;
-                max-width: min(100%, calc(100dvh - 315px));
-                gap: 2px;
+                max-width: min(100%, calc(var(--app-h) - var(--m-chrome-h)));
+                margin-inline: auto;
+                gap: var(--m-gap);
             }
             .board-with-eval {
                 width: 100%;
@@ -2340,10 +2385,9 @@
             }
             body.coach-mode .board-container-card {
                 width: 100%;
-                max-width: min(100%, calc(100dvh - 330px));
-            }
-            body.coach-mode.mobile-header-hidden .board-container-card {
-                max-width: min(100%, calc(100dvh - 280px));
+                max-width: min(100%, calc(var(--app-h) - var(--m-chrome-h)));
+                margin-inline: auto;
+                gap: var(--m-gap);
             }
             body.coach-mode .col-coach {
                 order: 2;
@@ -3059,6 +3103,625 @@
         body.coach-mode .square-55d63 {
             touch-action: none;
         }
+
+        /* ===== MOBILE REVAMP v2 — START ===== */
+
+        /* --- App Shell & Viewport --- */
+        @media (max-width: 991.98px) {
+            html, body {
+                height: var(--app-h);
+                overflow: hidden;
+                overscroll-behavior: none;
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+            }
+            .studio-container {
+                flex: 1;
+                min-height: 0;
+                padding: var(--m-gap) var(--m-gutter) 0;
+            }
+            .studio-grid {
+                flex: 1;
+                min-height: 0;
+                gap: var(--m-gap);
+            }
+            .col-analysis,
+            body.coach-mode .col-coach {
+                display: none !important;
+            }
+        }
+
+        /* --- App Bar (.lic-header) --- */
+        @media (max-width: 991.98px) {
+            .lic-header {
+                height: var(--m-appbar-h);
+                min-height: var(--m-appbar-h);
+                padding: 0 max(var(--m-gutter), var(--safe-right)) 0 max(var(--m-gutter), var(--safe-left));
+                padding-top: var(--safe-top);
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow: hidden;
+            }
+            .lic-header > * {
+                min-width: 0;
+            }
+            .lic-brand {
+                gap: 6px;
+                flex-shrink: 0;
+            }
+            .lic-mode-segmented-control {
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: center;
+            }
+            .lic-mode-btn {
+                height: 36px;
+                padding: 0 10px;
+                white-space: nowrap;
+                font-size: var(--m-fs-ui);
+                display: inline-flex;
+                align-items: center;
+            }
+            .mobile-btn-more {
+                width: var(--m-tap);
+                height: 36px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                padding: 0;
+            }
+            #btnTogglePgn {
+                height: 36px;
+                padding: 0 10px;
+                font-size: var(--m-fs-ui);
+                display: inline-flex;
+                align-items: center;
+            }
+            #importGameGroup .dropdown-toggle-split {
+                display: none !important;
+            }
+            #btnHeaderNewCoachGame {
+                height: 36px;
+                padding: 0 10px;
+                font-size: var(--m-fs-ui);
+                display: inline-flex;
+                align-items: center;
+            }
+            .btn-restore-mobile-header {
+                position: fixed;
+                top: max(8px, var(--safe-top));
+                right: max(8px, var(--safe-right));
+                width: var(--m-tap);
+                height: var(--m-tap);
+                border-radius: 50%;
+                z-index: 1045;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            }
+            .btn-restore-mobile-header span {
+                display: none;
+            }
+        }
+
+        @media (max-width: 599.98px) {
+            .lic-brand span {
+                display: none;
+            }
+            .mode-btn-label-full {
+                display: none;
+            }
+        }
+
+        @media (min-width: 600px) and (max-width: 991.98px) {
+            .lic-brand span {
+                display: inline;
+            }
+            .mode-btn-label-full {
+                display: inline;
+            }
+        }
+
+        /* Dedicated Keys Legend toggle rule */
+        .analysis-keys-legend.mode-hidden {
+            display: none !important;
+        }
+        @media (max-width: 991.98px) {
+            .analysis-keys-legend {
+                display: none !important;
+            }
+        }
+
+        /* --- Board & Notation --- */
+        @media (max-width: 991.98px) {
+            .board-container {
+                touch-action: none;
+            }
+            .board-wrapper {
+                border-radius: var(--m-radius);
+                overflow: hidden;
+            }
+            .notation-322f9 {
+                font-family: 'JetBrains Mono', monospace;
+                font-size: clamp(8px, 2.4vw, 11px);
+                font-weight: 700;
+                opacity: 0.78;
+                text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+            }
+            .alpha-d2270  { bottom: 1px; right: 3px; }
+            .numeric-fc462 { top: 2px; left: 3px; }
+        }
+
+        /* --- Eval Strip (#mobileEvalBar) --- */
+        @media (max-width: 991.98px) {
+            .mobile-eval-bar {
+                position: relative;
+                height: var(--m-evalstrip-h);
+                margin: 0;
+                border: none;
+                border-radius: 999px;
+                background: #3a3734;
+                overflow: visible;
+            }
+            .mobile-eval-bar.is-idle {
+                display: none !important;
+            }
+            .mobile-eval-track {
+                width: 100%;
+                height: 100%;
+                border-radius: 999px;
+                overflow: hidden;
+                background: transparent;
+            }
+            .mobile-eval-fill-white {
+                background: #e8e6e3;
+                height: 100%;
+                transition: width 0.3s ease;
+            }
+            .mobile-eval-bar::after {
+                content: '';
+                position: absolute;
+                left: 50%;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: rgba(0,0,0,0.35);
+                z-index: 1;
+            }
+            .mobile-eval-pill {
+                position: absolute;
+                left: auto;
+                right: 0;
+                top: 50%;
+                transform: translate(0, -50%);
+                font-size: var(--m-fs-chip);
+                line-height: 18px;
+                height: 18px;
+                padding: 0 7px;
+                border-radius: 9px;
+                background: var(--lic-bg-surface-header);
+                border: 1px solid var(--lic-border);
+                color: var(--lic-text-bright);
+                z-index: 2;
+                font-family: 'JetBrains Mono', monospace;
+                font-weight: 600;
+            }
+            .mobile-eval-pill[data-side="white"] { color: #e8e6e3; }
+            .mobile-eval-pill[data-side="black"] { color: #9aa0a6; }
+        }
+
+        /* --- Player Bars --- */
+        @media (max-width: 599.98px) {
+            .lic-player-bar {
+                min-height: var(--m-playerbar-h);
+                height: var(--m-playerbar-h);
+                padding: 0 10px;
+                border-radius: var(--m-radius);
+                font-size: var(--m-fs-ui);
+            }
+            .player-name-text {
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 52vw;
+            }
+            #topPlayerMeta, #bottomPlayerMeta {
+                display: none !important;
+            }
+            .player-elo-chip {
+                font-family: 'JetBrains Mono', monospace;
+                font-size: var(--m-fs-chip);
+                padding: 1px 6px;
+                border-radius: 4px;
+                background: var(--lic-border-subtle);
+                color: var(--lic-text-secondary);
+                font-weight: 600;
+            }
+            .player-avatar {
+                width: 20px;
+                height: 20px;
+            }
+            .material-piece-icon {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        /* --- Bottom Sheet (.m-sheet) --- */
+        @media (max-width: 991.98px) {
+            .m-sheet {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: calc(var(--m-bottombar-h) + var(--safe-bottom));
+                z-index: var(--m-z-sheet);
+                display: flex;
+                flex-direction: column;
+                height: var(--m-sheet-peek-h);
+                background: var(--lic-bg-surface);
+                border-top: 1px solid var(--lic-border);
+                border-radius: var(--m-radius-sheet) var(--m-radius-sheet) 0 0;
+                box-shadow: 0 -8px 28px rgba(0,0,0,0.55);
+                transition: height 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+                will-change: height;
+                overscroll-behavior: contain;
+            }
+            .m-sheet[data-state="half"] {
+                height: min(52vh, calc(var(--app-h) * 0.52));
+            }
+            .m-sheet[data-state="full"] {
+                height: calc(var(--app-h) - var(--m-appbar-h) - 56px);
+            }
+            .m-sheet.is-dragging {
+                transition: none;
+            }
+
+            .m-sheet-grip {
+                position: relative;
+                flex: 0 0 auto;
+                min-height: var(--m-sheet-peek-h);
+                display: grid;
+                grid-template-columns: 1fr auto;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 14px 8px;
+                cursor: grab;
+                touch-action: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            .m-sheet-handle {
+                position: absolute;
+                top: 6px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 36px;
+                height: 4px;
+                border-radius: 2px;
+                background: var(--lic-border-strong);
+            }
+            .m-sheet-summary {
+                font-size: var(--m-fs-ui);
+                color: var(--lic-text-primary);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                min-width: 0;
+            }
+            .m-sheet-chevron {
+                color: var(--lic-text-secondary);
+                font-size: 1.1rem;
+                transition: transform 0.25s ease;
+            }
+            .m-sheet-body {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                padding: 0 14px calc(14px + var(--m-gap));
+            }
+            .m-sheet[data-state="peek"] .m-sheet-body {
+                display: none;
+            }
+            .m-sheet[data-state="full"] .m-sheet-chevron {
+                transform: rotate(180deg);
+            }
+
+            .m-sheet-scrim {
+                position: fixed;
+                inset: 0;
+                z-index: var(--m-z-sheet-scrim);
+                background: rgba(0,0,0,0.45);
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                pointer-events: none;
+            }
+            .m-sheet-scrim.is-visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .m-sheet, .m-sheet-scrim {
+                display: none !important;
+            }
+        }
+
+        /* --- Bottom Action Bar (.mobile-nav-toolbar) --- */
+        @media (max-width: 991.98px) {
+            .mobile-nav-toolbar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: var(--m-z-bottombar);
+                height: calc(var(--m-bottombar-h) + var(--safe-bottom));
+                padding: 0 max(var(--m-gutter), var(--safe-left)) var(--safe-bottom) max(var(--m-gutter), var(--safe-right));
+                display: grid;
+                grid-template-columns: 56px 56px 1fr 56px 56px;
+                align-items: center;
+                gap: 4px;
+                background: rgba(30, 28, 24, 0.94);
+                background: color-mix(in srgb, var(--lic-bg-surface-header) 92%, transparent);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-top: 1px solid var(--lic-border);
+            }
+            .mobile-nav-tool-btn {
+                height: var(--m-tap);
+                min-width: var(--m-tap);
+                border: none;
+                background: transparent;
+                font-size: 1.15rem;
+                border-radius: var(--m-radius);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: var(--lic-text-secondary);
+            }
+            .mobile-tool-label {
+                font-size: var(--m-fs-chip);
+                line-height: 1;
+                margin-top: 2px;
+            }
+            .mobile-nav-capsule {
+                max-width: none;
+                height: var(--m-tap);
+                border-radius: var(--m-radius);
+                box-shadow: none;
+                background: var(--lic-bg-surface);
+                border: 1px solid var(--lic-border);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+            .mobile-nav-arrow-btn {
+                width: var(--m-tap);
+                height: var(--m-tap);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: var(--m-radius);
+                border: none;
+                background: transparent;
+                color: var(--lic-text-secondary);
+                font-size: 1.15rem;
+            }
+            .mobile-nav-arrow-btn:active {
+                background: var(--lic-bg-surface-hover);
+            }
+            .mobile-nav-next-btn {
+                background: var(--lic-green-dim);
+                color: var(--lic-green);
+            }
+            .mobile-nav-move-san {
+                font-size: var(--m-fs-ui);
+                font-weight: 700;
+            }
+            .mobile-nav-move-count {
+                font-size: var(--m-fs-chip);
+                color: var(--lic-text-secondary);
+            }
+
+            body.coach-mode .mobile-nav-toolbar {
+                display: grid !important;
+            }
+            body.coach-mode .mobile-slot-analysis {
+                display: none !important;
+            }
+            body:not(.coach-mode) .mobile-slot-coach {
+                display: none !important;
+            }
+            .coach-action-bar {
+                display: none !important;
+            }
+        }
+
+        /* --- Options Sheet (.mobile-options-sheet) --- */
+        @media (max-width: 991.98px) {
+            .mobile-options-sheet {
+                max-height: min(75vh, calc(var(--app-h) * 0.75));
+                border-radius: var(--m-radius-sheet) var(--m-radius-sheet) 0 0;
+                background: var(--lic-bg-surface);
+                border-top: 1px solid var(--lic-border);
+                padding-bottom: var(--safe-bottom);
+            }
+        }
+
+        /* --- Move Surfaces & Offcanvas --- */
+        @media (max-width: 599.98px) {
+            #mobileMoveTicker,
+            #coachMobileMoveTicker {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .mobile-moves-offcanvas {
+                height: min(78vh, calc(var(--app-h) * 0.78)) !important;
+                border-radius: var(--m-radius-sheet) var(--m-radius-sheet) 0 0;
+                padding-bottom: var(--safe-bottom);
+                background: var(--lic-bg-surface);
+            }
+            .mobile-moves-offcanvas .move-pair {
+                min-height: var(--m-tap);
+            }
+            .mobile-moves-offcanvas .move-cell {
+                font-size: var(--m-fs-ui);
+            }
+        }
+
+        /* --- Coach Themed Speech Bubble --- */
+        @media (max-width: 991.98px) {
+            body.coach-mode .coach-speech-bubble {
+                background: var(--lic-bg-surface-hover);
+                color: var(--lic-text-primary);
+                border: 1px solid var(--lic-border);
+                border-radius: 12px;
+                padding: 10px 12px;
+                font-size: var(--m-fs-body);
+                line-height: 1.5;
+                max-height: none;
+                overflow: visible;
+            }
+            body.coach-mode .coach-speech-bubble.expanded {
+                max-height: none;
+            }
+            body.coach-mode .coach-bubbles-col::before,
+            body.coach-mode .coach-speech-bubble::before {
+                display: none;
+            }
+            .m-sheet[data-state="peek"] #mobileSheetSummary {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                line-clamp: 2;
+                overflow: hidden;
+            }
+            body.coach-mode .coach-avatar-wrapper {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+        }
+
+        /* --- Density & Type Scale (< 600px) --- */
+        @media (max-width: 599.98px) {
+            .diagnosis-text {
+                font-size: var(--m-fs-body);
+                line-height: 1.5;
+                padding: 10px 12px;
+            }
+            .move-san {
+                font-size: 1.125rem;
+            }
+            .badge-q, .eval-tag, .eval-best-tag, .metric-chip {
+                font-size: var(--m-fs-chip);
+                padding: 3px 8px;
+            }
+            .diag-tag {
+                font-size: var(--m-fs-chip);
+                padding: 3px 8px;
+                min-height: 24px;
+                display: inline-flex;
+                align-items: center;
+            }
+            .better-move-strip, .threat-alert-box {
+                font-size: var(--m-fs-ui);
+                padding: 8px 10px;
+            }
+            .variation-box .lic-btn {
+                min-height: var(--m-tap);
+                font-size: var(--m-fs-ui);
+            }
+            .ticker-nav-btn {
+                width: var(--m-tap);
+                height: var(--m-tap);
+            }
+            .var-nav-btn-group .btn-lic-tool {
+                width: var(--m-tap);
+                height: var(--m-tap);
+            }
+            .coach-icon-btn {
+                width: var(--m-tap);
+                height: var(--m-tap);
+            }
+            .ticker-badge {
+                font-size: var(--m-fs-chip);
+            }
+        }
+
+        /* --- Landscape Mode (<= 991.98px, max-height: 500px) --- */
+        @media (max-width: 991.98px) and (orientation: landscape) and (max-height: 500px) {
+            :root {
+                --m-appbar-h: 40px;
+            }
+            body {
+                overflow: hidden !important;
+            }
+            .studio-container {
+                padding-right: 328px !important;
+                height: calc(var(--app-h) - var(--m-appbar-h)) !important;
+            }
+            .studio-grid {
+                display: flex !important;
+                justify-content: center !important;
+                height: 100% !important;
+            }
+            .col-board {
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .board-container-card {
+                max-width: calc(var(--app-h) - var(--m-appbar-h) - 16px) !important;
+                max-height: calc(var(--app-h) - var(--m-appbar-h) - 16px) !important;
+            }
+            .m-sheet {
+                position: fixed !important;
+                top: var(--m-appbar-h) !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: auto !important;
+                width: 320px !important;
+                height: calc(var(--app-h) - var(--m-appbar-h)) !important;
+                border-radius: 0 !important;
+                border-left: 1px solid var(--lic-border) !important;
+                box-shadow: none !important;
+                transform: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            .m-sheet-grip {
+                display: none !important;
+            }
+            .m-sheet-body {
+                display: block !important;
+                flex: 1 !important;
+                overflow-y: auto !important;
+                padding: 10px !important;
+            }
+            .mobile-nav-toolbar {
+                display: none !important;
+            }
+            .m-sheet-scrim {
+                display: none !important;
+            }
+        }
+
+        /* ===== MOBILE REVAMP v2 — END ===== */
     </style>
 </head>
 <body>
@@ -3079,12 +3742,12 @@
                     <i class="bi bi-graph-up me-1"></i> Analysis
                 </button>
                 <button type="button" class="lic-mode-btn" id="tabModeCoach" data-mode="coach" title="Play with Coach">
-                    <i class="bi bi-person-workspace me-1"></i> Play Coach
+                    <i class="bi bi-person-workspace me-1"></i> <span class="mode-btn-label-full">Play </span>Coach
                 </button>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <div class="d-none d-lg-flex align-items-center text-muted small me-2" id="analysisKeysLegend">
+            <div class="analysis-keys-legend d-none d-lg-flex align-items-center text-muted small me-2" id="analysisKeysLegend">
                 <span class="me-1" style="font-size:var(--lic-fs-sm);">Keys:</span>
                 <kbd style="background:#262421;color:#8c8c8c;border:1px solid #2e2b27;font-size:var(--lic-fs-sm);padding:1px 4px;border-radius:3px;">←</kbd>
                 <kbd style="background:#262421;color:#8c8c8c;border:1px solid #2e2b27;font-size:var(--lic-fs-sm);padding:1px 4px;border-radius:3px;" class="ms-1">→</kbd>
@@ -3095,14 +3758,14 @@
             <div class="d-none align-items-center gap-2" id="coachHeaderGroup">
                 <button type="button" id="btnHeaderNewCoachGame" class="lic-btn lic-btn-primary" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="New Sparring Game">
                     <i class="bi bi-plus-circle-fill"></i>
-                    <span>New Game</span>
+                    <span>New</span>
                 </button>
             </div>
 
             <div class="btn-group" id="importGameGroup">
                 <button type="button" id="btnTogglePgn" class="lic-btn" data-action="toggle-pgn" title="Import game from Lichess or PGN">
                     <i class="bi bi-box-arrow-in-down"></i>
-                    <span>Import Game</span>
+                    <span>Import</span>
                 </button>
                 <button type="button" class="lic-btn dropdown-toggle dropdown-toggle-split px-2" data-bs-toggle="dropdown" aria-expanded="false" title="Select import source">
                     <span class="visually-hidden">Toggle Dropdown</span>
@@ -3114,8 +3777,13 @@
                 </ul>
             </div>
 
+            <!-- Mobile Overflow Button for Options Sheet -->
+            <button type="button" id="mobileBtnMore" class="lic-btn d-lg-none px-2" data-bs-toggle="offcanvas" data-bs-target="#mobileOptionsSheet" aria-controls="mobileOptionsSheet" title="More Options">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+
             <!-- Mobile Header Collapse Button -->
-            <button type="button" id="btnToggleMobileHeader" class="lic-btn d-lg-none px-2" title="Hide Header for extra screen space">
+            <button type="button" id="btnToggleMobileHeader" class="lic-btn d-none d-lg-none px-2" title="Hide Header for extra screen space">
                 <i class="bi bi-chevron-bar-up"></i>
             </button>
         </div>
@@ -3239,6 +3907,7 @@
                         <div class="player-info-main">
                             <span class="player-avatar black-avatar"><i class="bi bi-person-fill"></i></span>
                             <span class="player-name-text" id="topPlayerName">Black</span>
+                            <span class="player-elo-chip d-none" id="topPlayerElo"></span>
                             <span class="text-muted small" id="topPlayerMeta"></span>
                             <div class="player-material-display" id="topMaterialDisplay"></div>
                         </div>
@@ -3248,7 +3917,7 @@
                     </div>
 
                     <!-- Mobile Horizontal Evaluation Bar (Screenshot 1 & 2 style) -->
-                    <div class="mobile-eval-bar d-lg-none" id="mobileEvalBar">
+                    <div class="mobile-eval-bar d-lg-none is-idle" id="mobileEvalBar">
                         <div class="mobile-eval-track">
                             <div class="mobile-eval-fill-white" id="mobileEvalWhite" style="width: 50%;"></div>
                         </div>
@@ -3298,6 +3967,7 @@
                         <div class="player-info-main">
                             <span class="player-avatar white-avatar"><i class="bi bi-person-fill"></i></span>
                             <span class="player-name-text" id="bottomPlayerName">White</span>
+                            <span class="player-elo-chip d-none" id="bottomPlayerElo"></span>
                             <span class="text-muted small" id="bottomPlayerMeta"></span>
                             <div class="player-material-display" id="bottomMaterialDisplay"></div>
                         </div>
@@ -3339,7 +4009,7 @@
                         <div class="text-center text-muted py-5 small px-3">
                             <p class="mb-3">Import a game from Lichess or paste PGN to begin full analysis.</p>
                             <button type="button" id="btnOpenPgnInput" class="lic-btn lic-btn-primary" data-action="open-pgn">
-                                <i class="bi bi-box-arrow-in-down"></i> Import Game
+                                <i class="bi bi-box-arrow-in-down"></i> Import
                             </button>
                         </div>
                     </div>
@@ -3486,39 +4156,70 @@
 
     <!-- Large Mobile Move Navigation Controller (Docked below screen) -->
     <nav class="mobile-nav-toolbar d-lg-none" id="mobileNavToolbar" aria-label="Mobile Game Navigation">
-        <!-- Left utilities: Moves Sheet Drawer + Next Key Moment -->
-        <div class="d-flex align-items-center gap-1">
-            <button type="button" id="mobileBtnMovesSheet" class="mobile-nav-tool-btn" title="Full Move Sheet" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
-                <i class="bi bi-list-nested"></i>
-                <span class="mobile-tool-label">Moves</span>
-            </button>
-            <button type="button" id="mobileBtnKey" class="mobile-nav-tool-btn mobile-nav-key-btn" title="Next Key Moment">
-                <i class="bi bi-lightning-charge-fill text-warning"></i>
-                <span id="mobileKeyBadge" class="mobile-key-badge d-none">0/0</span>
-            </button>
-        </div>
-
-        <!-- Center: Large Nav Capsule with Prev, Current Move, Next -->
-        <div class="mobile-nav-capsule">
-            <button type="button" id="mobileBtnPrev" class="mobile-nav-arrow-btn" title="Previous Move" aria-label="Previous Move">
-                <i class="bi bi-chevron-left"></i>
-            </button>
+        <!-- ANALYSIS MODE (5 slots) -->
+        <button type="button" id="mobileBtnMovesSheet" class="mobile-nav-tool-btn mobile-slot-analysis" title="Full Move Sheet" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
+            <i class="bi bi-list-nested"></i>
+            <span class="mobile-tool-label">Moves</span>
+        </button>
+        <button type="button" id="mobileBtnPrev" class="mobile-nav-arrow-btn mobile-slot-analysis" title="Previous Move" aria-label="Previous Move">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="mobile-nav-capsule mobile-slot-analysis" id="mobileNavCapsule" role="button" tabindex="0" title="Tap to expand analysis">
             <div class="mobile-nav-step-info" id="mobileNavStepInfo">
                 <span class="mobile-nav-move-san" id="mobileNavSan">—</span>
                 <span class="mobile-nav-move-count" id="mobileNavCount">0 of 0</span>
             </div>
-            <button type="button" id="mobileBtnNext" class="mobile-nav-arrow-btn mobile-nav-next-btn" title="Next Move" aria-label="Next Move">
-                <i class="bi bi-chevron-right"></i>
-            </button>
         </div>
+        <button type="button" id="mobileBtnNext" class="mobile-nav-arrow-btn mobile-nav-next-btn mobile-slot-analysis" title="Next Move" aria-label="Next Move">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <button type="button" id="mobileBtnKey" class="mobile-nav-tool-btn mobile-nav-key-btn mobile-slot-analysis" title="Next Key Moment">
+            <i class="bi bi-lightning-charge-fill text-warning"></i>
+            <span id="mobileKeyBadge" class="mobile-key-badge d-none">0/0</span>
+        </button>
 
-        <!-- Right utilities: Flip board -->
-        <div class="d-flex align-items-center gap-1">
-            <button type="button" id="mobileBtnFlip" class="mobile-nav-tool-btn" title="Flip Board" aria-label="Flip Board">
-                <i class="bi bi-arrow-left-right"></i>
+        <!-- COACH MODE (5 slots) -->
+        <button type="button" id="mobileCoachBtnResign" class="mobile-nav-tool-btn mobile-slot-coach" title="Resign Game">
+            <i class="bi bi-flag-fill text-danger"></i>
+            <span class="mobile-tool-label">Resign</span>
+        </button>
+        <button type="button" id="mobileCoachBtnTakeback" class="mobile-nav-tool-btn mobile-slot-coach" title="Undo Move">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span class="mobile-tool-label">Undo</span>
+        </button>
+        <div class="mobile-slot-coach w-100 d-flex justify-content-center">
+            <button type="button" id="mobileCoachBtnHint" class="lic-btn lic-btn-success w-100 px-2 py-1 fw-semibold d-flex align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Ask Coach for a Hint">
+                <i class="bi bi-lightbulb-fill"></i>
+                <span>Hint</span>
+            </button>
+            <button type="button" id="mobileCoachBtnReview" class="btn-coach-review w-100 px-2 py-1 fw-semibold d-none align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Game Review">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Review</span>
             </button>
         </div>
+        <button type="button" id="mobileCoachBtnMoves" class="mobile-nav-tool-btn mobile-slot-coach" title="Move List" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
+            <i class="bi bi-list-nested"></i>
+            <span class="mobile-tool-label">Moves</span>
+        </button>
+        <button type="button" id="mobileCoachBtnSettings" class="mobile-nav-tool-btn mobile-slot-coach" title="Coach Settings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
+            <i class="bi bi-gear-fill"></i>
+            <span class="mobile-tool-label">Coach</span>
+        </button>
     </nav>
+
+    <!-- Mobile Bottom Sheet (Overlay for Move Analysis / Coach Details) -->
+    <div class="m-sheet" id="mobileSheet" data-state="peek" aria-label="Details">
+        <div class="m-sheet-grip" id="mobileSheetGrip" role="button" tabindex="0"
+             aria-expanded="false" aria-controls="mobileSheetBody">
+            <span class="m-sheet-handle" aria-hidden="true"></span>
+            <div class="m-sheet-summary" id="mobileSheetSummary">
+                <span class="text-muted">Select any move to view analysis</span>
+            </div>
+            <i class="bi bi-chevron-up m-sheet-chevron" aria-hidden="true"></i>
+        </div>
+        <div class="m-sheet-body" id="mobileSheetBody"></div>
+    </div>
+    <div class="m-sheet-scrim" id="mobileSheetScrim" hidden></div>
 
     <!-- Mobile Full Move Sheet Offcanvas Drawer -->
     <div class="offcanvas offcanvas-bottom mobile-moves-offcanvas" tabindex="-1" id="mobileMovesOffcanvas" aria-labelledby="mobileMovesOffcanvasLabel">
@@ -3533,6 +4234,48 @@
         </div>
         <div class="offcanvas-body p-2" id="mobileMovesOffcanvasBody">
             <div class="text-center text-muted py-4 small">Load a game to see full move sheet.</div>
+        </div>
+    </div>
+
+    <!-- Mobile Options Sheet (Offcanvas bottom) -->
+    <div class="offcanvas offcanvas-bottom mobile-options-sheet" tabindex="-1" id="mobileOptionsSheet" aria-labelledby="mobileOptionsSheetLabel">
+        <div class="offcanvas-header py-2 px-3 border-bottom border-secondary border-opacity-25">
+            <h6 class="offcanvas-title fw-bold mb-0 text-light" id="mobileOptionsSheetLabel">
+                <i class="bi bi-gear-fill me-1 text-info"></i> Options
+            </h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-3">
+            <div class="d-flex flex-column gap-3">
+                <div class="mobile-opt-row d-flex align-items-center justify-content-between">
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-cpu text-info"></i> Analysis Depth</span>
+                    <select id="mobileAnalysisDepth" class="form-select form-select-sm select-dark" style="width: 140px;">
+                        <option value="14">Fast (14)</option>
+                        <option value="16">Standard (16)</option>
+                        <option value="18" selected>Deep (18)</option>
+                        <option value="20">Master (20)</option>
+                        <option value="22">Grandmaster (22)</option>
+                        <option value="24">Elite (24)</option>
+                    </select>
+                </div>
+                <div class="mobile-opt-row d-flex align-items-center justify-content-between">
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-info"></i> Animation Speed</span>
+                    <select id="mobileAnimationSpeed" class="form-select form-select-sm select-dark" style="width: 140px;">
+                        <option value="2000">Slow (2s)</option>
+                        <option value="1000" selected>Normal (1s)</option>
+                        <option value="500">Fast (0.5s)</option>
+                    </select>
+                </div>
+                <button type="button" id="mobileBtnFlip" class="lic-btn w-100 justify-content-start py-2 px-3" style="min-height:var(--m-tap);">
+                    <i class="bi bi-arrow-left-right me-2 text-info"></i> Flip Board
+                </button>
+                <button type="button" id="mobileBtnImportDrawer" class="lic-btn w-100 justify-content-start py-2 px-3" data-bs-dismiss="offcanvas" style="min-height:var(--m-tap);">
+                    <i class="bi bi-box-arrow-in-down me-2 text-info"></i> Import PGN / Lichess
+                </button>
+                <button type="button" id="mobileBtnHideHeaderOpt" class="lic-btn w-100 justify-content-start py-2 px-3" data-bs-dismiss="offcanvas" style="min-height:var(--m-tap);">
+                    <i class="bi bi-chevron-bar-up me-2 text-info"></i> Hide Header Bar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3973,18 +4716,236 @@
                 }
             }
 
+            // Viewport & Mobile Shell Geometry Sync
+            function syncAppViewport() {
+                const vv = window.visualViewport;
+                const h = vv ? vv.height : window.innerHeight;
+                document.documentElement.style.setProperty('--app-h', h + 'px');
+            }
+            syncAppViewport();
+            window.addEventListener('resize', syncAppViewport);
+            window.addEventListener('orientationchange', syncAppViewport);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', syncAppViewport);
+            }
+
+            // Debounced board resize helper
+            let boardResizeDebounce = null;
+            function triggerBoardResize() {
+                clearTimeout(boardResizeDebounce);
+                boardResizeDebounce = setTimeout(() => {
+                    if (board && board.resize) board.resize();
+                    updateSvgDimensions();
+                    if (currentMoveIndex >= 0 && !isPlayingVariation && !isInVariationMode) {
+                        drawMoveArrows(currentMoveIndex);
+                    }
+                }, 100);
+            }
+
             setTimeout(() => {
                 if (board && board.resize) board.resize();
                 updateSvgDimensions();
             }, 100);
 
-            window.addEventListener('resize', function() {
-                if (board && board.resize) board.resize();
-                updateSvgDimensions();
-                if (currentMoveIndex >= 0 && !isPlayingVariation && !isInVariationMode) {
-                    drawMoveArrows(currentMoveIndex);
+            window.addEventListener('resize', triggerBoardResize);
+            window.addEventListener('orientationchange', triggerBoardResize);
+
+            // Mobile Sheet API
+            window.MobileSheet = {
+                set(state) {
+                    const sheet = document.getElementById('mobileSheet');
+                    const scrim = document.getElementById('mobileSheetScrim');
+                    const grip = document.getElementById('mobileSheetGrip');
+                    if (!sheet) return;
+                    if (!['peek', 'half', 'full'].includes(state)) state = 'peek';
+                    sheet.setAttribute('data-state', state);
+                    if (grip) grip.setAttribute('aria-expanded', state !== 'peek');
+                    if (scrim) {
+                        if (state === 'full') {
+                            scrim.removeAttribute('hidden');
+                            scrim.classList.add('is-visible');
+                        } else {
+                            scrim.classList.remove('is-visible');
+                            scrim.setAttribute('hidden', '');
+                        }
+                    }
+                    sheet.style.height = '';
+                },
+                get() {
+                    const sheet = document.getElementById('mobileSheet');
+                    return sheet ? (sheet.getAttribute('data-state') || 'peek') : 'peek';
+                },
+                setSummary(html) {
+                    const sum = document.getElementById('mobileSheetSummary');
+                    if (sum) {
+                        if (typeof html === 'string') {
+                            sum.innerHTML = html;
+                        } else {
+                            sum.innerHTML = '';
+                            sum.appendChild(html);
+                        }
+                    }
+                },
+                isMobile() {
+                    return window.matchMedia('(max-width: 991.98px)').matches;
                 }
-            });
+            };
+
+            // Mobile Sheet Gestures & Drag-to-Snap
+            const mobileSheet = document.getElementById('mobileSheet');
+            const mobileSheetGrip = document.getElementById('mobileSheetGrip');
+            const mobileSheetScrim = document.getElementById('mobileSheetScrim');
+            if (mobileSheet && mobileSheetGrip) {
+                let startY = 0;
+                let startHeight = 0;
+                let isDragging = false;
+                let startTime = 0;
+
+                const onPointerDown = (e) => {
+                    if (e.target.closest('#mobileSheetSummary a, #mobileSheetSummary button')) return;
+                    isDragging = true;
+                    startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                    startHeight = mobileSheet.getBoundingClientRect().height;
+                    startTime = Date.now();
+                    mobileSheet.classList.add('is-dragging');
+                    window.addEventListener('pointermove', onPointerMove);
+                    window.addEventListener('pointerup', onPointerUp);
+                    window.addEventListener('touchmove', onPointerMove, { passive: false });
+                    window.addEventListener('touchend', onPointerUp);
+                };
+
+                const onPointerMove = (e) => {
+                    if (!isDragging) return;
+                    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                    const deltaY = startY - clientY;
+                    const newHeight = Math.max(50, startHeight + deltaY);
+                    mobileSheet.style.height = `${newHeight}px`;
+                    if (e.cancelable) e.preventDefault();
+                };
+
+                const onPointerUp = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    mobileSheet.classList.remove('is-dragging');
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    window.removeEventListener('touchmove', onPointerMove);
+                    window.removeEventListener('touchend', onPointerUp);
+
+                    const endY = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : (e.clientY || startY);
+                    const deltaY = startY - endY;
+                    const dt = Math.max(1, Date.now() - startTime);
+                    const velocity = deltaY / dt;
+
+                    const vh = window.innerHeight;
+                    const peekH = 76;
+                    const halfH = Math.min(vh * 0.52, vh * 0.52);
+                    const fullH = vh - 48 - 56;
+                    const curH = mobileSheet.getBoundingClientRect().height;
+
+                    let targetState = 'peek';
+                    if (velocity > 0.5) {
+                        targetState = curH < halfH ? 'half' : 'full';
+                    } else if (velocity < -0.5) {
+                        targetState = curH > halfH ? 'half' : 'peek';
+                    } else {
+                        const distPeek = Math.abs(curH - peekH);
+                        const distHalf = Math.abs(curH - halfH);
+                        const distFull = Math.abs(curH - fullH);
+                        const minDist = Math.min(distPeek, distHalf, distFull);
+                        if (minDist === distPeek) targetState = 'peek';
+                        else if (minDist === distHalf) targetState = 'half';
+                        else targetState = 'full';
+                    }
+
+                    if (Math.abs(deltaY) < 6 && dt < 300) {
+                        const curState = window.MobileSheet.get();
+                        targetState = curState === 'peek' ? 'half' : 'peek';
+                    }
+
+                    window.MobileSheet.set(targetState);
+                };
+
+                mobileSheetGrip.addEventListener('pointerdown', onPointerDown);
+                mobileSheetGrip.addEventListener('touchstart', onPointerDown, { passive: true });
+
+                mobileSheetGrip.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const curState = window.MobileSheet.get();
+                        window.MobileSheet.set(curState === 'peek' ? 'half' : 'peek');
+                    }
+                });
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const curState = window.MobileSheet.get();
+                        if (curState === 'full') window.MobileSheet.set('half');
+                        else if (curState === 'half') window.MobileSheet.set('peek');
+                    }
+                });
+
+                if (mobileSheetScrim) {
+                    mobileSheetScrim.addEventListener('click', () => {
+                        window.MobileSheet.set('half');
+                    });
+                }
+            }
+
+            // Content Relocation for Mobile Bottom Sheet
+            const originalParents = new WeakMap();
+            function relocateForViewport(currentMode) {
+                const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
+                const sheetBody = document.getElementById('mobileSheetBody');
+                if (!sheetBody) return;
+
+                const moveExp = document.getElementById('moveExplanation');
+                const coachBubbleCard = document.querySelector('.coach-dialogue-card');
+                const coachOpeningBar = document.querySelector('.coach-opening-bar');
+                const coachMovesWrapper = document.getElementById('coachMovesWrapper');
+
+                const track = (el) => {
+                    if (el && !originalParents.has(el)) {
+                        originalParents.set(el, el.parentElement);
+                    }
+                };
+                track(moveExp);
+                track(coachBubbleCard);
+                track(coachOpeningBar);
+                track(coachMovesWrapper);
+
+                const restore = (el) => {
+                    if (el && originalParents.has(el)) {
+                        const parent = originalParents.get(el);
+                        if (parent && el.parentElement !== parent) {
+                            parent.appendChild(el);
+                        }
+                    }
+                };
+
+                const mode = currentMode || (document.body.classList.contains('coach-mode') ? 'coach' : 'analysis');
+
+                if (!isMobile) {
+                    restore(moveExp);
+                    restore(coachOpeningBar);
+                    restore(coachBubbleCard);
+                    restore(coachMovesWrapper);
+                } else {
+                    if (mode === 'coach') {
+                        restore(moveExp);
+                        if (coachOpeningBar && coachOpeningBar.parentElement !== sheetBody) sheetBody.appendChild(coachOpeningBar);
+                        if (coachBubbleCard && coachBubbleCard.parentElement !== sheetBody) sheetBody.appendChild(coachBubbleCard);
+                        if (coachMovesWrapper && coachMovesWrapper.parentElement !== sheetBody) sheetBody.appendChild(coachMovesWrapper);
+                    } else {
+                        restore(coachOpeningBar);
+                        restore(coachBubbleCard);
+                        restore(coachMovesWrapper);
+                        if (moveExp && moveExp.parentElement !== sheetBody) sheetBody.appendChild(moveExp);
+                    }
+                }
+            }
+            relocateForViewport();
+            window.addEventListener('resize', () => relocateForViewport());
 
             setupArrowMarkers();
 
@@ -4261,6 +5222,83 @@
             if (tickerNavRight && tickerScroll) {
                 tickerNavRight.addEventListener('click', function() {
                     tickerScroll.scrollBy({ left: 140, behavior: 'smooth' });
+                });
+            }
+
+            const mobileNavCapsule = document.getElementById('mobileNavCapsule');
+            if (mobileNavCapsule) {
+                mobileNavCapsule.addEventListener('click', function() {
+                    if (window.MobileSheet && window.MobileSheet.isMobile()) {
+                        window.MobileSheet.set('half');
+                    }
+                });
+            }
+
+            const mobileCoachBtnResign = document.getElementById('mobileCoachBtnResign');
+            if (mobileCoachBtnResign) {
+                mobileCoachBtnResign.addEventListener('click', function() {
+                    if (btnCoachResign) btnCoachResign.click();
+                });
+            }
+
+            const mobileCoachBtnTakeback = document.getElementById('mobileCoachBtnTakeback');
+            if (mobileCoachBtnTakeback) {
+                mobileCoachBtnTakeback.addEventListener('click', function() {
+                    if (btnCoachTakeback) btnCoachTakeback.click();
+                });
+            }
+
+            const mobileCoachBtnHint = document.getElementById('mobileCoachBtnHint');
+            if (mobileCoachBtnHint) {
+                mobileCoachBtnHint.addEventListener('click', function() {
+                    if (btnCoachHint) btnCoachHint.click();
+                });
+            }
+
+            const mobileCoachBtnReview = document.getElementById('mobileCoachBtnReview');
+            if (mobileCoachBtnReview) {
+                mobileCoachBtnReview.addEventListener('click', function() {
+                    if (btnCoachReview) btnCoachReview.click();
+                });
+            }
+
+            const mobileAnalysisDepth = document.getElementById('mobileAnalysisDepth');
+            const analysisDepth = document.getElementById('analysisDepth');
+            if (mobileAnalysisDepth && analysisDepth) {
+                mobileAnalysisDepth.value = analysisDepth.value;
+                mobileAnalysisDepth.addEventListener('change', function(e) {
+                    analysisDepth.value = e.target.value;
+                    analysisDepth.dispatchEvent(new Event('change'));
+                });
+                analysisDepth.addEventListener('change', function(e) {
+                    mobileAnalysisDepth.value = e.target.value;
+                });
+            }
+
+            const mobileAnimationSpeed = document.getElementById('mobileAnimationSpeed');
+            if (mobileAnimationSpeed && speedControl) {
+                mobileAnimationSpeed.value = speedControl.value;
+                mobileAnimationSpeed.addEventListener('change', function(e) {
+                    speedControl.value = e.target.value;
+                    speedControl.dispatchEvent(new Event('change'));
+                });
+                speedControl.addEventListener('change', function(e) {
+                    mobileAnimationSpeed.value = e.target.value;
+                });
+            }
+
+            const mobileBtnImportDrawer = document.getElementById('mobileBtnImportDrawer');
+            if (mobileBtnImportDrawer) {
+                mobileBtnImportDrawer.addEventListener('click', function() {
+                    if (btnTogglePgn) btnTogglePgn.click();
+                });
+            }
+
+            const mobileBtnHideHeaderOpt = document.getElementById('mobileBtnHideHeaderOpt');
+            if (mobileBtnHideHeaderOpt) {
+                mobileBtnHideHeaderOpt.addEventListener('click', function() {
+                    const btnToggleMobileHeader = document.getElementById('btnToggleMobileHeader');
+                    if (btnToggleMobileHeader) btnToggleMobileHeader.click();
                 });
             }
 
@@ -4626,7 +5664,7 @@
                             <div class="text-center text-muted py-5 small px-3">
                                 <p class="mb-3">No moves analyzed. Please check game link or PGN notation.</p>
                                 <button type="button" id="btnOpenPgnInput" class="lic-btn lic-btn-primary" data-action="open-pgn">
-                                    <i class="bi bi-box-arrow-in-down"></i> Import Game
+                                    <i class="bi bi-box-arrow-in-down"></i> Import
                                 </button>
                             </div>`;
                         return;
@@ -4871,18 +5909,23 @@
             }
 
             function updateEvalGauge(index) {
+                const mobileEvalBar = document.getElementById('mobileEvalBar');
                 if (index < 0 || index >= moves.length) {
                     if (evalGaugeWhite) evalGaugeWhite.style.height = '50%';
                     if (evalGaugeTop) evalGaugeTop.textContent = '';
                     if (evalGaugeBottom) evalGaugeBottom.textContent = '';
                     if (mobileEvalWhite) mobileEvalWhite.style.width = '50%';
+                    if (mobileEvalBar) mobileEvalBar.classList.add('is-idle');
                     if (mobileEvalPill) {
                         mobileEvalPill.textContent = '0.0';
-                        mobileEvalPill.style.background = 'rgba(0, 0, 0, 0.75)';
-                        mobileEvalPill.style.color = '#cbd5e1';
+                        mobileEvalPill.removeAttribute('data-side');
+                        mobileEvalPill.style.background = '';
+                        mobileEvalPill.style.color = '';
                     }
                     return;
                 }
+
+                if (mobileEvalBar) mobileEvalBar.classList.remove('is-idle');
 
                 const move = moves[index];
                 const isFlipped = board.orientation() === 'black';
@@ -4937,16 +5980,9 @@
 
                 if (mobileEvalPill) {
                     mobileEvalPill.textContent = evalText || '0.0';
-                    if (whiteWp > 0.55) {
-                        mobileEvalPill.style.background = 'rgba(240, 240, 240, 0.95)';
-                        mobileEvalPill.style.color = '#111';
-                    } else if (whiteWp < 0.45) {
-                        mobileEvalPill.style.background = 'rgba(20, 20, 20, 0.95)';
-                        mobileEvalPill.style.color = '#eee';
-                    } else {
-                        mobileEvalPill.style.background = 'rgba(0, 0, 0, 0.75)';
-                        mobileEvalPill.style.color = '#cbd5e1';
-                    }
+                    mobileEvalPill.setAttribute('data-side', whiteWp >= 0.5 ? 'white' : 'black');
+                    mobileEvalPill.style.background = '';
+                    mobileEvalPill.style.color = '';
                 }
             }
 
@@ -5092,7 +6128,7 @@
                         <div class="text-center text-muted py-5 small px-3">
                             <p class="mb-3">No moves analyzed. Please check game link or PGN notation.</p>
                             <button type="button" id="btnOpenPgnInput" class="lic-btn lic-btn-primary" data-action="open-pgn">
-                                <i class="bi bi-box-arrow-in-down"></i> Import Game
+                                <i class="bi bi-box-arrow-in-down"></i> Import
                             </button>
                         </div>`;
                     return;
@@ -6091,6 +7127,10 @@
                 showMoveExplanation(index);
                 updateKeyMomentBadge();
                 
+                if (window.MobileSheet && window.MobileSheet.isMobile() && window.MobileSheet.get() === 'peek') {
+                    window.MobileSheet.set('half');
+                }
+
                 setTimeout(() => {
                     drawMoveArrows(index);
                 }, 80);
@@ -6130,6 +7170,22 @@
                     if (mobileNavSan && mobileNavCount) {
                         mobileNavSan.innerHTML = `${movePrefix}${formatSanWithFigurines(playedBase + playedGlyph, move.is_white)}`;
                         mobileNavCount.textContent = `${currentMoveIndex + 1} of ${moves.length}`;
+                    }
+
+                    if (window.MobileSheet) {
+                        const quality = (move.quality || 'good move').toUpperCase();
+                        const qualityClass = getQualityBadgeClass(move.quality);
+                        const evalFormatted = formatEvalForMoveList(move.evaluation);
+                        const bestEvalFormatted = (move.analysis && move.analysis.best_evaluation) ? formatEvalForMoveList(move.analysis.best_evaluation) : '';
+                        const evalDeltaStr = bestEvalFormatted && bestEvalFormatted !== evalFormatted ? `${bestEvalFormatted} → ${evalFormatted}` : evalFormatted;
+
+                        window.MobileSheet.setSummary(`
+                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                <span class="fw-bold">${movePrefix}${formatSanWithFigurines(playedBase + playedGlyph, move.is_white)}</span>
+                                <span class="badge ${qualityClass}" style="font-size:var(--m-fs-chip);">${quality}</span>
+                                <span class="text-muted small">${evalDeltaStr}</span>
+                            </div>
+                        `);
                     }
 
                     if (variationPreviewBar && pillPlayedSan && pillPlayedEval) {
@@ -7046,12 +8102,32 @@
                             </div>
                         </div>
                     `;
+                    if (window.MobileSheet) {
+                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
+                        const emoji = (p && p.emoji) ? p.emoji : '😎';
+                        window.MobileSheet.setSummary(`
+                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                <span>${emoji}</span>
+                                <span class="text-truncate">${escapeHtml(mainMsg)}</span>
+                            </div>
+                        `);
+                    }
                     return;
                 }
 
                 // If initial state (no moves yet)
                 if (coachManager.moveHistory.length === 0) {
                     bubble.textContent = coachManager.getDialogue();
+                    if (window.MobileSheet) {
+                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
+                        const emoji = (p && p.emoji) ? p.emoji : '😎';
+                        window.MobileSheet.setSummary(`
+                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                <span>${emoji}</span>
+                                <span class="text-truncate">${escapeHtml(bubble.textContent.trim())}</span>
+                            </div>
+                        `);
+                    }
                     return;
                 }
 
@@ -7059,6 +8135,16 @@
                 const lastMove = coachManager.moveHistory[coachManager.moveHistory.length - 1];
                 if (lastMove && lastMove.isPlayer && lastMove.isBlunder) {
                     bubble.textContent = coachManager.getDialogue();
+                    if (window.MobileSheet) {
+                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
+                        const emoji = (p && p.emoji) ? p.emoji : '😎';
+                        window.MobileSheet.setSummary(`
+                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                <span>${emoji}</span>
+                                <span class="text-truncate">${escapeHtml(bubble.textContent.trim())}</span>
+                            </div>
+                        `);
+                    }
                     return;
                 }
 
@@ -7091,6 +8177,18 @@
                         ? coachManager.getDialogue()
                         : (coachManager.currentDialogue || coachManager.currentBubble2 || coachManager.currentBubble1 || '');
                     bubble.textContent = text;
+                }
+
+                if (window.MobileSheet) {
+                    const p = coachManager.getPersona ? coachManager.getPersona() : null;
+                    const emoji = (p && p.emoji) ? p.emoji : '😎';
+                    const text = (bubble.innerText || bubble.textContent || '').replace(/\s+/g, ' ').trim();
+                    window.MobileSheet.setSummary(`
+                        <div class="d-flex align-items-center gap-2 text-truncate">
+                            <span>${emoji}</span>
+                            <span class="text-truncate">${escapeHtml(text)}</span>
+                        </div>
+                    `);
                 }
             }
 
@@ -7288,8 +8386,22 @@
                         bubble.textContent = record.dialogue;
                         bubble.classList.remove('expanded');
                     }
+                    if (window.MobileSheet) {
+                        const p = coachManager.getPersona ? coachManager.getPersona() : null;
+                        const emoji = (p && p.emoji) ? p.emoji : '😎';
+                        window.MobileSheet.setSummary(`
+                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                <span>${emoji}</span>
+                                <span class="text-truncate">${escapeHtml(record.dialogue)}</span>
+                            </div>
+                        `);
+                    }
                 } else if (clampedIndex === maxIndex) {
                     renderCoachDialogue();
+                }
+
+                if (window.MobileSheet && window.MobileSheet.isMobile() && window.MobileSheet.get() === 'peek') {
+                    window.MobileSheet.set('half');
                 }
 
                 // Update player bars
@@ -7345,14 +8457,26 @@
             function updateCoachActionBarState() {
                 const btnCoachHint = document.getElementById('btnCoachHint');
                 const btnCoachReview = document.getElementById('btnCoachReview');
+                const mobileCoachBtnHint = document.getElementById('mobileCoachBtnHint');
+                const mobileCoachBtnReview = document.getElementById('mobileCoachBtnReview');
                 if (!coachManager) return;
 
                 if (coachManager.isGameOver) {
                     if (btnCoachHint) btnCoachHint.classList.add('d-none');
                     if (btnCoachReview) btnCoachReview.classList.remove('d-none');
+                    if (mobileCoachBtnHint) mobileCoachBtnHint.classList.add('d-none');
+                    if (mobileCoachBtnReview) {
+                        mobileCoachBtnReview.classList.remove('d-none');
+                        mobileCoachBtnReview.classList.add('d-flex');
+                    }
                 } else {
                     if (btnCoachHint) btnCoachHint.classList.remove('d-none');
                     if (btnCoachReview) btnCoachReview.classList.add('d-none');
+                    if (mobileCoachBtnHint) mobileCoachBtnHint.classList.remove('d-none');
+                    if (mobileCoachBtnReview) {
+                        mobileCoachBtnReview.classList.add('d-none');
+                        mobileCoachBtnReview.classList.remove('d-flex');
+                    }
                 }
             }
 
@@ -7360,17 +8484,29 @@
                 if (!coachManager) return;
                 const p = coachManager.getPersona();
                 const isPlayerWhite = (coachManager.playerColor === 'w');
+                const topPlayerElo = document.getElementById('topPlayerElo');
+                const bottomPlayerElo = document.getElementById('bottomPlayerElo');
 
                 if (isPlayerWhite) {
-                    topPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    topPlayerName.textContent = `${p.name} ${p.flag}`;
                     topPlayerMeta.textContent = p.title;
+                    if (topPlayerElo) {
+                        topPlayerElo.textContent = p.elo;
+                        topPlayerElo.classList.remove('d-none');
+                    }
+                    if (bottomPlayerElo) bottomPlayerElo.classList.add('d-none');
                     bottomPlayerName.textContent = "You";
                     bottomPlayerMeta.textContent = "Sparring Player";
                 } else {
                     topPlayerName.textContent = "You";
                     topPlayerMeta.textContent = "Sparring Player";
-                    bottomPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    if (topPlayerElo) topPlayerElo.classList.add('d-none');
+                    bottomPlayerName.textContent = `${p.name} ${p.flag}`;
                     bottomPlayerMeta.textContent = p.title;
+                    if (bottomPlayerElo) {
+                        bottomPlayerElo.textContent = p.elo;
+                        bottomPlayerElo.classList.remove('d-none');
+                    }
                 }
 
                 if (topPlayerTurn && bottomPlayerTurn) {
@@ -7398,17 +8534,29 @@
                 if (!coachManager) return;
                 const p = coachManager.getPersona();
                 const isPlayerWhite = (coachManager.playerColor === 'w');
+                const topPlayerElo = document.getElementById('topPlayerElo');
+                const bottomPlayerElo = document.getElementById('bottomPlayerElo');
 
                 if (isPlayerWhite) {
-                    topPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    topPlayerName.textContent = `${p.name} ${p.flag}`;
                     topPlayerMeta.textContent = p.title;
+                    if (topPlayerElo) {
+                        topPlayerElo.textContent = p.elo;
+                        topPlayerElo.classList.remove('d-none');
+                    }
+                    if (bottomPlayerElo) bottomPlayerElo.classList.add('d-none');
                     bottomPlayerName.textContent = "You";
                     bottomPlayerMeta.textContent = "Sparring Player";
                 } else {
                     topPlayerName.textContent = "You";
                     topPlayerMeta.textContent = "Sparring Player";
-                    bottomPlayerName.textContent = `${p.name} (${p.elo}) ${p.flag}`;
+                    if (topPlayerElo) topPlayerElo.classList.add('d-none');
+                    bottomPlayerName.textContent = `${p.name} ${p.flag}`;
                     bottomPlayerMeta.textContent = p.title;
+                    if (bottomPlayerElo) {
+                        bottomPlayerElo.textContent = p.elo;
+                        bottomPlayerElo.classList.remove('d-none');
+                    }
                 }
 
                 // Turn dots
@@ -7708,7 +8856,7 @@
                         coachHeaderGroup.classList.add('d-flex');
                     }
                     if (importGameGroup) importGameGroup.classList.add('d-none');
-                    if (analysisKeysLegend) analysisKeysLegend.classList.add('d-none');
+                    if (analysisKeysLegend) analysisKeysLegend.classList.toggle('mode-hidden', mode === 'coach');
 
                     if (arrowSvg) arrowSvg.innerHTML = '';
                     stopVariationPlayback();
@@ -7735,7 +8883,7 @@
                         coachHeaderGroup.classList.remove('d-flex');
                     }
                     if (importGameGroup) importGameGroup.classList.remove('d-none');
-                    if (analysisKeysLegend) analysisKeysLegend.classList.remove('d-none');
+                    if (analysisKeysLegend) analysisKeysLegend.classList.toggle('mode-hidden', mode === 'coach');
 
                     clearHintHighlights();
                     highlightLastMove(null, null);
@@ -7745,10 +8893,15 @@
                     } else {
                         board.orientation('white');
                         board.position('start');
-                        updatePlayerBars();
+                        updatePlayerStripsOrientation();
                         clearKingCheckmateBadges();
+                        if (window.MobileSheet) {
+                            window.MobileSheet.setSummary('<span class="text-muted">Select any move to view analysis</span>');
+                        }
                     }
                 }
+
+                relocateForViewport(mode);
 
                 setTimeout(() => {
                     if (board && board.resize) board.resize();

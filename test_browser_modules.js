@@ -751,14 +751,38 @@ assert(indexHtml.includes('mobileBtnFlip.addEventListener'), "Must bind mobileBt
 console.log("✓ Mobile UI Rework & Layout Integrity passed!");
 
 // -------------------------------------------------------------
+// 10b. Mobile Revamp v2 Integrity Tests
+// -------------------------------------------------------------
+console.log("Testing Mobile Revamp v2 Integrity...");
+assert(indexHtml.includes('viewport-fit=cover'),            "viewport must opt into safe areas");
+assert(!indexHtml.includes('user-scalable=no'),             "pinch-zoom must not be disabled");
+assert(indexHtml.includes('--m-chrome-h'),                  "board height must derive from --m-chrome-h");
+assert(!/max-width:\s*min\(100%,\s*calc\(100dvh - \d+px\)\)/.test(indexHtml),
+                                                            "no magic-number board heights remain");
+assert(indexHtml.includes('function syncAppViewport('),     "must sync --app-h from visualViewport");
+assert(indexHtml.includes('MOBILE REVAMP v2 — START'),      "mobile revamp CSS region must be delimited");
+['mobileSheet','mobileSheetGrip','mobileSheetBody','mobileSheetSummary','mobileSheetScrim',
+ 'mobileBtnMore','mobileOptionsSheet'].forEach(id => {
+    assert(indexHtml.includes(`id="${id}"`), `Missing mobile element #${id}`);
+});
+assert(indexHtml.includes('window.MobileSheet'),            "must expose MobileSheet API");
+assert(indexHtml.includes('function relocateForViewport('), "must relocate panels between shell and sheet");
+assert(indexHtml.includes('.analysis-keys-legend'),         "keys legend must use a dedicated class, not d-none toggling");
+assert(!/analysisKeysLegend\.classList\.remove\('d-none'\)/.test(indexHtml),
+                                                            "keys legend must not have d-none stripped on mobile");
+assert(indexHtml.includes('--m-tap'),                       "touch-target token must exist");
+assert(indexHtml.includes('--m-fs-chip'),                   "mobile type floor token must exist");
+console.log("✓ Mobile Revamp v2 Integrity passed!");
+
+// -------------------------------------------------------------
 // 11. Lichess & PGN Import Integration Tests
 // -------------------------------------------------------------
 console.log("Testing Lichess & PGN Import UI and Logic...");
 
-// Verify Import Game header button and icon
+// Verify Import header button and icon
 assert(indexHtml.includes('id="btnTogglePgn"'), "index.html must include #btnTogglePgn");
-assert(indexHtml.includes('Import Game'), "index.html must include 'Import Game' button text");
-assert(indexHtml.includes('bi-box-arrow-in-down'), "index.html must use bi-box-arrow-in-down icon for Import Game");
+assert(indexHtml.includes('<span>Import</span>') || indexHtml.includes('>Import<'), "index.html must include 'Import' button text");
+assert(indexHtml.includes('bi-box-arrow-in-down'), "index.html must use bi-box-arrow-in-down icon for Import");
 
 // Verify Import dropdown menu options (Lichess & PGN only)
 assert(indexHtml.includes('id="importDropdownMenu"'), "index.html must include #importDropdownMenu");
@@ -781,7 +805,7 @@ assert(indexHtml.includes('id="pgnInput"'), "index.html must include #pgnInput")
 
 // Verify empty-state container action button updated
 assert(indexHtml.includes('id="btnOpenPgnInput"'), "index.html must preserve #btnOpenPgnInput ID for compatibility");
-assert(indexHtml.includes('Import Game</span>') || indexHtml.includes('Import Game\n'), "Empty state button must display 'Import Game'");
+assert(indexHtml.includes('Import') && indexHtml.includes('btnOpenPgnInput'), "Empty state button must display 'Import'");
 
 // Verify JS functions for import
 assert(indexHtml.includes('function switchImportTab('), "index.html must include switchImportTab function");

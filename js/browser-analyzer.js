@@ -510,6 +510,7 @@
                 let refTo = null;
                 let refPv = [];
                 let refPvFormatted = '';
+                let postEval = null;
 
                 if (playedIsBest) {
                     playedScoreObj = bestScoreObj;
@@ -529,7 +530,6 @@
                     }
 
                     // Evaluate boardAfter to get opponent's refutation and exact score
-                    let postEval;
                     try {
                         postEval = await this.pool.evaluate(fenAfter, budget.depthPost, 1);
                     } catch (e) {
