@@ -1,7 +1,7 @@
 # WhyBlunder — Mobile UI Revamp: Plan & Design Definition
 
 > **Audience:** the agent/developer who will implement this.
-> **Status:** design approved for implementation, not yet built.
+> **Status:** implemented.
 > **Scope:** mobile & small-tablet presentation of `index.html` (Analysis mode + Play Coach mode).
 > No changes to engine, diagnostics, coach logic, or the public output contract.
 
