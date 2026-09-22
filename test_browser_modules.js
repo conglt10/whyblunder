@@ -885,6 +885,30 @@ assert(coach.currentBubble1.length > 0, "Initial bubble1 should be present");
 assert(coach.currentBubble2.length > 0, "Initial bubble2 should be present");
 assert(coach.getDialogue().length > 0, "Initial dialogue should be present");
 
+// Test coach board flicker fix regressions (chessboard.js diff redraw,
+// drag threshold, unminified script load)
+console.log("Testing coach board flicker fix regressions...");
+const chessboardJsSrc = fs.readFileSync(require('path').join(__dirname, 'js', 'chessboard-1.0.0.js'), 'utf8');
+
+// (3) index.html must load the unminified chessboard.js, not the .min.js,
+// otherwise edits to chessboard-1.0.0.js have no effect in the browser
+assert(indexHtml.includes('<script src="js/chessboard-1.0.0.js"></script>'), "index.html must load js/chessboard-1.0.0.js");
+assert(!indexHtml.includes('<script src="js/chessboard-1.0.0.min.js"></script>'), "index.html must not load the minified chessboard-1.0.0.min.js");
+
+// (1) drawPositionInstant must no longer do a full unconditional wipe of
+// every piece on the board before redrawing (that caused board-wide blink)
+assert(!/\$board\.find\(\s*'\.'\s*\+\s*CSS\.piece\s*\)\.remove\(\)/.test(chessboardJsSrc), "drawPositionInstant must not unconditionally wipe all pieces with $board.find('.' + CSS.piece).remove()");
+assert(/function drawPositionInstant/.test(chessboardJsSrc), "drawPositionInstant function must still exist");
+assert(/data-piece['"]?\)\s*===\s*piece/.test(chessboardJsSrc), "drawPositionInstant must diff against existing data-piece before rebuilding a square");
+
+// (2) a drag threshold must gate the visual drag start so a plain click
+// does not hide/snapback-blink the piece
+assert(/DRAG_THRESHOLD_PX/.test(chessboardJsSrc), "chessboard-1.0.0.js must define a drag threshold constant");
+assert(/function\s+maybeStartVisualDrag/.test(chessboardJsSrc), "chessboard-1.0.0.js must gate visual drag start behind a threshold check");
+assert(/function\s+finishClickRelease/.test(chessboardJsSrc), "chessboard-1.0.0.js must handle pre-threshold release as a click, not a drag/snapback");
+
+console.log("✓ Coach board flicker fix regressions passed!");
+
 // Test Player Move
 (async () => {
     const resMove = await coach.handleUserMove('e4');

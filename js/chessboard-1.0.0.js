@@ -681,6 +681,14 @@
     var squareElsOffsets = {}
     var squareSize = 16
 
+    // pointer-down state that has not yet crossed the drag threshold; a
+    // release while still in this state is treated as a click, not a drag
+    var isMouseDown = false
+    var dragStartX = 0
+    var dragStartY = 0
+    var DRAG_THRESHOLD_PX = 4
+    var DRAG_THRESHOLD_PX_SQ = DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX
+
     // -------------------------------------------------------------------------
     // Validation / Errors
     // -------------------------------------------------------------------------
@@ -1108,14 +1116,34 @@
     // -------------------------------------------------------------------------
 
     function drawPositionInstant () {
-      // clear the board
-      $board.find('.' + CSS.piece).remove()
+      // diff-based redraw: only touch squares whose piece actually changed,
+      // instead of wiping and rebuilding every <img> on the board (which
+      // causes the whole board to blink on every move/animation finish)
+      for (var i in squareElsIds) {
+        if (!squareElsIds.hasOwnProperty(i)) continue
 
-      // add the pieces
-      for (var i in currentPosition) {
-        if (!currentPosition.hasOwnProperty(i)) continue
+        var $square = $('#' + squareElsIds[i])
+        var $existingPieces = $square.find('.' + CSS.piece)
+        var piece = currentPosition.hasOwnProperty(i) ? currentPosition[i] : false
 
-        $('#' + squareElsIds[i]).append(buildPieceHTML(currentPosition[i]))
+        // the correct piece is already on this square - keep the existing
+        // <img> element in place, just clear any stale inline styles left
+        // behind by jQuery's fadeIn/fadeOut (display / opacity)
+        if (piece && $existingPieces.length === 1 && $existingPieces.attr('data-piece') === piece) {
+          $existingPieces.css({display: '', opacity: ''})
+          continue
+        }
+
+        // square holds the wrong piece(s), or a stray/leftover piece
+        // element that no longer belongs there - clear it out
+        if ($existingPieces.length) {
+          $existingPieces.remove()
+        }
+
+        // add the correct piece, if this square should have one
+        if (piece) {
+          $square.append(buildPieceHTML(piece))
+        }
       }
     }
 
@@ -1295,10 +1323,16 @@
         return
       }
 
-      // set state
-      isDragging = true
+      // set state - the *visual* drag (hiding the source piece, adding the
+      // highlight, showing the floating dragged piece) is deferred until
+      // the pointer moves past DRAG_THRESHOLD_PX. Until then this is a
+      // pending click: releasing now must not snapback/blink the piece.
+      isMouseDown = true
+      isDragging = false
       draggedPiece = piece
       draggedPieceSource = source
+      dragStartX = x
+      dragStartY = y
 
       // if the piece came from spare pieces, location is offboard
       if (source === 'spare') {
@@ -1309,22 +1343,84 @@
 
       // capture the x, y coords of all squares in memory
       captureSquareOffsets()
+    }
+
+    // begin the actual visual drag: show the floating dragged piece and
+    // hide/highlight the source square. Called once the pointer has moved
+    // past the drag threshold since mousedown/touchstart.
+    function startVisualDrag (x, y) {
+      isDragging = true
 
       // create the dragged piece
-      $draggedPiece.attr('src', buildPieceImgSrc(piece)).css({
+      $draggedPiece.attr('src', buildPieceImgSrc(draggedPiece)).css({
         display: '',
         position: 'absolute',
         left: x - squareSize / 2,
         top: y - squareSize / 2
       })
 
-      if (source !== 'spare') {
+      if (draggedPieceSource !== 'spare') {
         // highlight the source square and hide the piece
-        $('#' + squareElsIds[source])
+        $('#' + squareElsIds[draggedPieceSource])
           .addClass(CSS.highlight1)
           .find('.' + CSS.piece)
           .css('display', 'none')
       }
+    }
+
+    // called from mousemove/touchmove while the pointer is down but the
+    // visual drag has not started yet; promotes to a real drag once the
+    // pointer has moved past the threshold
+    function maybeStartVisualDrag (x, y) {
+      var dx = x - dragStartX
+      var dy = y - dragStartY
+      if ((dx * dx + dy * dy) < DRAG_THRESHOLD_PX_SQ) return
+
+      startVisualDrag(x, y)
+      updateDraggedPiece(x, y)
+    }
+
+    // the pointer was released before the drag threshold was crossed -
+    // treat this as a click rather than a drag. No source piece was ever
+    // hidden and no dragged piece was ever shown, so there is nothing to
+    // snap back or redraw; just report a same-square "drop" so the caller
+    // can keep its existing click-to-select handling.
+    function finishClickRelease () {
+      isMouseDown = false
+      isDragging = false
+
+      var source = draggedPieceSource
+      var piece = draggedPiece
+
+      var result = null
+      if (isFunction(config.onDrop)) {
+        result = config.onDrop(
+          source,
+          source,
+          piece,
+          deepCopy(currentPosition),
+          deepCopy(currentPosition),
+          currentOrientation
+        )
+      }
+
+      // make sure the (never-shown) dragged piece placeholder is hidden
+      // and any highlight state is cleared - no animation, no redraw
+      $draggedPiece.css('display', 'none')
+      removeSquareHighlights()
+
+      if (result === 'snapback' && isFunction(config.onSnapbackEnd)) {
+        config.onSnapbackEnd(
+          piece,
+          source,
+          deepCopy(currentPosition),
+          currentOrientation
+        )
+      }
+
+      draggedPieceSource = null
+      draggedPieceLocation = null
+      draggedPiece = null
     }
 
     function updateDraggedPiece (x, y) {
@@ -1367,6 +1463,10 @@
     }
 
     function stopDraggedPiece (location) {
+      // this is a real (post-threshold) drag ending; clear the pending
+      // pointer-down state too
+      isMouseDown = false
+
       // determine what the action should be
       var action = 'drop'
       if (location === 'offboard' && config.dropOffBoard === 'snapback') {
@@ -1656,43 +1756,62 @@
     function mousemoveWindow (evt) {
       if (isDragging) {
         updateDraggedPiece(evt.pageX, evt.pageY)
+      } else if (isMouseDown) {
+        // pointer is down but hasn't crossed the drag threshold yet
+        maybeStartVisualDrag(evt.pageX, evt.pageY)
       }
     }
 
     var throttledMousemoveWindow = throttle(mousemoveWindow, config.dragThrottleRate)
 
     function touchmoveWindow (evt) {
-      // do nothing if we are not dragging a piece
-      if (!isDragging) return
+      // do nothing if there is no pending or active drag
+      if (!isDragging && !isMouseDown) return
 
       // prevent screen from scrolling
       evt.preventDefault()
 
-      updateDraggedPiece(evt.originalEvent.changedTouches[0].pageX,
-        evt.originalEvent.changedTouches[0].pageY)
+      var pageX = evt.originalEvent.changedTouches[0].pageX
+      var pageY = evt.originalEvent.changedTouches[0].pageY
+
+      if (isDragging) {
+        updateDraggedPiece(pageX, pageY)
+      } else {
+        maybeStartVisualDrag(pageX, pageY)
+      }
     }
 
     var throttledTouchmoveWindow = throttle(touchmoveWindow, config.dragThrottleRate)
 
     function mouseupWindow (evt) {
-      // do nothing if we are not dragging a piece
-      if (!isDragging) return
+      if (isDragging) {
+        // get the location
+        var location = isXYOnSquare(evt.pageX, evt.pageY)
 
-      // get the location
-      var location = isXYOnSquare(evt.pageX, evt.pageY)
+        stopDraggedPiece(location)
+        return
+      }
 
-      stopDraggedPiece(location)
+      // released before the drag threshold was crossed - treat as a click
+      if (isMouseDown) {
+        finishClickRelease()
+      }
     }
 
     function touchendWindow (evt) {
-      // do nothing if we are not dragging a piece
-      if (!isDragging) return
+      if (isDragging) {
+        // get the location
+        var location = isXYOnSquare(evt.originalEvent.changedTouches[0].pageX,
+          evt.originalEvent.changedTouches[0].pageY)
 
-      // get the location
-      var location = isXYOnSquare(evt.originalEvent.changedTouches[0].pageX,
-        evt.originalEvent.changedTouches[0].pageY)
+        stopDraggedPiece(location)
+        return
+      }
 
-      stopDraggedPiece(location)
+      // released before the drag threshold was crossed - treat as a click
+      if (isMouseDown) {
+        finishClickRelease()
+      }
     }
 
     function mouseenterSquare (evt) {
