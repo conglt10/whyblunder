@@ -21,6 +21,25 @@
         return wasmSupported ? 'js/stockfish.wasm.js' : 'js/stockfish.js';
     }
 
+    function getI18n() {
+        if (typeof WhyBlunderI18N !== 'undefined') return WhyBlunderI18N;
+        if (typeof window !== 'undefined' && window.WhyBlunderI18N) return window.WhyBlunderI18N;
+        if (typeof global !== 'undefined' && global.WhyBlunderI18N) return global.WhyBlunderI18N;
+        try { return require('./i18n.js'); } catch (e) { return null; }
+    }
+
+    /**
+     * User-facing error text with VI override. Reads the global language so
+     * the analysis toggle applies without threading options through workers.
+     */
+    function errText(key, enDefault, params) {
+        try {
+            const I18N = getI18n();
+            if (I18N && typeof I18N.t === 'function') return I18N.t(key, enDefault, params);
+        } catch (e) { /* fall through to English */ }
+        return enDefault;
+    }
+
     class StockfishWorker {
         constructor(id = 0) {
             this.id = id;
@@ -127,7 +146,7 @@
 
         evaluate(fen, depth = 10, multipv = 3) {
             if (!this.isReady || !this.worker) {
-                return Promise.reject(new Error('Worker not initialized'));
+                return Promise.reject(new Error(errText('error.workerInit', 'Worker not initialized')));
             }
 
             // Immediate terminal check to prevent 20s worker timeout on positions with 0 legal moves
@@ -188,7 +207,7 @@
                 this.currentResolve = null;
                 this.currentReject = null;
                 this.currentEvalData = null;
-                reject(new Error('Evaluation stopped'));
+                reject(new Error(errText('error.evalStopped', 'Evaluation stopped')));
             }
             this.isBusy = false;
         }
@@ -400,7 +419,7 @@
                 return {
                     game_info: {},
                     moves: [],
-                    errors: ["Could not parse game from PGN input"]
+                    errors: [errText('error.parsePgn', 'Could not parse game from PGN input')]
                 };
             }
 
@@ -459,7 +478,7 @@
             // Initialize worker pool in parallel
             await this.pool.init();
             if (this.isCancelled) {
-                analysisData.errors.push("Analysis cancelled by user");
+                analysisData.errors.push(errText('error.cancelled', 'Analysis cancelled by user'));
                 return analysisData;
             }
 
@@ -717,7 +736,7 @@
             const moveResults = await Promise.all(plyPromises);
 
             if (this.isCancelled) {
-                analysisData.errors.push("Analysis cancelled by user");
+                analysisData.errors.push(errText('error.cancelled', 'Analysis cancelled by user'));
                 return analysisData;
             }
 

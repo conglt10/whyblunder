@@ -41,6 +41,111 @@
         }
     }
 
+    function getI18n() {
+        if (typeof WhyBlunderI18N !== 'undefined') return WhyBlunderI18N;
+        if (typeof window !== 'undefined' && window.WhyBlunderI18N) return window.WhyBlunderI18N;
+        if (typeof global !== 'undefined' && global.WhyBlunderI18N) return global.WhyBlunderI18N;
+        try { return require('./i18n.js'); } catch (e) { return null; }
+    }
+
+    function resolveLang(explicit) {
+        if (explicit === 'vi' || explicit === 'en') return explicit;
+        const I18N = getI18n();
+        if (I18N && typeof I18N.getLang === 'function') {
+            const g = I18N.getLang();
+            if (g === 'vi' || g === 'en') return g;
+        }
+        return 'en';
+    }
+
+    /**
+     * Localize a template: VI sentence when lang is 'vi' (chess terms and
+     * fragments stay in English by design), otherwise the English default.
+     * Deterministic — pure function of its inputs.
+     */
+    function tx(lang, key, enDefault, params) {
+        const I18N = getI18n();
+        if (I18N && typeof I18N.t === 'function') {
+            return I18N.t(key, enDefault, params, lang);
+        }
+        if (typeof enDefault === 'string' && params) {
+            return enDefault.replace(/\{(\w+)\}/g, function(m, n) {
+                return (params[n] !== undefined && params[n] !== null) ? String(params[n]) : m;
+            });
+        }
+        return enDefault;
+    }
+
+    function oppNameFor(color, lang) {
+        const en = (color === 'w' ? 'Black' : 'White');
+        if (lang !== 'vi') return en;
+        return tx(lang, color === 'w' ? 'diag.oppBlack' : 'diag.oppWhite', en);
+    }
+
+    /**
+     * Vietnamese composition for blunder/mistake narratives. Mirrors the
+     * English STAGE 3 branch structure exactly (same conditions, same order)
+     * so classification behavior is identical; only connective prose is
+     * Vietnamese while SAN moves, squares and tactical fragments stay English.
+     */
+    function composeViBlunderExplanation(parts) {
+        const sanPlayed = parts.sanPlayed;
+        const sanBest = parts.sanBest;
+        const missedChance = parts.missedChance;
+        const bestReason = parts.bestReason;
+        const cleanRefEffect = parts.cleanRefEffect;
+        const blunderReason = parts.blunderReason;
+        const tags = parts.tags || [];
+        const openingPrincipleViolation = parts.openingPrincipleViolation;
+        const oppName = parts.oppName;
+        const effect = (cleanRefEffect || 'hands over the initiative')
+            .replace(/^allows\s+/, 'allowing ');
+
+        function has(tag) { return tags.indexOf(tag) !== -1; }
+
+        // Mirror the English STAGE 3 order exactly: missed-tactic first.
+        if (parts.isMissedTactic) {
+            if (has('Missed Mate')) {
+                if (parts.isStalemate) {
+                    return tx('vi', 'diag.missMateStalemate',
+                        sanPlayed + ' misses checkmate! ...',
+                        { played: sanPlayed, best: sanBest });
+                }
+                return tx('vi', 'diag.missMate',
+                    sanPlayed + ' misses checkmate! ...',
+                    { played: sanPlayed, best: sanBest, opp: oppName });
+            }
+            const missExtra = missedChance
+                ? tx('vi', 'diag.missTacticExtra', ' and ' + missedChance, { chance: missedChance })
+                : '';
+            return tx('vi', 'diag.missTactic', '',
+                { played: sanPlayed, extra: missExtra, best: sanBest, reason: bestReason, effect: effect });
+        }
+        if (blunderReason) {
+            if (cleanRefEffect) {
+                return tx('vi', 'diag.blunderEffect', '',
+                    { played: sanPlayed, reason: blunderReason, effect: effect, best: sanBest, bestReason: bestReason });
+            }
+            return tx('vi', 'diag.blunderPlain', '',
+                { played: sanPlayed, reason: blunderReason, best: sanBest, bestReason: bestReason });
+        }
+        if (has('Tactical Fork') || has('Pin') || has('Skewer') || has('Hanging Piece') ||
+            has('Checkmate') || has('Tactical Blunder') || has('Losing Material')) {
+            return tx('vi', 'diag.tacticTrouble', '',
+                { played: sanPlayed, effect: effect, best: sanBest, bestReason: bestReason });
+        }
+        if (openingPrincipleViolation) {
+            return tx('vi', 'diag.openingViol', '',
+                { played: sanPlayed, viol: openingPrincipleViolation, best: sanBest, bestReason: bestReason });
+        }
+        if (has('Center Control')) {
+            return tx('vi', 'diag.passive', '',
+                { played: sanPlayed, effect: effect, best: sanBest, bestReason: bestReason });
+        }
+        return tx('vi', 'diag.generic', '',
+            { played: sanPlayed, effect: effect, best: sanBest, bestReason: bestReason });
+    }
+
     function squareToFile(sq) {
         return sq.charCodeAt(0) - 97; // 0..7
     }
@@ -1799,12 +1904,15 @@
             isSacrifice = false,
             depthDial = null,
             personaId = null,
-            playerElo = null
+            playerElo = null,
+            lang: explicitLang = null
         } = options;
+
+        const lang = resolveLang(explicitLang);
 
         const color = boardBefore.turn();
         const oppColor = (color === 'w' ? 'b' : 'w');
-        const oppName = (color === 'w' ? 'Black' : 'White');
+        const oppName = (lang === 'vi') ? oppNameFor(color, lang) : (color === 'w' ? 'Black' : 'White');
 
         const ChessCtor = getChessConstructor();
 
@@ -2548,7 +2656,9 @@
         let refutationEffect = refCandidate ? refCandidate.refutationEffect : (isMissedTactic ? 'hands over the initiative' : (primaryFlaw?.refutationEffect || null));
         let flaw = primaryFlaw ? (primaryFlaw.flawText || primaryFlaw.blunderReason || refutationEffect) : null;
         if (!flaw) {
-            flaw = `concedes the advantage to ${oppName}`;
+            flaw = (lang === 'vi')
+                ? tx(lang, 'diag.flawFallback', `concedes the advantage to ${oppName}`, { opp: oppName })
+                : `concedes the advantage to ${oppName}`;
         }
 
         // Clean up redundant "allows allows" phrasing
@@ -2590,12 +2700,36 @@
             explanation = `${sanPlayed} ${cleanRefEffect || ('concedes the advantage to ' + oppName)}. ${sanBest} was better because it ${bestReason}.`;
         }
 
+        // Vietnamese composition: same branch order, Vietnamese connective
+        // prose, English chess terms/fragments. Deterministic (pure).
+        if (lang === 'vi') {
+            let isStalemate = false;
+            try {
+                isStalemate = Boolean(boardAfter.in_stalemate && boardAfter.in_stalemate());
+            } catch (e) { isStalemate = false; }
+            explanation = composeViBlunderExplanation({
+                sanPlayed,
+                sanBest,
+                isMissedTactic,
+                missedChance,
+                bestReason,
+                cleanRefEffect,
+                blunderReason,
+                tags,
+                openingPrincipleViolation,
+                oppName,
+                isStalemate
+            });
+        }
+
         // Persona-scaled explanation tuning
         if (depthDial === 'concise' || personaId === 'mcmarty' || (playerElo !== null && playerElo <= 900)) {
             const firstSentence = explanation.split('. ')[0];
             explanation = firstSentence.endsWith('.') ? firstSentence : firstSentence + '.';
         } else if ((depthDial === 'deep' || personaId === 'mangoose' || (playerElo !== null && playerElo >= 2000)) && bestPvFormatted && !explanation.includes(bestPvFormatted)) {
-            explanation = `${explanation} Better continuation: ${bestPvFormatted}`;
+            explanation = (lang === 'vi')
+                ? `${explanation} ${tx(lang, 'diag.betterCont', `Better continuation: ${bestPvFormatted}`, { pv: bestPvFormatted })}`
+                : `${explanation} Better continuation: ${bestPvFormatted}`;
         }
 
         return {
@@ -2623,6 +2757,7 @@
         const detailedQuality = options.detailedQuality || null;
         const isOnlyMove = Boolean(options.isOnlyMove);
         const isSacrifice = Boolean(options.isSacrifice);
+        const lang = resolveLang(options.lang);
 
         const color = boardBefore.turn();
         const tags = [];
@@ -2631,7 +2766,9 @@
         if (boardAfter.in_checkmate && boardAfter.in_checkmate()) {
             tags.push('Checkmate');
             return {
-                explanation: `Checkmate! ${san} delivers mate and finishes the game.`,
+                explanation: tx(lang, 'diag.checkmate',
+                    `Checkmate! ${san} delivers mate and finishes the game.`,
+                    { san }),
                 tags,
                 flaw: null,
                 missedChance: null,
@@ -2771,24 +2908,31 @@
             }
         }
 
-        let prefix = isBest ? 'Best move! ' : 'Strong move. ';
+        let prefix = isBest
+            ? tx(lang, 'diag.prefixBest', 'Best move! ')
+            : tx(lang, 'diag.prefixStrong', 'Strong move. ');
         if (detailedQuality === 'brilliant' || isSacrifice) {
-            prefix = 'Brilliant move! ';
+            prefix = tx(lang, 'diag.prefixBrilliant', 'Brilliant move! ');
         } else if (detailedQuality === 'great' || isOnlyMove) {
-            prefix = 'Great move! ';
+            prefix = tx(lang, 'diag.prefixGreat', 'Great move! ');
         }
 
         const reasonsDedup = Array.from(new Set(reasons));
         const depthDial = options.depthDial || null;
         const personaId = options.personaId || null;
         const playerElo = options.playerElo || null;
+        const joiner = (lang === 'vi') ? tx(lang, 'diag.goodJoin', ', and ') : ', and ';
 
         let explanationText = (reasonsDedup.length > 0)
-            ? `${prefix}${san} ${reasonsDedup.join(', and ')}.`
-            : `${prefix}${san} maintains a solid position and harmonious coordination.`;
+            ? `${prefix}${san} ${reasonsDedup.join(joiner)}.`
+            : tx(lang, 'diag.goodMaintain',
+                `${prefix}${san} maintains a solid position and harmonious coordination.`,
+                { prefix, san });
 
         if ((depthDial === 'deep' || personaId === 'mangoose' || (playerElo !== null && playerElo >= 2000)) && options.bestPvFormatted && !explanationText.includes(options.bestPvFormatted)) {
-            explanationText = `${explanationText} Strongest line: ${options.bestPvFormatted}`;
+            explanationText = (lang === 'vi')
+                ? `${explanationText} ${tx(lang, 'diag.strongestLine', `Strongest line: ${options.bestPvFormatted}`, { pv: options.bestPvFormatted })}`
+                : `${explanationText} Strongest line: ${options.bestPvFormatted}`;
         }
 
         return {
@@ -2796,7 +2940,9 @@
             tags: Array.from(new Set(tags)),
             flaw: null,
             missedChance: null,
-            betterLine: reasonsDedup.length > 0 ? reasonsDedup.join(', and ') : 'maintains solid piece coordination'
+            betterLine: reasonsDedup.length > 0
+                ? reasonsDedup.join(joiner)
+                : tx(lang, 'diag.maintainCoord', 'maintains solid piece coordination')
         };
     }
 

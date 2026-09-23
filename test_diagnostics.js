@@ -1464,3 +1464,49 @@ if (failed > 0) {
     process.exit(1);
 }
 console.log('MOVE DIAGNOSTICS CORPUS OK (known failures are expected until the plan lands). 🎉');
+
+// ---------------------------------------------------------------------------
+// Bilingual EN/VI parity: same verdict + tags, localized connective prose,
+// English chess terms (incl. played SAN) preserved in VI output.
+// ---------------------------------------------------------------------------
+console.log('');
+console.log('Running bilingual EN/VI parity checks...');
+const WhyBlunderI18N = require('./js/i18n.js');
+assert.deepStrictEqual(WhyBlunderI18N.SUPPORTED, ['en', 'vi']);
+
+function diagnoseWithLang(fx, lang) {
+    return MoveDiagnostics.diagnose({
+        fenBefore: fx.fenBefore,
+        playedMove: fx.playedUci,
+        engine: fx.engine,
+        context: {
+            ply: fx.ply,
+            sanHistory: fx.sanHistory || [],
+            phase: fx.phase,
+            lang
+        }
+    });
+}
+
+for (const name of ['hanging-knight-Ng5', 'missed-mate-back-rank-Rb1', 'quiet-castle-kingside']) {
+    const fx = FIXTURES.find(f => f.name === name);
+    assert(fx, `parity fixture "${name}" must exist in FIXTURES`);
+    const en = diagnoseWithLang(fx, 'en');
+    const vi = diagnoseWithLang(fx, 'vi');
+    assert.strictEqual(vi.lang, 'vi', `${name}: result must carry lang 'vi'`);
+    assert.strictEqual(vi.classification.uiQuality, en.classification.uiQuality,
+        `${name}: uiQuality must be language-independent`);
+    assert.strictEqual(vi.classification.detailedQuality, en.classification.detailedQuality,
+        `${name}: detailedQuality must be language-independent`);
+    assert.deepStrictEqual([...vi.tags].sort(), [...en.tags].sort(),
+        `${name}: tags must stay English and identical`);
+    assert(vi.explanation && vi.explanation.trim().length > 0, `${name}: VI explanation must be non-empty`);
+    assert.notStrictEqual(vi.explanation, en.explanation, `${name}: VI prose must differ from EN`);
+    for (const bad of ['undefined', 'null', '[object Object]', 'NaN']) {
+        assert(!vi.explanation.includes(bad), `${name}: VI explanation leaks "${bad}"`);
+    }
+    assert(vi.explanation.includes(en.sanPlayed),
+        `${name}: VI explanation must preserve played SAN "${en.sanPlayed}"`);
+    console.log(`✓ bilingual parity ${name} (${vi.classification.detailedQuality})`);
+}
+console.log('BILINGUAL PARITY OK. 🎉');

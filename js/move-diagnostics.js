@@ -49,6 +49,23 @@
         try { return require('./situation-recognizer.js'); } catch (e) { return null; }
     }
 
+    function getI18n() {
+        if (typeof WhyBlunderI18N !== 'undefined') return WhyBlunderI18N;
+        if (typeof window !== 'undefined' && window.WhyBlunderI18N) return window.WhyBlunderI18N;
+        if (typeof global !== 'undefined' && global.WhyBlunderI18N) return global.WhyBlunderI18N;
+        try { return require('./i18n.js'); } catch (e) { return null; }
+    }
+
+    function resolveLang(explicit) {
+        if (explicit === 'vi' || explicit === 'en') return explicit;
+        const I18N = getI18n();
+        if (I18N && typeof I18N.getLang === 'function') {
+            const g = I18N.getLang();
+            if (g === 'vi' || g === 'en') return g;
+        }
+        return 'en';
+    }
+
     function uciToSan(chessInstance, uciMove) {
         if (!uciMove || typeof uciMove !== 'string' || uciMove.length < 4) return '';
         const from = uciMove.substring(0, 2);
@@ -180,7 +197,8 @@
             fenAfter: passedFenAfter,
             playedMove,
             engine = {},
-            context = {}
+            context = {},
+            lang: explicitLang
         } = params;
 
         if (!fenBefore || !ChessCtor) {
@@ -315,6 +333,7 @@
         const ply = context.ply || (parseInt(fenBefore.split(' ')[5], 10) * 2 - (boardBefore.turn() === 'w' ? 1 : 0)) || 1;
         const sanHistory = context.sanHistory || [];
         const phase = context.phase || (Evaluator && Evaluator.gamePhase ? Evaluator.gamePhase(fenBefore) : 'middlegame');
+        const lang = resolveLang(explicitLang !== undefined ? explicitLang : context.lang);
 
         const isBook = (Detector && Detector.isBookMove) ? Detector.isBookMove(sanHistory, ply, fenAfter) : false;
 
@@ -424,7 +443,8 @@
                     isSacrifice,
                     personaId: context.personaId,
                     playerElo: context.playerElo,
-                    depthDial: context.depthDial
+                    depthDial: context.depthDial,
+                    lang
                 });
 
                 explanation = res.explanation;
@@ -454,7 +474,8 @@
                     ply,
                     personaId: context.personaId,
                     playerElo: context.playerElo,
-                    depthDial: context.depthDial
+                    depthDial: context.depthDial,
+                    lang
                 });
 
                 explanation = res.explanation;
@@ -505,7 +526,8 @@
             phase,
             sharpness,
             sacrificedPiece: offeredObj ? offeredObj.piece : undefined,
-            sacrificeSquare: offeredObj ? offeredObj.square : undefined
+            sacrificeSquare: offeredObj ? offeredObj.square : undefined,
+            lang
         };
     }
 
