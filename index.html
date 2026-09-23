@@ -7,10 +7,10 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="img/app-icon.svg">
     
-    <!-- Clean Unified Fonts: Inter & JetBrains Mono -->
+    <!-- Clean Unified Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -290,28 +290,33 @@
             margin: 4px 0;
         }
 
-        /* Collapsible PGN Drawer */
+        /* Import Game Modal */
         .pgn-drawer {
-            background: var(--lic-bg-surface-header);
-            border-bottom: none;
-            box-shadow: none;
-            max-height: 0;
-            overflow: hidden;
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
             visibility: hidden;
             pointer-events: none;
-            transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
         }
         .pgn-drawer.open {
-            max-height: 480px;
+            opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            border-bottom: 1px solid var(--lic-border-subtle);
         }
         /* Import Source Tabs */
         .import-tabs-group {
             background: var(--lic-bg-surface);
             border: 1px solid var(--lic-border);
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 2px;
             display: inline-flex;
             gap: 2px;
@@ -320,10 +325,10 @@
             background: transparent;
             color: var(--lic-text-secondary);
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             font-size: var(--lic-fs-base);
             font-weight: 600;
-            padding: 4px 12px;
+            padding: 6px 14px;
             cursor: pointer;
             transition: all 0.12s ease;
             display: inline-flex;
@@ -338,12 +343,49 @@
             background: var(--lic-blue);
         }
         .pgn-drawer-inner {
-            max-width: 1680px;
-            margin: 0 auto;
-            padding: 14px 1.25rem;
+            max-width: 620px;
+            width: 100%;
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
+            margin: auto;
+            padding: 22px 24px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
+            transform: scale(0.96) translateY(-8px);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pgn-drawer.open .pgn-drawer-inner {
+            transform: scale(1) translateY(0);
+        }
+        .import-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--lic-border-subtle);
+        }
+        .import-modal-icon-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: rgba(54, 146, 231, 0.15);
+            color: var(--lic-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .import-modal-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--lic-text-bright);
+            margin: 0;
         }
 
         .pgn-textarea {
@@ -473,47 +515,6 @@
             opacity: 0.4;
         }
 
-        .diagnosis-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--lic-border-subtle);
-        }
-
-        .move-title-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .player-badge {
-            font-size: var(--lic-fs-sm);
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 3px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        .player-badge.white {
-            background: #f0f0f0;
-            color: #161512;
-        }
-        .player-badge.black {
-            background: #141311;
-            color: #bababa;
-            border: 1px solid var(--lic-border-subtle);
-        }
-
-        .move-san {
-            font-family: monospace;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            color: var(--lic-text-bright);
-        }
 
         .badge-q {
             font-size: var(--lic-fs-sm);
@@ -597,83 +598,6 @@
             border-color: rgba(59, 130, 246, 0.3);
         }
 
-        /* Better Move Callout */
-        .better-move-strip {
-            background: var(--lic-green-dim);
-            border: 1px solid rgba(98, 153, 36, 0.3);
-            border-radius: 4px;
-            padding: 9px 12px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px 8px;
-            line-height: 1.4;
-        }
-        .badge-better {
-            background: var(--lic-green);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* Threats Alert Box */
-        .threat-alert-box {
-            background: var(--lic-red-dim);
-            border: 1px solid rgba(204, 51, 51, 0.3);
-            border-radius: 4px;
-            padding: 9px 12px;
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-        .threat-alert-box.opponent-threat {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .threat-item {
-            font-size: var(--lic-fs-sm);
-            background: rgba(204, 51, 51, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(204, 51, 51, 0.3);
-            padding: 2px 8px;
-            border-radius: 3px;
-            display: inline-flex;
-            align-items: center;
-            word-break: break-word;
-            max-width: 100%;
-        }
-        .threat-refutation-badge {
-            background: var(--lic-red);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* Diagnosis Text */
-        .diagnosis-text {
-            font-size: var(--lic-fs-base);
-            line-height: 1.6;
-            color: var(--lic-text-primary);
-            margin-bottom: 12px;
-            padding: 11px 14px;
-            background: var(--lic-bg-surface-subtle);
-            border-radius: 5px;
-            border: 1px solid var(--lic-border-subtle);
-        }
         .diag-missed-banner {
             display: flex;
             align-items: flex-start;
@@ -726,7 +650,7 @@
             word-break: break-word;
         }
 
-        /* Variation Boxes */
+        /* Variation Boxes (variation outcome screen) */
         .variation-box {
             background: var(--lic-bg-surface-subtle);
             border: 1px solid var(--lic-border-subtle);
@@ -1079,6 +1003,7 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
             border: none;
             letter-spacing: -0.05em;
+            background-color: #df4444;
         }
         .annotation-blunder::before {
             background-color: #df4444;
@@ -1101,6 +1026,29 @@
         .annotation-best::before {
             background-color: #3b82f6;
             color: #ffffff;
+        }
+        .annotation-miss::before,
+        .annotation-missed-win::before {
+            background-color: #ff7769;
+            color: #ffffff;
+        }
+        .annotation-book::before {
+            background-color: var(--q-book, #926f4e);
+            color: #ffffff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='%23ffffff'%3E%3Cpath d='M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
+        .annotation-excellent::before {
+            background-color: var(--q-excellent, #5d8f2c);
+            color: #ffffff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='%23ffffff'%3E%3Cpath d='M36 345L85 345L86 346L93 347L103 352L110 358L118 370L120 376L120 380L121 381L121 753L120 754L119 762L114 772L109 778L103 783L95 787L89 789L85 789L84 790L37 790L36 789L28 788L18 783L12 778L7 772L2 762L1 755L0 754L0 381L1 380L2 373L7 363L11 358L18 352L28 347L35 346L36 345Z M345 9L414 9L415 10L422 11L437 20L443 27L459 59L464 74L466 77L467 83L472 97L472 100L476 113L476 117L477 118L478 132L479 133L479 171L478 172L477 190L476 191L474 209L473 210L473 214L472 215L472 219L470 225L470 230L468 235L468 239L467 240L464 258L461 267L461 271L458 280L458 284L459 285L764 285L774 288L785 295L792 303L796 310L798 316L798 320L799 321L799 499L798 500L798 556L797 557L796 566L792 578L788 586L786 588L784 593L779 600L777 605L772 612L770 617L765 624L763 629L741 665L739 670L734 677L732 682L727 689L725 694L720 701L718 706L713 713L711 718L706 725L704 730L699 737L697 742L689 754L681 769L674 778L666 784L660 787L653 788L652 789L315 789L314 790L244 790L243 789L234 789L233 788L227 788L223 786L220 786L200 777L185 765L179 757L176 751L176 748L174 744L174 359L176 352L181 343L197 325L212 306L214 302L225 288L253 245L271 215L285 188L287 186L308 144L308 130L309 129L309 43L310 42L310 39L315 28L323 19L334 12L340 10L344 10L345 9Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
         }
 
         /* King Checkmate Badges (Winner ⭑ & Loser ×) */
@@ -2172,14 +2120,6 @@
             }
 
             /* Mobile diagnostic content density */
-            .diagnosis-header {
-                padding-bottom: 4px;
-                margin-bottom: 3px;
-                gap: 4px;
-            }
-            .move-title-wrap {
-                gap: 6px;
-            }
             .move-san {
                 font-size: 1.05rem;
             }
@@ -2199,29 +2139,16 @@
                 font-size: 0.65rem;
                 padding: 1px 5px;
             }
-            .better-move-strip {
-                padding: 4px 8px;
-                margin-bottom: 3px;
-                font-size: 0.75rem;
+            .diag-meta {
+                margin-bottom: 6px;
+                gap: 4px 8px;
             }
-            .threat-alert-box {
-                padding: 4px 8px;
-                margin-bottom: 3px;
-                font-size: 0.72rem;
-            }
-            .diagnosis-text {
+            .diag-lines {
                 padding: 6px 8px;
-                margin-bottom: 3px;
-                font-size: 0.78rem;
-                line-height: 1.4;
+                margin-bottom: 6px;
             }
-            .variation-box {
-                padding: 6px 8px;
-                margin-top: 3px;
-            }
-            .variation-box .lic-btn {
-                padding: 3px 8px;
-                font-size: 0.75rem;
+            .diag-line-row {
+                padding: 4px 6px;
             }
 
             /* 3. HIDE DESKTOP MOVE COLUMN */
@@ -2229,24 +2156,28 @@
                 display: none !important;
             }
 
-            /* Mobile PGN drawer overlay */
+            /* Mobile PGN Import Modal */
             .pgn-drawer {
                 position: fixed;
-                top: 42px;
-                left: 0;
-                right: 0;
-                z-index: 1050;
-                box-shadow: none;
-                border-bottom: none;
+                inset: 0;
+                top: 0 !important;
+                z-index: 1100;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
-            body.mobile-header-hidden .pgn-drawer {
-                top: 0;
+            .pgn-drawer-inner {
+                max-width: 100%;
+                max-height: calc(100dvh - 24px);
+                padding: 16px;
+                gap: 12px;
             }
             .pgn-drawer.open {
-                max-height: calc(100dvh - 50px);
-                overflow-y: auto;
-                border-bottom: 1px solid var(--lic-border-subtle);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+                max-height: none;
+                overflow-y: visible;
+                border-bottom: none;
+                box-shadow: none;
             }
 
             .variation-under-board {
@@ -2842,7 +2773,7 @@
             padding: 3px 6px;
             border-radius: 4px;
             font-size: var(--lic-fs-base);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: monospace;
         }
         .coach-move-row:hover {
             background: var(--lic-bg-surface-hover);
@@ -3299,7 +3230,7 @@
                 overflow: hidden;
             }
             .notation-322f9 {
-                font-family: 'JetBrains Mono', monospace;
+                font-family: monospace;
                 font-size: clamp(8px, 2.4vw, 11px);
                 font-weight: 700;
                 opacity: 0.78;
@@ -3360,7 +3291,7 @@
                 border: 1px solid var(--lic-border);
                 color: var(--lic-text-bright);
                 z-index: 2;
-                font-family: 'JetBrains Mono', monospace;
+                font-family: monospace;
                 font-weight: 600;
             }
             .mobile-eval-pill[data-side="white"] { color: #e8e6e3; }
@@ -3387,7 +3318,7 @@
                 display: none !important;
             }
             .player-elo-chip {
-                font-family: 'JetBrains Mono', monospace;
+                font-family: monospace;
                 font-size: var(--m-fs-chip);
                 padding: 1px 6px;
                 border-radius: 4px;
@@ -3680,11 +3611,6 @@
 
         /* --- Density & Type Scale (< 600px) --- */
         @media (max-width: 599.98px) {
-            .diagnosis-text {
-                font-size: var(--m-fs-body);
-                line-height: 1.5;
-                padding: 10px 12px;
-            }
             .move-san {
                 font-size: 1.125rem;
             }
@@ -3698,14 +3624,6 @@
                 min-height: 24px;
                 display: inline-flex;
                 align-items: center;
-            }
-            .better-move-strip, .threat-alert-box {
-                font-size: var(--m-fs-ui);
-                padding: 8px 10px;
-            }
-            .variation-box .lic-btn {
-                min-height: var(--m-tap);
-                font-size: var(--m-fs-ui);
             }
             .ticker-nav-btn {
                 width: var(--m-tap);
@@ -3807,9 +3725,1306 @@
         }
 
         /* ===== MOBILE REVAMP v2 — END ===== */
+
+        /* ===== CHESS.COM THEME (data-theme="cc") — START ===== */
+        :root {
+            --cc-cta: #81b64c;
+            --cc-cta-hover: #95c65f;
+            --cc-cta-shadow: #45753c;
+            --cc-radius: 8px;
+            --cc-sidebar-w: 72px;
+            --cc-panel-w: 440px;
+        }
+
+        /* --- Tokens: remap the Lichess tokens so legacy selectors pick up the new look --- */
+        body[data-theme="cc"] {
+            --lic-bg-canvas: #312e2b;
+            --lic-bg-surface: #262522;
+            --lic-bg-surface-header: #21201d;
+            --lic-bg-surface-subtle: #2b2926;
+            --lic-bg-surface-hover: #3c3a37;
+            --lic-bg-input: #1f1e1b;
+            --lic-border-subtle: #2b2926;
+            --lic-border: #3c3a37;
+            --lic-border-strong: #4b4847;
+            --lic-text-primary: #dfdedc;
+            --lic-text-bright: #ffffff;
+            --lic-text-secondary: #a7a6a2;
+            --lic-text-muted: #7c7a77;
+            --lic-blue: #81b64c;
+            --lic-blue-hover: #95c65f;
+            --lic-blue-dim: rgba(129, 182, 76, 0.14);
+            --lic-green: #81b64c;
+            --lic-green-hover: #95c65f;
+            --lic-green-dim: rgba(129, 182, 76, 0.14);
+            --lic-active-move: #484644;
+            --lic-fs-base: 0.875rem;
+
+            --q-brilliant: #26c2a3;
+            --q-great: #749bbf;
+            --q-best: #81b64c;
+            --q-excellent: #96bc4b;
+            --q-good: #95b776;
+            --q-book: #a88865;
+            --q-inaccuracy: #f7c631;
+            --q-mistake: #ffa459;
+            --q-miss: #ff7769;
+            --q-blunder: #fa412d;
+        }
+        body[data-theme="cc"] .cc-hide-when-cc { display: none !important; }
+        body:not([data-theme="cc"]) .cc-cta-label,
+        body:not([data-theme="cc"]) .cc-eval-graph-strip,
+        body:not([data-theme="cc"]) #mobileBtnReviewSummary {
+            display: none !important;
+        }
+
+        /* --- Board themes (independent of UI theme) --- */
+        body[data-board-theme="green"] .white-1e1d7 { background-color: #ebecd0; color: #779556; }
+        body[data-board-theme="green"] .black-3c85d { background-color: #779556; color: #ebecd0; }
+        body[data-board-theme="blue"]  .white-1e1d7 { background-color: #eae9d2; color: #4b7399; }
+        body[data-board-theme="blue"]  .black-3c85d { background-color: #4b7399; color: #eae9d2; }
+        body[data-board-theme="brown"] .white-1e1d7 { background-color: #f0d9b5; color: #b58863; }
+        body[data-board-theme="brown"] .black-3c85d { background-color: #b58863; color: #f0d9b5; }
+        body[data-board-theme="green"] .white-1e1d7.square-highlight-from,
+        body[data-board-theme="green"] .white-1e1d7.square-highlight-to,
+        body[data-board-theme="blue"] .white-1e1d7.square-highlight-from,
+        body[data-board-theme="blue"] .white-1e1d7.square-highlight-to {
+            box-shadow: inset 0 0 0 100px rgba(245, 246, 130, 0.85) !important;
+        }
+        body[data-board-theme="green"] .black-3c85d.square-highlight-from,
+        body[data-board-theme="green"] .black-3c85d.square-highlight-to,
+        body[data-board-theme="blue"] .black-3c85d.square-highlight-from,
+        body[data-board-theme="blue"] .black-3c85d.square-highlight-to {
+            box-shadow: inset 0 0 0 100px rgba(185, 202, 67, 0.9) !important;
+        }
+        body[data-theme="cc"] .notation-322f9 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: inherit;
+        }
+        body[data-theme="cc"] .board-wrapper {
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* --- Buttons --- */
+        .cc-btn-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--cc-radius);
+            background: var(--cc-cta);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 800;
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 0 var(--cc-cta-shadow);
+            cursor: pointer;
+            transition: background 0.12s, transform 0.06s, box-shadow 0.06s;
+        }
+        .cc-btn-cta:hover { background: var(--cc-cta-hover); }
+        .cc-btn-cta:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--cc-cta-shadow); }
+        .cc-btn-cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+        body[data-theme="cc"] .lic-btn { border-radius: 6px; }
+        body[data-theme="cc"] .lic-btn-primary,
+        body[data-theme="cc"] .lic-btn-success {
+            background: var(--cc-cta);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 3px 0 var(--cc-cta-shadow);
+        }
+        body[data-theme="cc"] .lic-btn-primary:hover,
+        body[data-theme="cc"] .lic-btn-success:hover {
+            background: var(--cc-cta-hover);
+            color: #fff;
+        }
+        body[data-theme="cc"] .lic-btn-primary:active,
+        body[data-theme="cc"] .lic-btn-success:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 var(--cc-cta-shadow);
+        }
+        body[data-theme="cc"] .btn-coach-hint {
+            background: var(--cc-cta) !important;
+            color: #fff !important;
+            border: none !important;
+            box-shadow: 0 4px 0 var(--cc-cta-shadow);
+        }
+
+        /* --- Classification icons --- */
+        .cc-q-icon {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+            border-radius: 50%;
+            background: var(--q-good);
+            color: #fff;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.04em;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            vertical-align: middle;
+            border: none;
+        }
+        .cc-q-icon.q-brilliant  { background: var(--q-brilliant); letter-spacing: -0.05em; }
+        .cc-q-icon.q-great      { background: var(--q-great); }
+        .cc-q-icon.q-best       { background: var(--q-best); font-size: 9px; }
+        .cc-q-icon.q-excellent  { background: var(--q-excellent); font-size: 9px; }
+        .cc-q-icon.q-good       { background: var(--q-good); font-size: 9px; }
+        .cc-q-icon.q-book       { background: var(--q-book); font-size: 9px; }
+        .cc-q-icon.q-inaccuracy { background: var(--q-inaccuracy); letter-spacing: -0.05em; }
+        .cc-q-icon.q-mistake    { background: var(--q-mistake); }
+        .cc-q-icon.q-miss       { background: var(--q-miss); font-size: 9px; }
+        .cc-q-icon.q-blunder    { background: var(--q-blunder); letter-spacing: -0.05em; }
+        .cc-q-icon svg {
+            display: inline-block;
+            vertical-align: middle;
+            width: 10px;
+            height: 10px;
+            fill: currentColor;
+        }
+
+        /* Board badge on the destination square, scaled to the board via container units */
+        body[data-theme="cc"] .board-container { container-type: inline-size; }
+        body[data-theme="cc"] .square-annotation::before {
+            top: -1.6cqw;
+            right: -1.6cqw;
+            width: 5.4cqw;
+            height: 5.4cqw;
+            font-size: 2.6cqw;
+            font-weight: 900;
+            border: none;
+            background-color: var(--q-miss);
+            box-shadow: 0 0.4cqw 1.2cqw rgba(0, 0, 0, 0.5);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-align: center;
+        }
+        body[data-theme="cc"] .annotation-brilliant::before  { background-color: var(--q-brilliant); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        body[data-theme="cc"] .annotation-great::before      { background-color: var(--q-great); color: #fff; font-size: 2.7cqw; }
+        body[data-theme="cc"] .annotation-best::before       { background-color: var(--q-best); color: #fff; font-size: 2.3cqw; }
+        body[data-theme="cc"] .annotation-excellent::before  {
+            background-color: var(--q-excellent);
+            color: #fff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='%23ffffff'%3E%3Cpath d='M36 345L85 345L86 346L93 347L103 352L110 358L118 370L120 376L120 380L121 381L121 753L120 754L119 762L114 772L109 778L103 783L95 787L89 789L85 789L84 790L37 790L36 789L28 788L18 783L12 778L7 772L2 762L1 755L0 754L0 381L1 380L2 373L7 363L11 358L18 352L28 347L35 346L36 345Z M345 9L414 9L415 10L422 11L437 20L443 27L459 59L464 74L466 77L467 83L472 97L472 100L476 113L476 117L477 118L478 132L479 133L479 171L478 172L477 190L476 191L474 209L473 210L473 214L472 215L472 219L470 225L470 230L468 235L468 239L467 240L464 258L461 267L461 271L458 280L458 284L459 285L764 285L774 288L785 295L792 303L796 310L798 316L798 320L799 321L799 499L798 500L798 556L797 557L796 566L792 578L788 586L786 588L784 593L779 600L777 605L772 612L770 617L765 624L763 629L741 665L739 670L734 677L732 682L727 689L725 694L720 701L718 706L713 713L711 718L706 725L704 730L699 737L697 742L689 754L681 769L674 778L666 784L660 787L653 788L652 789L315 789L314 790L244 790L243 789L234 789L233 788L227 788L223 786L220 786L200 777L185 765L179 757L176 751L176 748L174 744L174 359L176 352L181 343L197 325L212 306L214 302L225 288L253 245L271 215L285 188L287 186L308 144L308 130L309 129L309 43L310 42L310 39L315 28L323 19L334 12L340 10L344 10L345 9Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
+        body[data-theme="cc"] .annotation-good::before,
+        body[data-theme="cc"] .annotation-good-move::before  { background-color: var(--q-good); color: #fff; font-size: 2.3cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-book::before       {
+            background-color: var(--q-book);
+            color: #fff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='%23ffffff'%3E%3Cpath d='M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
+        body[data-theme="cc"] .annotation-inaccuracy::before { background-color: var(--q-inaccuracy); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        body[data-theme="cc"] .annotation-mistake::before    { background-color: var(--q-mistake); color: #fff; font-size: 2.7cqw; }
+        body[data-theme="cc"] .annotation-miss::before,
+        body[data-theme="cc"] .annotation-missed-win::before { background-color: var(--q-miss); color: #fff; font-size: 2.5cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-blunder::before    { background-color: var(--q-blunder); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        .coach-color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+        .coach-color-dot.dot-white {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .coach-color-dot.dot-black {
+            background: #181715;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        body[data-theme="cc"] .board-wrapper { overflow: visible; }
+
+        /* --- Coach line (analysis mode "coach voice") --- */
+        .cc-coach-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .cc-coach-avatar {
+            flex: 0 0 auto;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #4b4847;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            line-height: 1;
+        }
+        .cc-coach-avatar svg {
+            width: 24px;
+            height: 24px;
+        }
+        .cc-coach-line.is-compact .cc-coach-avatar svg {
+            width: 18px;
+            height: 18px;
+        }
+        .cc-coach-bubble {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            background: #fff;
+            color: #312e2b;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.9375rem;
+            line-height: 1.45;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        .cc-coach-bubble::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 14px;
+            border-width: 7px 8px 7px 0;
+            border-style: solid;
+            border-color: transparent #fff transparent transparent;
+        }
+        .cc-coach-head {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2px 4px;
+            font-weight: 600;
+        }
+        .cc-coach-head b { font-weight: 800; }
+        .cc-coach-bubble.q-brilliant  .cc-coach-head b { color: #1a9e84; }
+        .cc-coach-bubble.q-great      .cc-coach-head b { color: #5c86ad; }
+        .cc-coach-bubble.q-best       .cc-coach-head b,
+        .cc-coach-bubble.q-excellent  .cc-coach-head b { color: #5d8f2c; }
+        .cc-coach-bubble.q-inaccuracy .cc-coach-head b { color: #c99a00; }
+        .cc-coach-bubble.q-mistake    .cc-coach-head b { color: #e07b1f; }
+        .cc-coach-bubble.q-miss       .cc-coach-head b,
+        .cc-coach-bubble.q-blunder    .cc-coach-head b { color: #d9331f; }
+        .cc-coach-bubble .cc-coach-detail { margin-top: 4px; color: #4b4847; }
+        .cc-coach-bubble .cc-coach-head + .cc-coach-detail { margin-top: 4px; }
+        .cc-coach-bubble > .cc-coach-detail:first-child { margin-top: 0; color: #312e2b; font-weight: 500; }
+        .cc-coach-best {
+            display: block;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #e6e4e1;
+            font-size: 0.8125rem;
+            color: #5d5b58;
+        }
+        .cc-coach-best b { color: #5d8f2c; }
+        .cc-coach-line.is-compact { margin: 0; gap: 8px; align-items: center; }
+        .cc-coach-line.is-compact .cc-coach-avatar { width: 34px; height: 34px; font-size: 20px; }
+        .cc-coach-line.is-compact .cc-coach-text {
+            min-width: 0;
+            font-size: var(--m-fs-ui);
+            line-height: 1.35;
+            color: var(--lic-text-bright);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+        }
+        .cc-coach-line.is-compact .cc-coach-detail { color: var(--lic-text-secondary); }
+        body[data-theme="cc"] .m-sheet-summary { white-space: normal; }
+        body[data-theme="cc"] .m-sheet[data-state="peek"] #mobileSheetSummary { display: block; }
+
+        /* --- Eval graph --- */
+        .cc-eval-graph {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .cc-graph-bg { fill: #403d39; }
+        .cc-graph-area { fill: #f1f1f1; }
+        .cc-graph-mid { stroke: #8b8987; stroke-width: 1; stroke-dasharray: 5 5; opacity: 0.6; }
+        .cc-graph-cursor { stroke: var(--cc-cta); stroke-width: 3; }
+        .cc-graph-dot { stroke: #fff; stroke-width: 2; }
+        .cc-graph-dot.q-brilliant { fill: var(--q-brilliant); }
+        .cc-graph-dot.q-great { fill: var(--q-great); }
+        .cc-graph-dot.q-miss { fill: var(--q-miss); }
+        .cc-graph-dot.q-mistake { fill: var(--q-mistake); }
+        .cc-graph-dot.q-blunder { fill: var(--q-blunder); }
+        .cc-eval-graph-strip {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--lic-border-subtle);
+            background: var(--lic-bg-surface);
+        }
+
+        /* --- Game Review summary --- */
+        .cc-review-summary[hidden] { display: none !important; }
+        .cc-review-summary {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: var(--lic-bg-surface);
+            border-radius: var(--cc-radius);
+            overflow: hidden;
+        }
+        .cc-review-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--lic-border);
+        }
+        .cc-review-title {
+            flex: 1;
+            margin: 0;
+            font-size: 1.0625rem;
+            font-weight: 800;
+            color: var(--lic-text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cc-review-title .bi { color: var(--cc-cta); }
+        .cc-review-close {
+            order: 2;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--lic-text-secondary);
+            font-size: 1.1rem;
+        }
+        .cc-review-close:hover { background: var(--lic-bg-surface-hover); color: #fff; }
+        .cc-review-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 14px;
+            overscroll-behavior: contain;
+        }
+        .cc-review-empty { color: var(--lic-text-secondary); text-align: center; padding: 32px 8px; }
+        .cc-review-graph { margin-bottom: 14px; }
+        .cc-review-players {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .cc-acc-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+            padding: 10px 8px;
+            border-radius: var(--cc-radius);
+            background: #3c3a37;
+        }
+        .cc-acc-name {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 700;
+            color: var(--lic-text-bright);
+            font-size: 0.8125rem;
+        }
+        .cc-acc-name small { color: var(--lic-text-secondary); font-weight: 500; }
+        .cc-acc-value {
+            min-width: 84px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1.625rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .cc-acc-card.is-white .cc-acc-value { background: #fff; color: #312e2b; }
+        .cc-acc-card.is-black .cc-acc-value { background: #1f1e1b; color: #fff; border: 1px solid #4b4847; }
+        .cc-acc-caption { font-size: 0.75rem; color: var(--lic-text-secondary); }
+        .cc-review-counts {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 0.875rem;
+        }
+        .cc-review-counts td { padding: 5px 6px; border-bottom: 1px solid var(--lic-border-subtle); }
+        .cc-count-label { display: flex; align-items: center; color: var(--lic-text-primary); font-weight: 600; }
+        .cc-count-val { width: 25%; text-align: center; font-weight: 800; color: var(--lic-text-bright); }
+        .cc-review-phases .cc-count-val { white-space: nowrap; }
+        .cc-phase-acc { font-weight: 600; color: var(--lic-text-secondary); font-size: 0.8125rem; }
+        .q-row-brilliant .cc-count-val  { color: var(--q-brilliant); }
+        .q-row-great .cc-count-val      { color: var(--q-great); }
+        .q-row-best .cc-count-val       { color: var(--q-best); }
+        .q-row-excellent .cc-count-val  { color: var(--q-excellent); }
+        .q-row-good .cc-count-val       { color: var(--q-good); }
+        .q-row-book .cc-count-val       { color: var(--q-book); }
+        .q-row-inaccuracy .cc-count-val { color: var(--q-inaccuracy); }
+        .q-row-mistake .cc-count-val    { color: var(--q-mistake); }
+        .q-row-miss .cc-count-val       { color: var(--q-miss); }
+        .q-row-blunder .cc-count-val    { color: var(--q-blunder); }
+        .cc-review-footer {
+            padding: 12px 14px 16px;
+            border-top: 1px solid var(--lic-border);
+        }
+
+        /* --- Sidebar (desktop only) --- */
+        .cc-sidebar { display: none; }
+        .cc-settings-menu {
+            min-width: 220px;
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+        }
+        .cc-settings-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--lic-text-secondary);
+        }
+        .cc-settings-row:last-child { margin-bottom: 0; }
+
+        /* ---------- DESKTOP (≥ 992px) ---------- */
+        @media (min-width: 992px) {
+            body[data-theme="cc"] { padding-left: var(--cc-sidebar-w); }
+            body[data-theme="cc"] .lic-header { display: none; }
+            body[data-theme="cc"] .cc-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                z-index: 1030;
+                width: var(--cc-sidebar-w);
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 2px;
+                padding: 10px 6px;
+                background: #262522;
+                border-right: 1px solid #1f1e1b;
+            }
+            .cc-sidebar-brand {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                padding: 4px 0 12px;
+                text-decoration: none;
+            }
+            .cc-sidebar-brand .cc-sidebar-label {
+                color: #fff;
+                font-weight: 800;
+                font-size: 0.6875rem;
+                letter-spacing: -0.01em;
+            }
+            .cc-sidebar-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                width: 100%;
+                min-height: 56px;
+                border: none;
+                border-radius: 6px;
+                background: transparent;
+                color: #bebdb9;
+                font-size: 1.35rem;
+                cursor: pointer;
+                transition: background 0.12s, color 0.12s;
+            }
+            .cc-sidebar-item .cc-sidebar-label {
+                font-size: 0.6875rem;
+                font-weight: 700;
+                line-height: 1.1;
+                text-align: center;
+            }
+            .cc-sidebar-item:hover { background: #3c3a37; color: #fff; }
+            .cc-sidebar-item.active { background: var(--cc-cta); color: #fff; box-shadow: none; }
+            .cc-sidebar-item.active .cc-sidebar-label { color: #fff; }
+            .cc-sidebar-item.active:hover { background: var(--cc-cta-hover); color: #fff; }
+            .cc-sidebar-item:focus-visible { outline: 2px solid var(--cc-cta); outline-offset: -2px; }
+            .cc-sidebar-spacer { flex: 1; }
+
+            /* Two-column studio: board | one right-hand panel */
+            body[data-theme="cc"] .studio-container {
+                max-width: none;
+                padding: 16px 20px;
+            }
+            body[data-theme="cc"] .studio-grid,
+            body[data-theme="cc"].coach-mode .studio-grid {
+                grid-template-columns: minmax(0, 1fr) minmax(360px, var(--cc-panel-w));
+                grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+                gap: 12px 20px;
+                height: calc(100vh - 32px);
+                min-height: 600px;
+                max-width: 1480px;
+                margin: 0 auto;
+                align-items: stretch;
+            }
+            body[data-theme="cc"] .col-board {
+                grid-column: 1;
+                grid-row: 1 / span 2;
+                align-items: center;
+                justify-content: flex-start;
+                min-height: 0;
+            }
+            body[data-theme="cc"] .board-container-card {
+                max-width: calc(100vh - 118px);
+                margin: 0 auto;
+                gap: 8px;
+            }
+            body[data-theme="cc"] .col-analysis {
+                grid-column: 2;
+                grid-row: 1;
+                position: static;
+                max-height: 46vh;
+                min-height: 0;
+            }
+            body[data-theme="cc"] .col-analysis .lic-panel {
+                max-height: 100%;
+                min-height: 0;
+                border-radius: var(--cc-radius);
+            }
+            body[data-theme="cc"] .col-analysis .lic-panel-body {
+                max-height: none;
+                flex: 1;
+                min-height: 0;
+            }
+            body[data-theme="cc"] .col-moves {
+                grid-column: 2;
+                grid-row: 2;
+                position: static;
+                max-height: none;
+                min-height: 0;
+            }
+            body[data-theme="cc"] .col-moves .lic-panel {
+                height: 100%;
+                min-height: 0;
+                border-radius: var(--cc-radius);
+            }
+            body[data-theme="cc"] .analysis-container {
+                max-height: none;
+                min-height: 120px;
+                flex: 1;
+            }
+            body[data-theme="cc"] .col-coach {
+                grid-column: 2;
+                grid-row: 1 / span 2;
+                min-height: 0;
+            }
+            body[data-theme="cc"] .col-coach .coach-play-panel { height: 100%; }
+            body[data-theme="cc"] .cc-review-summary {
+                grid-column: 2;
+                grid-row: 1 / span 2;
+            }
+            body[data-theme="cc"].cc-summary-open .col-analysis,
+            body[data-theme="cc"].cc-summary-open .col-moves {
+                display: none !important;
+            }
+            body[data-theme="cc"] .lic-panel-header {
+                text-transform: none;
+                letter-spacing: 0;
+                font-size: 0.9375rem;
+                font-weight: 800;
+                color: var(--lic-text-bright);
+                padding: 10px 14px;
+            }
+
+            /* Player cards */
+            body[data-theme="cc"] .lic-player-bar {
+                background: transparent;
+                border: none;
+                padding: 2px 0 2px 30px;
+                min-height: 40px;
+            }
+            body[data-theme="cc"].coach-mode .lic-player-bar { padding-left: 0; }
+            body[data-theme="cc"] .player-avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 4px;
+                font-size: 1.1rem;
+            }
+            body[data-theme="cc"] .player-name-text { font-weight: 700; font-size: 0.9375rem; }
+
+            /* Eval bar */
+            body[data-theme="cc"] .eval-gauge {
+                width: 22px;
+                min-width: 22px;
+                background: #403d39;
+                border: none;
+                border-radius: 4px;
+            }
+            body[data-theme="cc"] .eval-gauge-white { background: #fff; }
+
+            /* Move list: compact chess.com-style rows */
+            body[data-theme="cc"] .move-pair {
+                grid-template-columns: 38px 1fr 1fr;
+                min-height: 32px;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.875rem;
+                border-bottom: none;
+            }
+            body[data-theme="cc"] .move-pair:nth-child(even) { background: rgba(255, 255, 255, 0.025); }
+            body[data-theme="cc"] .move-number { font-family: 'Inter', sans-serif; font-weight: 600; }
+            body[data-theme="cc"] .move-cell {
+                font-family: 'Inter', sans-serif;
+                font-weight: 600;
+                justify-content: flex-start;
+                padding: 4px 6px;
+                border-radius: 4px;
+            }
+            body[data-theme="cc"] .move-cell .move-eval { margin-left: auto; font-family: 'Inter', sans-serif; }
+            body[data-theme="cc"] .move-cell .move-san-wrap { font-weight: 600; }
+            body[data-theme="cc"] .move-cell.active,
+            body[data-theme="cc"] .move-cell[class*="quality-"].active {
+                background: #484644 !important;
+                box-shadow: inset 0 -2px 0 var(--cc-cta);
+            }
+            body[data-theme="cc"] .inline-analysis-card { display: none; }
+
+            /* Bottom navigation: arrows + a big green Next */
+            body[data-theme="cc"] .lic-nav-toolbar {
+                padding: 10px 12px 14px;
+                border-top: 1px solid var(--lic-border);
+            }
+            body[data-theme="cc"] .nav-btn-group { flex: 1; gap: 4px; }
+            body[data-theme="cc"] .nav-btn-group .btn-lic-tool {
+                min-height: 44px;
+                min-width: 40px;
+                font-size: 1.05rem;
+                border-radius: 6px;
+                background: #3c3a37;
+                color: #dfdedc;
+            }
+            body[data-theme="cc"] .nav-btn-group .btn-lic-tool:hover { background: #4b4847; color: #fff; }
+            body[data-theme="cc"] #btnNextKey {
+                order: 10;
+                flex: 1;
+                min-height: 44px;
+                background: var(--cc-cta) !important;
+                color: #fff !important;
+                border: none !important;
+                border-radius: var(--cc-radius);
+                font-size: 1rem !important;
+                font-weight: 800 !important;
+                box-shadow: 0 4px 0 var(--cc-cta-shadow);
+            }
+            body[data-theme="cc"] #btnNextKey .key-icon { color: #fff !important; }
+            body[data-theme="cc"] #btnNextKey .key-label { display: inline !important; }
+            body[data-theme="cc"] #btnNextKey:hover { background: var(--cc-cta-hover) !important; }
+            body[data-theme="cc"] #btnNextKey:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--cc-cta-shadow); }
+            body[data-theme="cc"] #btnNextKey .key-moment-counter-badge {
+                background: rgba(0, 0, 0, 0.25);
+                color: #fff;
+            }
+            body[data-theme="cc"] #btnNextKey.is-playing { background: #ca3431 !important; box-shadow: 0 4px 0 #8a2320; }
+        }
+
+        /* ---------- MOBILE (< 992px) ---------- */
+        @media (max-width: 991.98px) {
+            body[data-theme="cc"] .lic-header { background: #262522; border-bottom-color: #1f1e1b; }
+            body[data-theme="cc"] .mobile-nav-toolbar {
+                grid-template-columns: 52px 48px 1fr 48px 112px;
+                background: #262522;
+                border-top-color: #1f1e1b;
+            }
+            body[data-theme="cc"] .mobile-nav-next-btn {
+                background: transparent;
+                color: var(--lic-text-secondary);
+            }
+            body[data-theme="cc"] .mobile-nav-arrow-btn { background: #3c3a37; color: #fff; }
+            body[data-theme="cc"] .mobile-nav-capsule { background: transparent; border: none; }
+            body[data-theme="cc"] #mobileBtnKey {
+                flex-direction: row;
+                gap: 6px;
+                height: 48px;
+                background: var(--cc-cta);
+                color: #fff;
+                border-radius: var(--cc-radius);
+                font-weight: 800;
+                font-size: 1.05rem;
+                box-shadow: 0 4px 0 var(--cc-cta-shadow);
+            }
+            body[data-theme="cc"] #mobileBtnKey .bi { color: #fff !important; }
+            body[data-theme="cc"] #mobileBtnKey:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--cc-cta-shadow); }
+            body[data-theme="cc"] #mobileBtnKey .mobile-key-badge {
+                top: -7px;
+                right: -4px;
+                font-size: var(--m-fs-chip);
+                background: #fff;
+                color: #312e2b;
+                padding: 2px 5px;
+            }
+            body[data-theme="cc"] .lic-player-bar { background: transparent; border: none; }
+            body[data-theme="cc"] .m-sheet { background: #262522; }
+            body[data-theme="cc"] .m-sheet-grip { padding-top: 14px; }
+
+            /* Full-screen Game Review summary */
+            body[data-theme="cc"] .cc-review-summary {
+                position: fixed;
+                inset: 0;
+                z-index: 1042;
+                border-radius: 0;
+                background: var(--lic-bg-canvas);
+                padding-top: var(--safe-top);
+            }
+            body[data-theme="cc"] .cc-review-header { background: #262522; }
+            body[data-theme="cc"] .cc-review-footer {
+                padding-bottom: calc(16px + var(--safe-bottom));
+                background: #262522;
+            }
+        }
+        /* --- Fixes after visual review --- */
+        /* Let the board column shrink so board.resize() can re-measure after a live theme switch */
+        .studio-grid > .col-board { min-width: 0; }
+        @media (min-width: 992px) {
+            body[data-theme="cc"] .lic-nav-toolbar > .d-flex:last-child { display: none !important; }
+            body[data-theme="cc"] .eval-gauge-text { font-size: 10px; letter-spacing: -0.04em; }
+            body[data-theme="cc"].coach-mode .coach-moves-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+            body[data-theme="cc"].coach-mode .coach-moves-sheet { flex: 1; max-height: none; overflow-y: auto; }
+            body[data-theme="cc"] #btnCoachHint::after { content: 'Hint'; margin-left: 8px; font-weight: 800; font-size: 1rem; }
+        }
+        @media (max-width: 991.98px) {
+            body[data-theme="cc"] #mobileBtnNext { background: #3c3a37 !important; color: #fff !important; box-shadow: none; }
+            body[data-theme="cc"] .m-sheet:not([data-state="peek"]) #mobileSheetSummary .cc-coach-line { display: none; }
+            body[data-theme="cc"] .m-sheet:not([data-state="peek"]) #mobileSheetSummary .cc-hide-when-cc { display: flex !important; }
+        }
+
+        /* --- Choose Your Coach Modal (Chess.com theme styling) --- */
+        body[data-theme="cc"] #coachSettingsModal .modal-content {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            color: var(--lic-text-primary);
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-header {
+            border-bottom: 1px solid var(--lic-border);
+            padding: 16px 20px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-title {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-title i {
+            color: var(--cc-cta) !important;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-close {
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-close:hover {
+            opacity: 1;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-body {
+            padding: 20px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer {
+            border-top: 1px solid var(--lic-border);
+            padding: 14px 20px;
+            gap: 10px;
+        }
+        body[data-theme="cc"] .coach-option-card {
+            background: #1e1d1a;
+            border: 1.5px solid #383530;
+            border-radius: var(--cc-radius);
+            padding: 12px 14px;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+        body[data-theme="cc"] .coach-option-card:hover {
+            background: #2b2926;
+            border-color: #4a4742;
+        }
+        body[data-theme="cc"] .coach-option-card.active {
+            background: rgba(129, 182, 76, 0.12);
+            border-color: var(--cc-cta);
+            box-shadow: 0 0 0 1px var(--cc-cta);
+        }
+        body[data-theme="cc"] .coach-option-avatar {
+            background: #262522;
+            border: 1px solid #3c3a37;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+        body[data-theme="cc"] .coach-option-details .fw-bold {
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        body[data-theme="cc"] .coach-option-details .text-muted {
+            color: var(--lic-text-muted) !important;
+            font-size: 0.8125rem;
+            line-height: 1.35;
+            margin-top: 2px;
+        }
+        body[data-theme="cc"] .coach-option-details .badge {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 800;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="pikaru"] .badge {
+            background: rgba(247, 198, 49, 0.16) !important;
+            color: #f7c631 !important;
+            border: 1px solid rgba(247, 198, 49, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="mcmarty"] .badge {
+            background: rgba(129, 182, 76, 0.16) !important;
+            color: #95c65f !important;
+            border: 1px solid rgba(129, 182, 76, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="sophy"] .badge {
+            background: rgba(116, 155, 191, 0.16) !important;
+            color: #749bbf !important;
+            border: 1px solid rgba(116, 155, 191, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="mangoose"] .badge {
+            background: rgba(250, 65, 45, 0.16) !important;
+            color: #ff7769 !important;
+            border: 1px solid rgba(250, 65, 45, 0.35);
+        }
+        body[data-theme="cc"] #coachSettingsModal hr {
+            border-color: var(--lic-border);
+            opacity: 1;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group {
+            background: #1b1916;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid var(--lic-border);
+            gap: 2px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group .btn {
+            border: none !important;
+            border-radius: 6px !important;
+            color: var(--lic-text-secondary) !important;
+            font-weight: 700;
+            font-size: 0.8125rem;
+            padding: 6px 14px;
+            background: transparent !important;
+            transition: background 0.15s, color 0.15s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group .btn:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-check:checked + .btn {
+            background: #3c3a37 !important;
+            color: #fff !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer .btn-secondary {
+            background: #312e2a;
+            border: 1px solid #3c3a37;
+            color: var(--lic-text-primary);
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 8px 18px;
+            border-radius: var(--cc-radius);
+            transition: background 0.12s, color 0.12s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer .btn-secondary:hover {
+            background: #3c3a37;
+            color: #fff;
+        }
+        body[data-theme="cc"] #btnStartCoachGame {
+            background: var(--cc-cta) !important;
+            border: none !important;
+            color: #fff !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 800;
+            font-size: 0.9375rem;
+            padding: 9px 22px;
+            border-radius: var(--cc-radius);
+            box-shadow: 0 3px 0 var(--cc-cta-shadow);
+            transition: background 0.12s, transform 0.06s, box-shadow 0.06s;
+            cursor: pointer;
+        }
+        body[data-theme="cc"] #btnStartCoachGame:hover {
+            background: var(--cc-cta-hover) !important;
+        }
+        body[data-theme="cc"] #btnStartCoachGame:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 var(--cc-cta-shadow);
+        }
+
+        /* --- Import Game Modal (Chess.com theme styling) --- */
+        body[data-theme="cc"] .pgn-drawer-inner {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            color: var(--lic-text-primary);
+        }
+        body[data-theme="cc"] .import-modal-header {
+            border-bottom: 1px solid var(--lic-border);
+            padding-bottom: 14px;
+        }
+        body[data-theme="cc"] .import-modal-title {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+        body[data-theme="cc"] .import-modal-icon-badge {
+            background: rgba(129, 182, 76, 0.15);
+            color: var(--cc-cta);
+        }
+        body[data-theme="cc"] .import-tabs-group {
+            background: #1e1d1a;
+            border-color: #383530;
+            border-radius: 8px;
+            padding: 3px;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn {
+            border-radius: 6px;
+            font-weight: 700;
+            color: #9c9a96;
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn.active {
+            background: var(--cc-cta);
+            color: #ffffff;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn:hover:not(.active) {
+            color: #ffffff;
+            background: #2c2a26;
+        }
+        body[data-theme="cc"] .pgn-textarea,
+        body[data-theme="cc"] #lichessInput {
+            background-color: #181715 !important;
+            border-color: #383530 !important;
+            color: #ffffff !important;
+            border-radius: 8px;
+        }
+        body[data-theme="cc"] .pgn-textarea:focus,
+        body[data-theme="cc"] #lichessInput:focus {
+            border-color: var(--cc-cta) !important;
+            box-shadow: 0 0 0 2px rgba(129, 182, 76, 0.25) !important;
+        }
+        body[data-theme="cc"] #analyzeBtn {
+            background: var(--cc-cta) !important;
+            border: none !important;
+            box-shadow: 0 3px 0 var(--cc-cta-shadow) !important;
+            border-radius: var(--cc-radius);
+            font-weight: 800;
+            font-size: 0.9375rem;
+            padding: 9px 22px;
+            color: #ffffff;
+            transition: background 0.12s, transform 0.06s, box-shadow 0.06s;
+        }
+        body[data-theme="cc"] #analyzeBtn:hover {
+            background: var(--cc-cta-hover) !important;
+        }
+        body[data-theme="cc"] #analyzeBtn:active {
+            transform: translateY(2px) !important;
+            box-shadow: 0 1px 0 var(--cc-cta-shadow) !important;
+        }
+        body[data-theme="cc"] .lic-chip-btn {
+            background: #2b2926;
+            border-color: #383530;
+            border-radius: 6px;
+            color: #bababa;
+        }
+        body[data-theme="cc"] .lic-chip-btn:hover {
+            background: #363430;
+            border-color: #55524c;
+            color: #ffffff;
+        }
+        body[data-theme="cc"] .import-modal-footer {
+            border-top: 1px solid var(--lic-border);
+            padding-top: 14px;
+        }
+        body[data-theme="cc"] #btnCancelImport {
+            background: #312e2a !important;
+            border: 1px solid #3c3a37 !important;
+            color: var(--lic-text-primary) !important;
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 8px 18px;
+            border-radius: var(--cc-radius);
+            transition: background 0.12s, color 0.12s;
+        }
+        body[data-theme="cc"] #btnCancelImport:hover {
+            background: #3c3a37 !important;
+            color: #fff !important;
+        }
+
+        /* Simplified Move Analysis Panel (One narrative, One meta row, One lines card) */
+        .cc-coach-bubble .diag-body {
+            color: #312e2b;
+            font-size: 0.9375rem;
+            line-height: 1.45;
+            margin-top: 6px;
+        }
+        .cc-coach-bubble .diag-highlight-move {
+            color: #1a1a18;
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+        }
+        .cc-coach-bubble .diag-missed-banner {
+            background: rgba(220, 38, 38, 0.08);
+            border-color: rgba(220, 38, 38, 0.25);
+            color: #991b1b;
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        .cc-coach-bubble .diag-missed-text {
+            color: #991b1b;
+        }
+        .cc-coach-foot {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            font-size: var(--lic-fs-sm);
+            color: #62605d;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .cc-coach-foot .threat-lead {
+            color: #73706d;
+            font-weight: 600;
+        }
+
+        .diag-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            margin-bottom: 12px;
+            padding: 2px 0 6px;
+        }
+        .diag-meta-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .player-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 2px;
+            flex-shrink: 0;
+        }
+        .player-dot.is-white {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.35);
+        }
+        .player-dot.is-black {
+            background: #141311;
+            border: 1px solid #73706d;
+        }
+        .diag-meta-tags {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .diag-tag.tag-overflow {
+            cursor: help;
+            opacity: 0.85;
+            font-weight: 600;
+        }
+
+        .diag-lines {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .diag-lines-title {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--lic-text-muted);
+            margin-bottom: 2px;
+        }
+        .diag-line-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            background: var(--lic-bg-surface-subtle);
+            border-left: 3px solid transparent;
+            transition: background 0.15s ease;
+        }
+        .diag-line-row.is-refutation {
+            border-left-color: var(--lic-red);
+            background: rgba(204, 51, 51, 0.06);
+        }
+        .diag-line-row.is-better {
+            border-left-color: var(--lic-green);
+            background: rgba(98, 153, 36, 0.06);
+        }
+        body[data-theme="cc"] .diag-line-row.is-refutation {
+            border-left-color: var(--q-blunder);
+            background: rgba(250, 65, 45, 0.08);
+        }
+        body[data-theme="cc"] .diag-line-row.is-better {
+            border-left-color: var(--q-best);
+            background: rgba(129, 182, 76, 0.08);
+        }
+        .diag-line-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: var(--lic-fs-sm);
+            font-weight: 600;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .diag-line-label .line-icon {
+            font-size: 0.8125rem;
+            font-weight: 800;
+        }
+        .diag-line-label .line-name {
+            color: var(--lic-text-primary);
+        }
+        .diag-line-label .line-move-san {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--lic-text-bright);
+        }
+        .diag-line-label .line-best-eval {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--lic-text-muted);
+            margin-left: 2px;
+        }
+        /* Label + play button share the first line; the PV gets the full width below */
+        .diag-line-row .principal-variation {
+            order: 3;
+            flex: 1 1 100%;
+            min-width: 0;
+            background: transparent;
+            padding: 0;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+        }
+        .diag-line-row .play-button,
+        .diag-line-row .play-refutation-button {
+            order: 2;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        /* ===== CHESS.COM THEME — END ===== */
     </style>
 </head>
-<body>
+<body data-theme="cc" data-board-theme="green">
+    <script>
+        // Apply saved UI/board theme before first layout so the board is sized for the right shell
+        try {
+            var savedUiTheme = localStorage.getItem('whyblunder_theme');
+            var savedBoardTheme = localStorage.getItem('whyblunder_board_theme');
+            if (savedUiTheme) document.body.setAttribute('data-theme', savedUiTheme);
+            if (savedBoardTheme) document.body.setAttribute('data-board-theme', savedBoardTheme);
+            else if (savedUiTheme === 'lichess') document.body.setAttribute('data-board-theme', 'brown');
+        } catch (e) {}
+    </script>
+    <!-- chess.com-style Desktop Sidebar (forwards clicks to the header controls) -->
+    <nav class="cc-sidebar" id="ccSidebar" aria-label="Main">
+        <a href="#" class="cc-sidebar-brand" title="WhyBlunder">
+            <img src="img/app-icon.svg" alt="" width="28" height="28">
+            <span class="cc-sidebar-label">WhyBlunder</span>
+        </a>
+        <button type="button" class="cc-sidebar-item active" data-cc-mode="analysis" title="Analyze a game">
+            <i class="bi bi-graph-up"></i><span class="cc-sidebar-label">Analyze</span>
+        </button>
+        <button type="button" class="cc-sidebar-item" data-cc-mode="coach" title="Play vs Coach">
+            <i class="bi bi-person-workspace"></i><span class="cc-sidebar-label">Play Coach</span>
+        </button>
+        <div class="cc-sidebar-spacer"></div>
+        <div class="dropend">
+            <button type="button" class="cc-sidebar-item" data-bs-toggle="dropdown" aria-expanded="false" title="Settings">
+                <i class="bi bi-gear-fill"></i><span class="cc-sidebar-label">Settings</span>
+            </button>
+            <div class="dropdown-menu cc-settings-menu p-3">
+                <label class="cc-settings-row">Theme
+                    <select class="form-select form-select-sm select-dark" data-cc-setting="theme">
+                        <option value="cc">Chess.com</option>
+                        <option value="lichess">Lichess</option>
+                    </select>
+                </label>
+                <label class="cc-settings-row">Board
+                    <select class="form-select form-select-sm select-dark" data-cc-setting="board">
+                        <option value="green">Green</option>
+                        <option value="brown">Brown</option>
+                        <option value="blue">Blue</option>
+                    </select>
+                </label>
+                <label class="cc-settings-row">Animation speed
+                    <select class="form-select form-select-sm select-dark" data-cc-setting="speed">
+                        <option value="0">Instant (Jump)</option>
+                        <option value="2000">Slow</option>
+                        <option value="1000" selected>Normal</option>
+                        <option value="500">Fast</option>
+                        <option value="200">Very Fast</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+    </nav>
+
     <!-- Floating Restore Header Button (shown on mobile when header is collapsed) -->
     <button type="button" id="btnRestoreMobileHeader" class="btn-restore-mobile-header d-none" title="Show Header Menu">
         <i class="bi bi-chevron-bar-down"></i> <span>Menu</span>
@@ -3874,10 +5089,25 @@
         </div>
     </header>
 
-    <!-- Collapsible Import Drawer -->
-    <div id="pgnDrawer" class="pgn-drawer">
+    <!-- Import Game Modal -->
+    <div id="pgnDrawer" class="pgn-drawer" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
         <div class="pgn-drawer-inner">
-            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+            <!-- Modal Header -->
+            <div class="import-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="import-modal-icon-badge">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                    </div>
+                    <div>
+                        <h5 class="import-modal-title" id="importModalTitle">Import Game</h5>
+                        <div class="small text-muted" style="font-size:12px;">Analyze with Stockfish 16 WASM</div>
+                    </div>
+                </div>
+                <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:32px;min-width:32px;border-radius:6px;" title="Close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <!-- Tab Switcher & Depth Controls -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <!-- 2-Source Tabs -->
                 <div class="d-flex align-items-center gap-1 import-tabs-group" role="tablist">
                     <button type="button" class="lic-tab-btn active" data-import-tab="lichess" role="tab" aria-selected="true">
@@ -3889,8 +5119,8 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-2">
-                    <label for="analysisDepth" class="small mb-0" style="color:var(--lic-text-secondary);">Depth:</label>
-                    <select id="analysisDepth" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:28px; font-size:var(--lic-fs-sm);">
+                    <label for="analysisDepth" class="small mb-0 text-muted" style="font-size:12px;">Search Depth:</label>
+                    <select id="analysisDepth" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:30px; font-size:var(--lic-fs-sm);">
                         <option value="14">Fast (14)</option>
                         <option value="16">Standard (16)</option>
                         <option value="18" selected>Deep (18)</option>
@@ -3898,16 +5128,15 @@
                         <option value="22">Grandmaster (22)</option>
                         <option value="24">Elite Search (24)</option>
                     </select>
-                    <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:28px;min-width:28px;" title="Close Drawer"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
 
             <!-- TAB PANEL 1: LICHESS -->
             <div id="tabPanelLichess" class="import-tab-panel">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste Lichess URL (e.g. <code>https://lichess.org/Qa7FJNk2</code>) or 8-char Game ID:</span>
+                    <span class="small text-muted" style="font-size:12px;">Paste Lichess URL (e.g. <code>https://lichess.org/Qa7FJNk2</code>) or 8-char Game ID:</span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Examples:</span>
+                        <span class="small me-1 text-muted" style="font-size:11px;">Examples:</span>
                         <button type="button" class="lic-chip-btn" data-sample="lichess"><i class="bi bi-link-45deg me-1"></i>Lichess Game</button>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
@@ -3922,9 +5151,9 @@
             <!-- TAB PANEL 2: PGN -->
             <div id="tabPanelPgn" class="import-tab-panel d-none">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste raw PGN notation:</span>
+                    <span class="small text-muted" style="font-size:12px;">Paste raw PGN notation:</span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Presets:</span>
+                        <span class="small me-1 text-muted" style="font-size:11px;">Presets:</span>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
                         <button type="button" class="lic-chip-btn" data-sample="scholar">Scholar's Mate</button>
@@ -3934,16 +5163,17 @@
             </div>
 
             <!-- Bottom Action Row -->
-            <div class="d-flex align-items-center justify-content-between pt-1">
-                <div class="d-flex align-items-center gap-2">
+            <div class="import-modal-footer d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25 flex-wrap gap-2">
+                <span id="importSourceNotice" class="small text-muted font-monospace" style="font-size:11px;"></span>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <button type="button" id="btnCancelImport" class="lic-btn">Cancel</button>
                     <button id="analyzeBtn" class="lic-btn lic-btn-primary">
-                        <i class="bi bi-play-circle-fill"></i> Analyze Game
+                        <i class="bi bi-play-circle-fill me-1"></i> Analyze Game
                     </button>
                     <button id="cancelAnalyzeBtn" class="lic-btn lic-btn-danger d-none">
-                        <i class="bi bi-x-circle"></i> Cancel
+                        <i class="bi bi-x-circle me-1"></i> Cancel
                     </button>
                 </div>
-                <span id="importSourceNotice" class="small text-muted font-monospace" style="font-size:11px;"></span>
             </div>
         </div>
     </div>
@@ -4087,8 +5317,14 @@
                             <span id="moveCountSummary" class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size:var(--lic-fs-sm);">0 moves</span>
                             <span id="keyMomentsSummary" class="badge bg-warning bg-opacity-25 text-warning font-monospace d-none" style="font-size:var(--lic-fs-sm);">0 moments</span>
                         </div>
-                        <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)"><i class="bi bi-arrow-left-right me-1"></i> Flip</button>
+                        <div class="d-flex align-items-center gap-1">
+                            <button id="btnMovesImport" class="lic-chip-btn" title="Import game"><i class="bi bi-box-arrow-in-down me-1"></i> Import</button>
+                            <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)"><i class="bi bi-arrow-left-right me-1"></i> Flip</button>
+                        </div>
                     </div>
+
+                    <!-- Eval Graph (Game Review) -->
+                    <div class="cc-eval-graph-strip d-none" id="ccEvalGraphStrip"></div>
 
                     <!-- Scrollable 2-Column Move Notation Sheet -->
                     <div class="analysis-container" id="analysisContainer">
@@ -4163,7 +5399,7 @@
                     <div class="coach-dialogue-card">
                         <div class="coach-avatar-col">
                             <div class="coach-avatar-wrapper" id="coachAvatarDisplay">
-                                <span id="coachAvatarEmoji">😎</span>
+                                <span id="coachAvatarEmoji"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg></span>
                             </div>
                         </div>
                         <div class="coach-bubbles-col">
@@ -4238,6 +5474,18 @@
                 </div>
             </div>
 
+            <!-- GAME REVIEW SUMMARY (desktop: right column, mobile: full-screen) -->
+            <section class="cc-review-summary" id="ccReviewSummary" aria-labelledby="ccReviewTitle" hidden>
+                <header class="cc-review-header">
+                    <button type="button" class="cc-review-close" id="ccReviewClose" aria-label="Close summary"><i class="bi bi-x-lg"></i></button>
+                    <h2 class="cc-review-title" id="ccReviewTitle"><i class="bi bi-star-fill"></i> Game Review</h2>
+                </header>
+                <div class="cc-review-body" id="ccReviewBody"></div>
+                <footer class="cc-review-footer">
+                    <button type="button" class="cc-btn-cta w-100" id="ccStartReview">Start Review</button>
+                </footer>
+            </section>
+
         </div>
     </main>
 
@@ -4262,6 +5510,7 @@
         </button>
         <button type="button" id="mobileBtnKey" class="mobile-nav-tool-btn mobile-nav-key-btn mobile-slot-analysis" title="Next Key Moment">
             <i class="bi bi-lightning-charge-fill text-warning"></i>
+            <span class="cc-cta-label">Next</span>
             <span id="mobileKeyBadge" class="mobile-key-badge d-none">0/0</span>
         </button>
 
@@ -4353,6 +5602,24 @@
                         <option value="500">Fast (0.5s)</option>
                     </select>
                 </div>
+                <div class="mobile-opt-row d-flex align-items-center justify-content-between">
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-palette-fill text-info"></i> Theme</span>
+                    <select class="form-select form-select-sm select-dark" data-cc-setting="theme" style="width: 140px;">
+                        <option value="cc">Chess.com</option>
+                        <option value="lichess">Lichess</option>
+                    </select>
+                </div>
+                <div class="mobile-opt-row d-flex align-items-center justify-content-between">
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-grid-3x3 text-info"></i> Board</span>
+                    <select class="form-select form-select-sm select-dark" data-cc-setting="board" style="width: 140px;">
+                        <option value="green">Green</option>
+                        <option value="brown">Brown</option>
+                        <option value="blue">Blue</option>
+                    </select>
+                </div>
+                <button type="button" id="mobileBtnReviewSummary" class="lic-btn w-100 justify-content-start py-2 px-3" data-bs-dismiss="offcanvas" style="min-height:var(--m-tap);">
+                    <i class="bi bi-star-fill me-2 text-info"></i> Game Review Summary
+                </button>
                 <button type="button" id="mobileBtnFlip" class="lic-btn w-100 justify-content-start py-2 px-3" style="min-height:var(--m-tap);">
                     <i class="bi bi-arrow-left-right me-2 text-info"></i> Flip Board
                 </button>
@@ -4378,10 +5645,12 @@
                     <div class="coach-select-grid" id="coachSelectGrid">
                         <!-- Coach Pikaru (1600) -->
                         <div class="coach-option-card active" data-persona="pikaru">
-                            <div class="coach-option-avatar">😎</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach Pikaru 🇺🇸</span>
+                                    <span class="fw-bold">Coach Pikaru <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">USA</span></span>
                                     <span class="badge bg-warning text-dark font-monospace">1600 ELO</span>
                                 </div>
                                 <div class="small text-muted">Speed & Passed Pawn Prodigy. Sharp, witty, and tactical.</div>
@@ -4389,10 +5658,12 @@
                         </div>
                         <!-- Coach McMarty (800) -->
                         <div class="coach-option-card" data-persona="mcmarty">
-                            <div class="coach-option-avatar">🤠</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#95c65f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#95c65f" fill-opacity="0.3"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach McMarty 🇨🇦</span>
+                                    <span class="fw-bold">Coach McMarty <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">CAN</span></span>
                                     <span class="badge bg-success text-white font-monospace">800 ELO</span>
                                 </div>
                                 <div class="small text-muted">Enthusiastic Rookie Coach. Friendly and frequently blunders for you to spot!</div>
@@ -4400,10 +5671,12 @@
                         </div>
                         <!-- Coach Sophy (1200) -->
                         <div class="coach-option-card" data-persona="sophy">
-                            <div class="coach-option-avatar">👩‍🏫</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#749bbf" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" fill="#749bbf" fill-opacity="0.3"/><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach Sophy 🇬🇧</span>
+                                    <span class="fw-bold">Coach Sophy <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">GBR</span></span>
                                     <span class="badge bg-info text-dark font-monospace">1200 ELO</span>
                                 </div>
                                 <div class="small text-muted">Club Coach & Instructor. Teaches harmony, king safety, and pins.</div>
@@ -4411,10 +5684,12 @@
                         </div>
                         <!-- GM Mangoose (2200) -->
                         <div class="coach-option-card" data-persona="mangoose">
-                            <div class="coach-option-avatar">🧙‍♂️</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ff7769" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" fill="#ff7769" fill-opacity="0.3"/><path d="M19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1z" fill="#ff7769"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">GM Mangoose 🇳🇴</span>
+                                    <span class="fw-bold">GM Mangoose <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">NOR</span></span>
                                     <span class="badge bg-danger text-white font-monospace">2200 ELO</span>
                                 </div>
                                 <div class="small text-muted">Endgame Wizard. Chilled-out master who rarely slips up.</div>
@@ -4427,9 +5702,9 @@
                         <span class="small text-muted">Play as:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorWhite" value="w" checked autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorWhite">White ⚪</label>
+                            <label class="btn btn-outline-light d-inline-flex align-items-center gap-2" for="colorWhite">White <span class="coach-color-dot dot-white"></span></label>
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorBlack" value="b" autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorBlack">Black ⚫</label>
+                            <label class="btn btn-outline-light d-inline-flex align-items-center gap-2" for="colorBlack">Black <span class="coach-color-dot dot-black"></span></label>
                         </div>
                     </div>
                 </div>
@@ -5126,6 +6401,20 @@
             });
 
             if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', () => toggleDrawer(false));
+            const btnCancelImport = document.getElementById('btnCancelImport');
+            if (btnCancelImport) btnCancelImport.addEventListener('click', () => toggleDrawer(false));
+            if (pgnDrawer) {
+                pgnDrawer.addEventListener('click', function(e) {
+                    if (e.target === pgnDrawer) toggleDrawer(false);
+                });
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && pgnDrawer && pgnDrawer.classList.contains('open')) {
+                    toggleDrawer(false);
+                }
+            });
+            const btnMovesImport = document.getElementById('btnMovesImport');
+            if (btnMovesImport) btnMovesImport.addEventListener('click', () => toggleDrawer(true));
 
             // Auto-switch tabs if the user pastes a URL or PGN into an input
             function handleSourceAutoDetection(val, currentField) {
@@ -5868,6 +7157,17 @@
                 const blackElo = (currentGameInfo && currentGameInfo.black_elo) ? `(${currentGameInfo.black_elo})` : '';
                 const result = (currentGameInfo && currentGameInfo.result) ? currentGameInfo.result : '';
 
+                const topPlayerElo = document.getElementById('topPlayerElo');
+                const bottomPlayerElo = document.getElementById('bottomPlayerElo');
+                if (topPlayerElo) {
+                    topPlayerElo.textContent = '';
+                    topPlayerElo.classList.add('d-none');
+                }
+                if (bottomPlayerElo) {
+                    bottomPlayerElo.textContent = '';
+                    bottomPlayerElo.classList.add('d-none');
+                }
+
                 if (isFlipped) {
                     // White on top, Black on bottom
                     if (topPlayerName) topPlayerName.textContent = whiteName;
@@ -6131,7 +7431,7 @@
                     case 'brilliant': return '!!';
                     case 'great': return '!';
                     case 'best': return '★';
-                    case 'book': return '📖';
+                    case 'book': return '';
                     default: return '';
                 }
             }
@@ -6252,12 +7552,12 @@
                         const wKeyClass = isWKey ? 'is-key-moment' : '';
                         const wGlyph = getMoveGlyph(wMove);
                         const wBaseSan = (wMove.move || '').replace(/[?!]+$/, '');
-                        const wSanFormatted = formatSanWithFigurines(wBaseSan + wGlyph, true);
+                        const wSanFormatted = formatSanWithFigurines(wBaseSan + (isCcTheme() ? '' : wGlyph), true);
                         const wEvalFormatted = formatEvalForMoveList(wMove.evaluation);
 
                         html += `
                             <div class="move-cell white-move ${wQualityClass} ${wKeyClass}" data-index="${wIdx}" id="move-${wIdx}" ${isWKey ? 'title="Key Moment"' : ''}>
-                                <span class="move-san-wrap">${wSanFormatted}</span>
+                                ${ccQualityIconHtml(wMove)}<span class="move-san-wrap">${wSanFormatted}</span>
                                 ${wEvalFormatted ? `<span class="move-eval">${wEvalFormatted}</span>` : ''}
                             </div>`;
                     } else {
@@ -6273,12 +7573,12 @@
                         const bKeyClass = isBKey ? 'is-key-moment' : '';
                         const bGlyph = getMoveGlyph(bMove);
                         const bBaseSan = (bMove.move || '').replace(/[?!]+$/, '');
-                        const bSanFormatted = formatSanWithFigurines(bBaseSan + bGlyph, false);
+                        const bSanFormatted = formatSanWithFigurines(bBaseSan + (isCcTheme() ? '' : bGlyph), false);
                         const bEvalFormatted = formatEvalForMoveList(bMove.evaluation);
 
                         html += `
                             <div class="move-cell black-move ${bQualityClass} ${bKeyClass}" data-index="${bIdx}" id="move-${bIdx}" ${isBKey ? 'title="Key Moment"' : ''}>
-                                <span class="move-san-wrap">${bSanFormatted}</span>
+                                ${ccQualityIconHtml(bMove)}<span class="move-san-wrap">${bSanFormatted}</span>
                                 ${bEvalFormatted ? `<span class="move-eval">${bEvalFormatted}</span>` : ''}
                             </div>`;
                     } else {
@@ -6339,6 +7639,8 @@
 
                 renderMobileMoveTicker(movesList);
                 syncMobileOffcanvas(movesList);
+                renderReviewSummary(movesList);
+                openReviewSummary();
             }
 
             function renderMobileMoveTicker(movesList) {
@@ -6440,33 +7742,76 @@
                 let html = '';
                 
                 const playerName = move.player || (move.is_white ? 'White' : 'Black');
-                const qualityTitle = (move.detailed_quality || move.quality || 'move').toUpperCase();
-                const qualityClass = getQualityClass(move.detailed_quality || move.quality);
-                
                 let evalText = (move.evaluation !== undefined && move.evaluation !== null) ? `${move.evaluation}` : '';
                 if (evalText && !evalText.startsWith('+') && !evalText.startsWith('-') && !evalText.startsWith('#') && !evalText.startsWith('M')) {
                     evalText = '+' + evalText;
                 }
 
-                html += `
-                    <div class="diagnosis-header">
-                        <div class="move-title-wrap">
-                            <span class="player-badge ${move.is_white ? 'white' : 'black'}">${playerName}</span>
-                            <span class="move-san">${formatSanWithFigurines(move.move, move.is_white)}</span>
-                            <span class="badge-q ${qualityClass}">${qualityTitle}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            ${evalText ? `<span class="eval-tag" title="Position Evaluation">${evalText}</span>` : ''}
-                            ${(move.quality !== 'good move' && move.analysis && move.analysis.best_evaluation) ? `<span class="eval-best-tag" title="Best line evaluation">Best: ${move.analysis.best_evaluation}</span>` : ''}
-                            ${(move.win_probability !== undefined) ? `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win: ${(move.win_probability * 100).toFixed(1)}%</span>` : ''}
-                            ${(move.win_prob_loss && move.win_prob_loss > 0.02) ? `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>` : ''}
-                        </div>
-                    </div>`;
-                
-                // Tactical, positional, or opening tags
-                if (move.tags && move.tags.length > 0) {
-                    html += `<div class="tags-cluster">`;
-                    move.tags.forEach(tag => {
+                // 1. COACH BUBBLE (One narrative)
+                let bodyHtml = '';
+                if (move.analysis) {
+                    const isMissedWin = (move.detailed_quality === 'missed win') || 
+                        (Array.isArray(move.tags) && move.tags.some(t => {
+                            const lower = t.toLowerCase();
+                            return lower.includes('missed win') || lower.includes('missed mate');
+                        }));
+                    const missChanceText = move.analysis.missed_chance || (isMissedWin ? 'Misses a forced winning advantage' : null);
+                    if (missChanceText) {
+                        const missTitle = missChanceText.charAt(0).toUpperCase() + missChanceText.slice(1);
+                        const badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED';
+                        const badgeIcon = isMissedWin ? 'bi-trophy-fill' : 'bi-crosshair';
+                        const badgeClass = isMissedWin ? 'diag-missed-badge badge-missed-win' : 'diag-missed-badge';
+                        bodyHtml += `
+                            <div class="diag-missed-banner mb-2">
+                                <span class="${badgeClass}"><i class="bi ${badgeIcon} me-1"></i>${badgeLabel}</span>
+                                <span class="diag-missed-text">${escapeHtml(missTitle)}</span>
+                            </div>`;
+                    }
+
+                    if (move.analysis.explanation) {
+                        let formattedExpl = escapeHtml(move.analysis.explanation);
+                        const highlightMoves = [move.move, move.analysis.best_move, move.analysis.refutation].filter(Boolean);
+                        highlightMoves.forEach(m => {
+                            const escapedM = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            formattedExpl = formattedExpl.replace(new RegExp(`\\b${escapedM}\\b`, 'g'), `<span class="diag-highlight-move">${m}</span>`);
+                        });
+
+                        bodyHtml += `<div class="diag-body">${formattedExpl}</div>`;
+                    }
+                }
+                if (!bodyHtml) {
+                    bodyHtml = '<div class="diag-body text-muted"><i class="bi bi-check2-circle text-success me-1"></i>This move is considered solid by the engine.</div>';
+                }
+
+                let footHtml = '';
+                if (move.analysis && move.analysis.threats_created && move.analysis.threats_created.length > 0) {
+                    const threats = move.analysis.threats_created.map(t => escapeHtml(t.description || t)).join('; ');
+                    footHtml = `<i class="bi bi-arrow-right me-1 opacity-75"></i><span class="threat-lead">Also: </span>${threats}`;
+                }
+
+                // Unknown quality keys render no bubble; keep the narrative visible anyway
+                html += ccCoachLineHtml(move, false, { bodyHtml, footHtml })
+                    || `<div class="diag-fallback">${bodyHtml}${footHtml ? `<div class="cc-coach-foot">${footHtml}</div>` : ''}</div>`;
+
+                // 2. ONE META ROW (eval + win% + <=3 tags)
+                let metaHtml = '<div class="diag-meta">';
+                metaHtml += '<div class="diag-meta-stats d-flex align-items-center gap-2 flex-wrap">';
+                metaHtml += `<span class="player-dot ${move.is_white ? 'is-white' : 'is-black'}" title="${playerName}"></span>`;
+                if (evalText) {
+                    metaHtml += `<span class="eval-tag" title="Position Evaluation">${evalText}</span>`;
+                }
+                if (move.win_probability !== undefined) {
+                    metaHtml += `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win ${(move.win_probability * 100).toFixed(1)}%</span>`;
+                }
+                if (move.win_prob_loss && move.win_prob_loss > 0.02) {
+                    metaHtml += `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>`;
+                }
+                metaHtml += '</div>';
+
+                const displayTags = ccDisplayTags(move);
+                if (displayTags.length > 0) {
+                    metaHtml += '<div class="diag-meta-tags d-flex align-items-center gap-1 flex-wrap">';
+                    displayTags.forEach(tag => {
                         const isMiss = tag.startsWith('Missed') || tag.includes('Attack') || tag === 'Tactical Fork' || tag === 'Hanging Piece';
                         const isControl = tag.includes('Center') || tag.includes('File') || tag.includes('Outpost') || tag.includes('Diagonal');
                         let tagClass = 'diag-tag';
@@ -6478,124 +7823,75 @@
                             tagClass += ' tag-control';
                             icon = 'bi-compass-fill';
                         }
-                        html += `<span class="${tagClass}"><i class="bi ${icon} me-1 opacity-75"></i>${tag}</span>`;
+                        metaHtml += `<span class="${tagClass}"><i class="bi ${icon} me-1 opacity-75"></i>${escapeHtml(tag)}</span>`;
                     });
-                    html += `</div>`;
+                    if (displayTags.overflow && displayTags.overflow.length > 0) {
+                        metaHtml += `<span class="diag-tag tag-overflow" title="${escapeHtml(displayTags.all.join(', '))}">+${displayTags.overflow.length}</span>`;
+                    }
+                    metaHtml += '</div>';
                 }
+                metaHtml += '</div>';
+                html += metaHtml;
 
+                // 3. ONE LINES CARD (refutation row + recommended row)
                 if (move.analysis) {
-                    // Better move callout (if not a good move)
-                    if (move.quality !== 'good move' && move.analysis.best_move) {
-                        html += `
-                            <div class="better-move-strip">
-                                <span class="text-success fw-semibold small me-1"><i class="bi bi-lightbulb me-1"></i>Better:</span>
-                                <span class="badge-better font-monospace">${formatSanWithFigurines(move.analysis.best_move, move.is_white)}</span>
-                                ${move.analysis.best_evaluation ? `<span class="text-muted small ms-1">(${move.analysis.best_evaluation})</span>` : ''}
-                            </div>`;
-                    }
+                    const isRefutationApplicable = (move.quality !== 'good move');
+                    const refVarData = isRefutationApplicable ? getVariationData(index, 'refutation') : null;
+                    const hasRefutation = Boolean(refVarData && refVarData.moves && refVarData.moves.length > 0);
 
-                    // Threats created by the played move
-                    if (move.analysis.threats_created && move.analysis.threats_created.length > 0) {
-                        html += `
-                            <div class="threat-alert-box created-threat">
-                                <div class="d-flex align-items-center gap-1 text-danger fw-semibold small mb-1">
-                                    <i class="bi bi-bullseye"></i> <span>Threat created by ${move.move}:</span>
-                                </div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${move.analysis.threats_created.map(t => `<span class="threat-item"><i class="bi bi-arrow-right-short"></i>${t.description || t}</span>`).join('')}
-                                </div>
-                            </div>`;
-                    }
+                    const betterVarData = getVariationData(index, 'better');
+                    const hasBetterLine = Boolean(betterVarData && betterVarData.moves && betterVarData.moves.length > 0);
+                    // When the played move was the engine's choice, the line is its continuation, not an alternative
+                    const bestDiffers = Boolean(move.analysis.best_move) && move.analysis.best_move.replace(/[?!+#]+$/, '') !== (move.move || '').replace(/[?!+#]+$/, '');
 
-                    // Opponent's counter-threat / refutation
-                    if (move.analysis.refutation) {
-                        html += `
-                            <div class="threat-alert-box opponent-threat d-flex align-items-center flex-wrap gap-2">
-                                <span class="text-danger fw-semibold small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Opponent's threat:</span>
-                                <span class="threat-refutation-badge font-monospace">${formatSanWithFigurines(move.analysis.refutation, !move.is_white)}</span>
-                            </div>`;
-                    }
+                    if (hasRefutation || hasBetterLine) {
+                        let linesHtml = '<div class="diag-lines">';
+                        linesHtml += '<div class="diag-lines-title">LINES</div>';
 
-                    // Explanation / Why
-                    if (move.analysis.explanation) {
-                        let cardContent = '';
-                        const isMissedWin = (move.detailed_quality === 'missed win') || 
-                            (Array.isArray(move.tags) && move.tags.some(t => {
-                                const lower = t.toLowerCase();
-                                return lower.includes('missed win') || lower.includes('missed mate');
-                            }));
-                        const missChanceText = move.analysis.missed_chance || (isMissedWin ? 'Misses a forced winning advantage' : null);
-                        if (missChanceText) {
-                            const missTitle = missChanceText.charAt(0).toUpperCase() + missChanceText.slice(1);
-                            const badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED';
-                            const badgeIcon = isMissedWin ? 'bi-trophy-fill' : 'bi-crosshair';
-                            const badgeClass = isMissedWin ? 'diag-missed-badge badge-missed-win' : 'diag-missed-badge';
-                            cardContent += `
-                                <div class="diag-missed-banner mb-2">
-                                    <span class="${badgeClass}"><i class="bi ${badgeIcon} me-1"></i>${badgeLabel}</span>
-                                    <span class="diag-missed-text">${escapeHtml(missTitle)}</span>
+                        if (hasRefutation) {
+                            const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'refutation');
+                            const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
+                            linesHtml += `
+                                <div class="diag-line-row is-refutation" id="varBox-refutation-${index}">
+                                    <div class="diag-line-label">
+                                        <span class="line-icon text-danger">✕</span>
+                                        <span class="line-name">After</span>
+                                        <span class="line-move-san">${formatSanWithFigurines(move.move, move.is_white)}</span>
+                                    </div>
+                                    <div class="principal-variation refutation-line" data-index="${index}" data-type="refutation">
+                                        ${renderVariationLineHtml(refVarData, activeStep)}
+                                    </div>
+                                    <button type="button" class="lic-btn lic-btn-danger play-refutation-button" data-index="${index}" title="Play punishment line" aria-label="Play punishment line">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
                                 </div>`;
                         }
 
-                        let formattedExpl = escapeHtml(move.analysis.explanation);
-                        const highlightMoves = [move.move, move.analysis.best_move, move.analysis.refutation].filter(Boolean);
-                        highlightMoves.forEach(m => {
-                            const escapedM = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            formattedExpl = formattedExpl.replace(new RegExp(`\\b${escapedM}\\b`, 'g'), `<span class="diag-highlight-move">${m}</span>`);
-                        });
-
-                        cardContent += `<div class="diag-body"><i class="bi bi-info-circle me-1 text-info opacity-75"></i>${formattedExpl}</div>`;
-                        html += `<div class="diagnosis-text">${cardContent}</div>`;
-                    }
-
-                    // Variations: Punishing Line & Recommended Line
-                    const refVarData = (move.quality !== 'good move') ? getVariationData(index, 'refutation') : null;
-                    if (refVarData && refVarData.moves.length > 0) {
-                        const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'refutation');
-                        const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
-                        html += `
-                            <div class="variation-box box-refutation" id="varBox-refutation-${index}">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="text-danger fw-semibold small">
-                                        <i class="bi bi-shield-slash me-1"></i>Punishing line (why this is bad):
-                                    </span>
-                                    <span class="text-muted font-monospace small">${refVarData.moves.length} moves</span>
-                                </div>
-                                <div class="principal-variation refutation-line" data-index="${index}" data-type="refutation">
-                                    ${renderVariationLineHtml(refVarData, activeStep)}
-                                </div>
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <button type="button" class="lic-btn lic-btn-danger py-1 px-2 play-refutation-button" data-index="${index}">
-                                        <i class="bi bi-play-fill"></i> Play punishment line
+                        if (hasBetterLine) {
+                            const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'better');
+                            const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
+                            const bestEvalStr = move.analysis.best_evaluation ? `<span class="line-best-eval text-muted small">${move.analysis.best_evaluation}</span>` : '';
+                            linesHtml += `
+                                <div class="diag-line-row is-better" id="varBox-better-${index}">
+                                    <div class="diag-line-label">
+                                        <span class="line-icon text-success">✓</span>
+                                        ${bestDiffers ? `
+                                        <span class="line-name">Best</span>
+                                        <span class="line-move-san">${formatSanWithFigurines(move.analysis.best_move, move.is_white)}</span>
+                                        ${bestEvalStr}` : `<span class="line-name">Main line</span>`}
+                                    </div>
+                                    <div class="principal-variation" data-index="${index}" data-type="better">
+                                        ${renderVariationLineHtml(betterVarData, activeStep)}
+                                    </div>
+                                    <button type="button" class="lic-btn lic-btn-success play-button" data-index="${index}" title="Play better line" aria-label="Play better line">
+                                        <i class="bi bi-play-fill"></i>
                                     </button>
-                                </div>
-                            </div>`;
-                    }
+                                </div>`;
+                        }
 
-                    const betterVarData = getVariationData(index, 'better');
-                    if (betterVarData && betterVarData.moves.length > 0) {
-                        const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'better');
-                        const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
-                        html += `
-                            <div class="variation-box box-better" id="varBox-better-${index}">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="text-success fw-semibold small">
-                                        <i class="bi bi-check-circle me-1"></i>Recommended line:
-                                    </span>
-                                    <span class="text-muted font-monospace small">${betterVarData.moves.length} moves</span>
-                                </div>
-                                <div class="principal-variation" data-index="${index}" data-type="better">
-                                    ${renderVariationLineHtml(betterVarData, activeStep)}
-                                </div>
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <button type="button" class="lic-btn lic-btn-success py-1 px-2 play-button" data-index="${index}">
-                                        <i class="bi bi-play-fill"></i> Play better line
-                                    </button>
-                                </div>
-                            </div>`;
+                        linesHtml += '</div>';
+                        html += linesHtml;
                     }
-                } else {
-                    html += '<div class="diagnosis-text text-muted mb-0"><i class="bi bi-check2-circle text-success me-1"></i>This move is considered solid by the engine.</div>';
                 }
 
                 moveExplanation.innerHTML = html;
@@ -6681,7 +7977,9 @@
                     updateBoardSquareHighlights(moveData.from, moveData.to);
                     drawArrow(moveData.from, moveData.to, 'current');
                     
-                    if (move.quality === 'blunder' || move.quality === 'mistake' || move.quality === 'inaccuracy' || move.quality === 'brilliant' || move.quality === 'great') {
+                    if (isCcTheme()) {
+                        addSquareAnnotation(moveData.to, ccQualityKey(move));
+                    } else if (move.quality === 'blunder' || move.quality === 'mistake' || move.quality === 'inaccuracy' || move.quality === 'brilliant' || move.quality === 'great') {
                         addSquareAnnotation(moveData.to, move.quality);
                     }
                     
@@ -6776,28 +8074,47 @@
 
             function addSquareAnnotation(square, moveQuality) {
                 clearSquareAnnotations();
-                if (!square || !moveQuality || moveQuality === 'good move') return;
+                if (!square || !moveQuality) return;
+                
+                const raw = String(moveQuality).toLowerCase().trim();
+                let norm = raw;
+                if (norm === 'missed win' || norm === 'missed-win' || norm === 'miss') norm = 'miss';
+                else if (norm === 'good move' || norm === 'good-move' || norm === 'good') norm = 'good';
+                
+                if (norm === 'good') return;
                 
                 const isFlipped = board.orientation() === 'black';
                 const file = isFlipped ? 7 - (square.charCodeAt(0) - 97) : (square.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(square.charAt(1)) - 1 : 8 - parseInt(square.charAt(1));
                 
                 let symbol = '';
-                switch(moveQuality) {
-                    case 'blunder': symbol = '??'; break;
-                    case 'mistake': symbol = '?'; break;
-                    case 'inaccuracy': symbol = '?!'; break;
-                    case 'brilliant': symbol = '!!'; break;
-                    case 'great':
-                    case 'best': symbol = '!'; break;
+                if (isCcTheme()) {
+                    symbol = ccGlyph(norm);
+                } else {
+                    switch(norm) {
+                        case 'blunder': symbol = '??'; break;
+                        case 'mistake': symbol = '?'; break;
+                        case 'inaccuracy': symbol = '?!'; break;
+                        case 'brilliant': symbol = '!!'; break;
+                        case 'miss': symbol = '✕'; break;
+                        case 'great':
+                        case 'best': symbol = '!'; break;
+                        default: symbol = '';
+                    }
                 }
                 if (!symbol) return;
                 
                 const annotation = document.createElement('div');
-                annotation.className = `square-annotation annotation-${moveQuality.replace(' ', '-')}`;
+                const rawSlug = raw.replace(/\s+/g, '-');
+                annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
                 annotation.style.left = `${file * 12.5}%`;
                 annotation.style.top = `${rank * 12.5}%`;
-                annotation.setAttribute('data-symbol', symbol);
+                if (typeof symbol === 'string' && symbol.startsWith('<svg')) {
+                    if (norm === 'best') annotation.setAttribute('data-symbol', '★');
+                    else annotation.setAttribute('data-symbol', '');
+                } else {
+                    annotation.setAttribute('data-symbol', symbol);
+                }
                 
                 boardContainer.appendChild(annotation);
             }
@@ -7258,6 +8575,7 @@
             }
 
             function updateMoveHighlight() {
+                ccUpdateGraphCursor(currentMoveIndex);
                 document.querySelectorAll('.move-cell').forEach(item => {
                     item.classList.remove('active');
                 });
@@ -7295,7 +8613,8 @@
                         const evalDeltaStr = bestEvalFormatted && bestEvalFormatted !== evalFormatted ? `${bestEvalFormatted} → ${evalFormatted}` : evalFormatted;
 
                         window.MobileSheet.setSummary(`
-                            <div class="d-flex align-items-center gap-2 text-truncate">
+                            ${ccCoachLineHtml(move, true)}
+                            <div class="d-flex align-items-center gap-2 text-truncate cc-hide-when-cc">
                                 <span class="fw-bold">${movePrefix}${formatSanWithFigurines(playedBase + playedGlyph, move.is_white)}</span>
                                 <span class="badge-q ${qualityClass}" style="font-size:var(--m-fs-chip);">${quality}</span>
                                 <span class="text-muted small">${evalDeltaStr}</span>
@@ -8293,7 +9612,7 @@
                         'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
                         'great': '<span class="badge bg-primary me-1">! Great</span>',
                         'best': '<span class="badge bg-primary me-1">★ Best</span>',
-                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'book': '<span class="badge bg-secondary me-1"><svg viewBox="0 0 800 800" width="12" height="12" fill="currentColor" class="me-1" style="vertical-align:-1px;"><path d="M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z"/></svg>Book</span>',
                         'good': '<span class="badge bg-success me-1">✓ Good</span>',
                         'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
                     };
@@ -8346,7 +9665,7 @@
                                 : escapeHtml(baseSan);
                             const glyphBadge = glyph ? `<span class="coach-move-glyph ${qClass}">${glyph}</span>` : '';
                             const hintBadge = (m.isPlayer && m.hintsUsed > 0)
-                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}"><i class="bi bi-lightbulb-fill text-warning me-1"></i>${m.hintsUsed}</span>`
                                 : '';
                             const isActive = (coachCurrentMoveIndex === moveIndex);
                             return `<span class="coach-move-san ${isActive ? 'active' : ''} ${qClass}" data-coach-index="${moveIndex}" title="Move ${Math.floor(moveIndex / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
@@ -8417,7 +9736,7 @@
                                 badgeText = '?!';
                                 badgeCls = 'ticker-badge-inaccuracy';
                             } else if (qClass.includes('book')) {
-                                badgeText = '<i class="bi bi-book-fill"></i>';
+                                badgeText = '<svg viewBox="0 0 800 800" width="10" height="10" fill="currentColor" style="vertical-align:middle;"><path d="M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z"/></svg>';
                                 badgeCls = 'ticker-badge-book';
                             } else if (qClass.includes('great') || qClass.includes('best')) {
                                 badgeText = '<i class="bi bi-star-fill"></i>';
@@ -8428,7 +9747,7 @@
                             }
 
                             const hintBadge = (m.isPlayer && m.hintsUsed > 0)
-                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}"><i class="bi bi-lightbulb-fill text-warning me-1"></i>${m.hintsUsed}</span>`
                                 : '';
 
                             tickerHtml += `<button type="button" class="ticker-chip ${qClass} ${isActive ? 'active' : ''}" data-coach-index="${idx}" title="Move ${Math.floor(idx / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
@@ -8738,7 +10057,7 @@
                         'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
                         'great': '<span class="badge bg-primary me-1">! Great</span>',
                         'best': '<span class="badge bg-primary me-1">★ Best</span>',
-                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'book': '<span class="badge bg-secondary me-1"><svg viewBox="0 0 800 800" width="12" height="12" fill="currentColor" class="me-1" style="vertical-align:-1px;"><path d="M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z"/></svg>Book</span>',
                         'good': '<span class="badge bg-success me-1">✓ Good</span>',
                         'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
                     };
@@ -8956,8 +10275,13 @@
                 const p = coachManager.getPersona();
                 const coachAvatarEmoji = document.getElementById('coachAvatarEmoji');
                 if (coachAvatarEmoji) {
-                    const emojis = { pikaru: '😎', mcmarty: '🤠', sophy: '👩‍🏫', mangoose: '🧙‍♂️' };
-                    coachAvatarEmoji.textContent = emojis[p.id] || '😎';
+                    const coachSvgs = {
+                        pikaru: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg>',
+                        mcmarty: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#95c65f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#95c65f" fill-opacity="0.3"/></svg>',
+                        sophy: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#749bbf" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" fill="#749bbf" fill-opacity="0.3"/><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>',
+                        mangoose: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#ff7769" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" fill="#ff7769" fill-opacity="0.3"/><path d="M19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1z" fill="#ff7769"/></svg>'
+                    };
+                    coachAvatarEmoji.innerHTML = coachSvgs[p.id] || coachSvgs.pikaru;
                 }
 
                 coachCurrentMoveIndex = -1;
@@ -9029,13 +10353,13 @@
 
                     clearHintHighlights();
                     highlightLastMove(null, null);
+                    updatePlayerStripsOrientation();
 
                     if (moves.length > 0 && currentMoveIndex >= 0) {
                         goToMove(currentMoveIndex);
                     } else {
                         board.orientation('white');
                         board.position('start');
-                        updatePlayerStripsOrientation();
                         clearKingCheckmateBadges();
                         if (window.MobileSheet) {
                             window.MobileSheet.setSummary('<span class="text-muted">Select any move to view analysis</span>');
@@ -9044,6 +10368,7 @@
                 }
 
                 relocateForViewport(mode);
+                ccSyncSidebar();
 
                 setTimeout(() => {
                     if (board && board.resize) board.resize();
@@ -9412,6 +10737,418 @@
             // Check URL for game on initial startup
             checkUrlForGame();
 
+
+            // ===== CHESS.COM-STYLE UI: themes, sidebar, coach line, Game Review =====
+            const CC_QUALITY_ORDER = ['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'inaccuracy', 'mistake', 'miss', 'blunder'];
+            const CC_QUALITY_LABELS = {
+                brilliant: 'Brilliant', great: 'Great', best: 'Best', excellent: 'Excellent', good: 'Good',
+                book: 'Book', inaccuracy: 'Inaccuracy', mistake: 'Mistake', miss: 'Miss', blunder: 'Blunder'
+            };
+            const CC_QUALITY_PHRASES = {
+                brilliant: 'is brilliant!', great: 'is a great move', best: 'is the best move', excellent: 'is excellent',
+                good: 'is a good move', book: 'is a book move', inaccuracy: 'is an inaccuracy', mistake: 'is a mistake',
+                miss: 'misses a win', blunder: 'is a blunder'
+            };
+
+            function isCcTheme() {
+                return document.body.getAttribute('data-theme') === 'cc';
+            }
+
+            function ccNormalizeQuality(quality) {
+                const q = (quality || '').toLowerCase().trim();
+                if (q === 'missed win' || q === 'missed-win') return 'miss';
+                if (q === 'good move' || q === 'good-move') return 'good';
+                return CC_QUALITY_LABELS[q] ? q : '';
+            }
+
+            function ccQualityKey(move) {
+                if (!move) return '';
+                return ccNormalizeQuality(move.detailed_quality || move.quality);
+            }
+
+            const CC_COACH_AVATAR_SVG = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e0e0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>';
+            const CC_BOOK_SVG = '<svg viewBox="0 0 800 800" fill="currentColor"><path d="M58 187 C95 125 150 108 217 108 C285 108 340 125 379 180 L379 686 C340 655 295 640 248 640 C175 640 115 660 80 691 Q58 691 58 669 Z M742 187 C705 125 650 108 583 108 C515 108 460 125 421 180 L421 686 C460 655 505 640 552 640 C625 640 685 660 720 691 Q742 691 742 669 Z"/></svg>';
+            const CC_EXCELLENT_SVG = '<svg viewBox="0 0 800 800" fill="currentColor"><path d="M36 345L85 345L86 346L93 347L103 352L110 358L118 370L120 376L120 380L121 381L121 753L120 754L119 762L114 772L109 778L103 783L95 787L89 789L85 789L84 790L37 790L36 789L28 788L18 783L12 778L7 772L2 762L1 755L0 754L0 381L1 380L2 373L7 363L11 358L18 352L28 347L35 346L36 345Z M345 9L414 9L415 10L422 11L437 20L443 27L459 59L464 74L466 77L467 83L472 97L472 100L476 113L476 117L477 118L478 132L479 133L479 171L478 172L477 190L476 191L474 209L473 210L473 214L472 215L472 219L470 225L470 230L468 235L468 239L467 240L464 258L461 267L461 271L458 280L458 284L459 285L764 285L774 288L785 295L792 303L796 310L798 316L798 320L799 321L799 499L798 500L798 556L797 557L796 566L792 578L788 586L786 588L784 593L779 600L777 605L772 612L770 617L765 624L763 629L741 665L739 670L734 677L732 682L727 689L725 694L720 701L718 706L713 713L711 718L706 725L704 730L699 737L697 742L689 754L681 769L674 778L666 784L660 787L653 788L652 789L315 789L314 790L244 790L243 789L234 789L233 788L227 788L223 786L220 786L200 777L185 765L179 757L176 751L176 748L174 744L174 359L176 352L181 343L197 325L212 306L214 302L225 288L253 245L271 215L285 188L287 186L308 144L308 130L309 129L309 43L310 42L310 39L315 28L323 19L334 12L340 10L344 10L345 9Z"/></svg>';
+            const CC_GLYPH_SVGS = {
+                excellent: CC_EXCELLENT_SVG,
+                book: CC_BOOK_SVG
+            };
+
+            function ccGlyph(key) {
+                switch (key) {
+                    case 'brilliant': return '!!';
+                    case 'great': return '!';
+                    case 'best': return '★';
+                    case 'excellent': return CC_GLYPH_SVGS.excellent;
+                    case 'good': return '✓';
+                    case 'book': return CC_GLYPH_SVGS.book;
+                    case 'inaccuracy': return '?!';
+                    case 'mistake': return '?';
+                    case 'miss': return '✕';
+                    case 'blunder': return '??';
+                    default: return '';
+                }
+            }
+
+            function ccQualityIconHtml(moveOrKey) {
+                const key = typeof moveOrKey === 'string' ? moveOrKey : ccQualityKey(moveOrKey);
+                if (!key) return '';
+                return `<span class="cc-q-icon q-${key}" title="${CC_QUALITY_LABELS[key]}" aria-label="${CC_QUALITY_LABELS[key]}">${ccGlyph(key)}</span>`;
+            }
+
+            function ccFirstSentence(text) {
+                const plain = String(text || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                if (!plain) return '';
+                const match = plain.match(/^.*?[.!?](\s|$)/);
+                let sentence = (match ? match[0] : plain).trim();
+                if (sentence.length > 170) sentence = sentence.slice(0, 167).trim() + '…';
+                return escapeHtml(sentence);
+            }
+
+            function ccDisplayTags(move) {
+                if (!move || !Array.isArray(move.tags) || move.tags.length === 0) {
+                    const empty = [];
+                    empty.all = [];
+                    empty.overflow = [];
+                    return empty;
+                }
+                const quality = (move.detailed_quality || move.quality || '').toLowerCase();
+                let tags = Array.from(new Set(move.tags.filter(Boolean)));
+
+                // Drop tags that contradict the quality label
+                if (quality !== 'blunder') {
+                    tags = tags.filter(t => t !== 'Tactical Blunder' && t !== 'Blunder');
+                }
+                if (['good move', 'best', 'great', 'brilliant', 'book'].includes(quality)) {
+                    tags = tags.filter(t => !['Tactical Blunder', 'Blunder', 'Mistake', 'Inaccuracy', 'Losing Material'].includes(t));
+                }
+
+                // Drop generic tags when a more specific one exists
+                const hasSpecificLoss = tags.some(t => ['Hanging Piece', 'Tactical Fork', 'Fork', 'Pin', 'Skewer', 'Discovered Attack'].includes(t));
+                if (hasSpecificLoss) {
+                    tags = tags.filter(t => t !== 'Losing Material' && t !== 'Winning Material');
+                }
+                if (tags.includes('Pawn Promotion') && tags.includes('Promotion')) {
+                    tags = tags.filter(t => t !== 'Promotion');
+                }
+                if (tags.includes('Opposition') && tags.includes('King Activity')) {
+                    tags = tags.filter(t => t !== 'King Activity');
+                }
+
+                const allFiltered = [...tags];
+                const visible = tags.slice(0, 3);
+                visible.all = allFiltered;
+                visible.overflow = allFiltered.slice(3);
+                return visible;
+            }
+
+            function ccCoachLineHtml(move, compact = false, opts = {}) {
+                if (compact && typeof compact === 'object') {
+                    opts = compact;
+                    compact = false;
+                }
+                const key = ccQualityKey(move);
+                if (!move || !key) return '';
+                const san = formatSanWithFigurines((move.move || '').replace(/[?!]+$/, ''), move.is_white);
+                const a = move.analysis || {};
+                const isBad = ['inaccuracy', 'mistake', 'miss', 'blunder'].includes(key);
+                let detail = ccFirstSentence(isBad ? (a.flaw || a.missed_chance || a.explanation) : (a.explanation || a.flaw));
+                const hasCustomBody = Boolean(opts && opts.bodyHtml !== undefined);
+                const best = (hasCustomBody || compact || !isBad || !a.best_move) ? '' : `<span class="cc-coach-best">Best was <b>${formatSanWithFigurines(a.best_move, move.is_white)}</b></span>`;
+                if (compact) {
+                    return `<div class="cc-coach-line is-compact">
+                        <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
+                        <div class="cc-coach-text">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}${detail ? `<span class="cc-coach-detail"> ${detail}</span>` : ''}</div>
+                    </div>`;
+                }
+                const bodyContent = hasCustomBody ? opts.bodyHtml : (detail ? `<div class="cc-coach-detail">${detail}</div>` : '');
+                const footContent = (opts && opts.footHtml) ? `<div class="cc-coach-foot">${opts.footHtml}</div>` : '';
+                return `<div class="cc-coach-line">
+                    <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
+                    <div class="cc-coach-bubble q-${key}">
+                        <div class="cc-coach-head">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}</div>
+                        ${bodyContent}
+                        ${best}
+                        ${footContent}
+                    </div>
+                </div>`;
+            }
+
+            function ccWhiteWinProb(move) {
+                if (!move) return 0.5;
+                if (typeof move.win_probability === 'number') {
+                    return move.is_white ? move.win_probability : 1 - move.win_probability;
+                }
+                const cp = Number(move.score_cp) || 0;
+                return 1 / (1 + Math.pow(10, -cp / 400));
+            }
+
+            function ccEvalGraphSvg(list, id, H = 120) {
+                const W = 600;
+                const n = list.length;
+                const x = i => (n <= 1 ? W / 2 : (i / (n - 1)) * W);
+                const y = i => ((1 - ccWhiteWinProb(list[i])) * H).toFixed(1);
+                let area = `M0,${H} L0,${H / 2} `;
+                for (let i = 0; i < n; i++) area += `L${x(i).toFixed(1)},${y(i)} `;
+                area += `L${W},${H} Z`;
+                let dots = '';
+                list.forEach((m, i) => {
+                    const key = ccQualityKey(m);
+                    if (['brilliant', 'great', 'miss', 'mistake', 'blunder'].includes(key)) {
+                        dots += `<circle class="cc-graph-dot q-${key}" cx="${x(i).toFixed(1)}" cy="${y(i)}" r="${H < 100 ? 4 : 5}"><title>${m.move_number}${m.is_white ? '.' : '...'} ${escapeHtml(m.move || '')} (${CC_QUALITY_LABELS[key]})</title></circle>`;
+                    }
+                });
+                return `<svg class="cc-eval-graph" id="${id}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evaluation graph. Click to jump to a move." data-count="${n}">
+                    <rect class="cc-graph-bg" x="0" y="0" width="${W}" height="${H}"></rect>
+                    <path class="cc-graph-area" d="${area}"></path>
+                    <line class="cc-graph-mid" x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}"></line>
+                    <line class="cc-graph-cursor" x1="-10" y1="0" x2="-10" y2="${H}"></line>
+                    ${dots}
+                </svg>`;
+            }
+
+            function ccBindGraph(svg, onPick) {
+                if (!svg) return;
+                svg.addEventListener('click', (e) => {
+                    const n = parseInt(svg.dataset.count, 10) || 0;
+                    if (!n) return;
+                    const rect = svg.getBoundingClientRect();
+                    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    onPick(Math.round(frac * (n - 1)));
+                });
+            }
+
+            function ccUpdateGraphCursor(index) {
+                document.querySelectorAll('.cc-eval-graph').forEach(svg => {
+                    const cursor = svg.querySelector('.cc-graph-cursor');
+                    const n = parseInt(svg.dataset.count, 10) || 0;
+                    if (!cursor) return;
+                    const cx = (index < 0 || !n) ? -10 : (n <= 1 ? 300 : (index / (n - 1)) * 600);
+                    cursor.setAttribute('x1', cx);
+                    cursor.setAttribute('x2', cx);
+                });
+            }
+
+            function ccPhaseKey(acc) {
+                if (acc === null || acc === undefined) return '';
+                if (acc >= 90) return 'best';
+                if (acc >= 80) return 'excellent';
+                if (acc >= 70) return 'good';
+                if (acc >= 55) return 'inaccuracy';
+                if (acc >= 40) return 'mistake';
+                return 'blunder';
+            }
+
+            function ccHeadline(acc, counts, whiteName, blackName) {
+                const w = acc.white, b = acc.black;
+                if (w === null && b === null) return 'Let\'s review this game together.';
+                let line;
+                if (w !== null && b !== null && Math.abs(w - b) < 3) {
+                    line = 'A close, evenly-played game.';
+                } else if ((w || 0) > (b || 0)) {
+                    line = `${escapeHtml(whiteName)} played more accurately.`;
+                } else {
+                    line = `${escapeHtml(blackName)} played more accurately.`;
+                }
+                const brill = counts.white.brilliant + counts.black.brilliant;
+                const blunders = counts.white.blunder + counts.black.blunder;
+                if (brill) line += ` There ${brill === 1 ? 'was a brilliant move' : `were ${brill} brilliant moves`} to find!`;
+                else if (blunders) line += ` ${blunders === 1 ? 'One blunder' : `${blunders} blunders`} decided a lot — let's look at ${blunders === 1 ? 'it' : 'them'}.`;
+                else line += ' Let\'s step through the key moments.';
+                return line;
+            }
+
+            function renderReviewSummary(movesList) {
+                const body = document.getElementById('ccReviewBody');
+                const strip = document.getElementById('ccEvalGraphStrip');
+                const list = movesList || moves;
+                if (!body) return;
+                if (!list || list.length === 0) {
+                    body.innerHTML = '<div class="cc-review-empty">Import and analyze a game to see its review.</div>';
+                    if (strip) { strip.innerHTML = ''; strip.classList.add('d-none'); }
+                    return;
+                }
+
+                const hasEvaluator = typeof ChessEvaluator !== 'undefined' && ChessEvaluator.gameAccuracy;
+                const acc = hasEvaluator ? ChessEvaluator.gameAccuracy(list) : { white: null, black: null };
+                const fens = list.map((m, i) => (moveHistory[i] && moveHistory[i].fen) || null);
+                const phases = hasEvaluator ? ChessEvaluator.phaseAccuracy(list, fens) : null;
+
+                const counts = { white: {}, black: {} };
+                CC_QUALITY_ORDER.forEach(k => { counts.white[k] = 0; counts.black[k] = 0; });
+                list.forEach(m => {
+                    const key = ccQualityKey(m);
+                    if (key) counts[m.is_white ? 'white' : 'black'][key]++;
+                });
+
+                const whiteName = (currentGameInfo && currentGameInfo.white) || 'White';
+                const blackName = (currentGameInfo && currentGameInfo.black) || 'Black';
+                const whiteElo = (currentGameInfo && currentGameInfo.white_elo) || '';
+                const blackElo = (currentGameInfo && currentGameInfo.black_elo) || '';
+                const fmtAcc = v => (v === null || v === undefined) ? '—' : v.toFixed(1);
+
+                const rows = CC_QUALITY_ORDER.map(k => `
+                    <tr class="q-row-${k}">
+                        <td class="cc-count-label">${ccQualityIconHtml(k)}${CC_QUALITY_LABELS[k]}</td>
+                        <td class="cc-count-val">${counts.white[k]}</td>
+                        <td class="cc-count-val">${counts.black[k]}</td>
+                    </tr>`).join('');
+
+                const phaseRow = (name, key) => {
+                    if (!phases) return '';
+                    const p = phases[key];
+                    if (p.white === null && p.black === null) return '';
+                    const cell = v => { const q = ccPhaseKey(v); return q ? `${ccQualityIconHtml(q)}<span class="cc-phase-acc">${fmtAcc(v)}</span>` : '<span class="text-muted">—</span>'; };
+                    return `<tr><td class="cc-count-label">${name}</td><td class="cc-count-val">${cell(p.white)}</td><td class="cc-count-val">${cell(p.black)}</td></tr>`;
+                };
+
+                body.innerHTML = `
+                    <div class="cc-coach-line">
+                        <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
+                        <div class="cc-coach-bubble"><div class="cc-coach-detail">${ccHeadline(acc, counts, whiteName, blackName)}</div></div>
+                    </div>
+                    <div class="cc-review-graph">${ccEvalGraphSvg(list, 'ccEvalGraph')}</div>
+                    <div class="cc-review-players">
+                        <div class="cc-acc-card is-white">
+                            <span class="cc-acc-name" title="${escapeHtml(whiteName)}">${escapeHtml(whiteName)}${whiteElo ? ` <small>(${escapeHtml(String(whiteElo))})</small>` : ''}</span>
+                            <span class="cc-acc-value" id="ccAccuracyWhite">${fmtAcc(acc.white)}</span>
+                            <span class="cc-acc-caption">Accuracy</span>
+                        </div>
+                        <div class="cc-acc-card is-black">
+                            <span class="cc-acc-name" title="${escapeHtml(blackName)}">${escapeHtml(blackName)}${blackElo ? ` <small>(${escapeHtml(String(blackElo))})</small>` : ''}</span>
+                            <span class="cc-acc-value" id="ccAccuracyBlack">${fmtAcc(acc.black)}</span>
+                            <span class="cc-acc-caption">Accuracy</span>
+                        </div>
+                    </div>
+                    <table class="cc-review-counts"><tbody>${rows}</tbody></table>
+                    <table class="cc-review-counts cc-review-phases"><tbody>
+                        ${phaseRow('Opening', 'opening')}${phaseRow('Middlegame', 'middlegame')}${phaseRow('Endgame', 'endgame')}
+                    </tbody></table>`;
+
+                ccBindGraph(document.getElementById('ccEvalGraph'), (i) => { closeReviewSummary(); goToMove(i); });
+
+                if (strip) {
+                    strip.innerHTML = ccEvalGraphSvg(list, 'ccEvalGraphMini', 56);
+                    strip.classList.remove('d-none');
+                    ccBindGraph(document.getElementById('ccEvalGraphMini'), (i) => goToMove(i));
+                }
+                ccUpdateGraphCursor(currentMoveIndex);
+            }
+
+            function openReviewSummary(force = false) {
+                const section = document.getElementById('ccReviewSummary');
+                if (!section || currentAppMode === 'coach') return;
+                if (!force && !isCcTheme()) return;
+                section.hidden = false;
+                document.body.classList.add('cc-summary-open');
+            }
+
+            function closeReviewSummary() {
+                const section = document.getElementById('ccReviewSummary');
+                if (section) section.hidden = true;
+                document.body.classList.remove('cc-summary-open');
+            }
+
+            function ccSyncSidebar() {
+                document.querySelectorAll('.cc-sidebar-item[data-cc-mode]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.ccMode === currentAppMode);
+                });
+                if (currentAppMode === 'coach') closeReviewSummary();
+            }
+
+            function applyCcSettings(theme, boardTheme) {
+                if (theme) document.body.setAttribute('data-theme', theme);
+                if (boardTheme) document.body.setAttribute('data-board-theme', boardTheme);
+                const t = document.body.getAttribute('data-theme');
+                const b = document.body.getAttribute('data-board-theme');
+                try {
+                    localStorage.setItem('whyblunder_theme', t);
+                    localStorage.setItem('whyblunder_board_theme', b);
+                } catch (e) {}
+                document.querySelectorAll('[data-cc-setting="theme"]').forEach(sel => { sel.value = t; });
+                document.querySelectorAll('[data-cc-setting="board"]').forEach(sel => { sel.value = b; });
+                if (t !== 'cc') closeReviewSummary();
+            }
+
+            (function initCcUi() {
+                let savedTheme = 'cc', savedBoard = 'green';
+                try {
+                    savedTheme = localStorage.getItem('whyblunder_theme') || 'cc';
+                    savedBoard = localStorage.getItem('whyblunder_board_theme') || (savedTheme === 'lichess' ? 'brown' : 'green');
+                } catch (e) {}
+                applyCcSettings(savedTheme, savedBoard);
+
+                document.querySelectorAll('[data-cc-setting="speed"]').forEach(sel => {
+                    if (speedControl) sel.value = speedControl.value;
+                    sel.addEventListener('change', () => {
+                        if (!speedControl) return;
+                        speedControl.value = sel.value;
+                        speedControl.dispatchEvent(new Event('change'));
+                    });
+                });
+
+                document.querySelectorAll('[data-cc-setting="theme"], [data-cc-setting="board"]').forEach(sel => {
+                    sel.addEventListener('change', () => {
+                        if (sel.dataset.ccSetting === 'theme') applyCcSettings(sel.value, null);
+                        else applyCcSettings(null, sel.value);
+                        setTimeout(() => {
+                            if (board && board.resize) board.resize();
+                            updateSvgDimensions();
+                            if (sel.dataset.ccSetting === 'theme' && moves.length > 0) {
+                                displayAnalysis(moves);
+                                closeReviewSummary();
+                            }
+                            if (currentAppMode === 'analysis' && currentMoveIndex >= 0) goToMove(currentMoveIndex);
+                        }, 50);
+                    });
+                });
+
+                document.querySelectorAll('.cc-sidebar-item[data-cc-mode]').forEach(btn => {
+                    btn.addEventListener('click', () => switchAppMode(btn.dataset.ccMode));
+                });
+
+                const sidebarImport = document.getElementById('ccSidebarImport');
+                if (sidebarImport) {
+                    sidebarImport.addEventListener('click', () => {
+                        switchAppMode('analysis');
+                        closeReviewSummary();
+                        if (btnTogglePgn) btnTogglePgn.click();
+                    });
+                }
+
+                const openSummaryOrImport = () => {
+                    switchAppMode('analysis');
+                    if (moves.length > 0) {
+                        openReviewSummary(true);
+                    } else if (btnTogglePgn && pgnDrawer && !pgnDrawer.classList.contains('open')) {
+                        btnTogglePgn.click();
+                    }
+                };
+                const sidebarReview = document.getElementById('ccSidebarReview');
+                if (sidebarReview) sidebarReview.addEventListener('click', openSummaryOrImport);
+                const mobileReview = document.getElementById('mobileBtnReviewSummary');
+                if (mobileReview) mobileReview.addEventListener('click', openSummaryOrImport);
+
+                const reviewClose = document.getElementById('ccReviewClose');
+                if (reviewClose) reviewClose.addEventListener('click', closeReviewSummary);
+
+                const startReview = document.getElementById('ccStartReview');
+                if (startReview) {
+                    startReview.addEventListener('click', () => {
+                        closeReviewSummary();
+                        if (moves.length > 0 && currentMoveIndex < 0) goToMove(0);
+                    });
+                }
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && document.body.classList.contains('cc-summary-open')) {
+                        closeReviewSummary();
+                    }
+                });
+
+                renderReviewSummary([]);
+            })();
+
             window.switchAppMode = switchAppMode;
             window.startNewCoachGame = startNewCoachGame;
             window.executeCoachUserMove = executeCoachUserMove;
@@ -9425,6 +11162,10 @@
             window.clearKingCheckmateBadges = clearKingCheckmateBadges;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
+            window.renderReviewSummary = renderReviewSummary;
+            window.openReviewSummary = openReviewSummary;
+            window.addSquareAnnotation = addSquareAnnotation;
+            window.board = board;
 
             // Also re-check when URL hash changes
             window.addEventListener('hashchange', function() {

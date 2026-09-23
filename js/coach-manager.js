@@ -75,7 +75,7 @@
             name: 'Coach Pikaru',
             elo: 1600,
             title: 'Speed & Passed Pawn Prodigy',
-            flag: '🇺🇸',
+            flag: 'USA',
             blunderInterval: 7, // Blunder candidate check every ~7 coach plies
             skillLevel: 14,
             depthDial: 'dynamic',
@@ -240,7 +240,7 @@
             name: 'Coach McMarty',
             elo: 800,
             title: 'Enthusiastic Rookie Coach',
-            flag: '🇨🇦',
+            flag: 'CAN',
             blunderInterval: 4, // Blunders frequently
             skillLevel: 5,
             depthDial: 'concise',
@@ -313,7 +313,7 @@
                 ],
                 baitByMotif: {
                     fork: [
-                        "Oopsie! Did I just let you attack two of my pieces at once?! 🙈",
+                        "Oopsie! Did I just let you attack two of my pieces at once?!",
                         "Uh oh! Fork alert! Can you find where your piece hits two of mine?"
                     ],
                     pin: [
@@ -329,7 +329,7 @@
                         "Surprise! Look what happens if you move your piece out of the way!"
                     ],
                     hanging: [
-                        "Oops… did I leave something without a guard? 🙈",
+                        "Oops… did I leave something without a guard?",
                         "Uh oh, is my piece totally free for the taking?! Check it out!"
                     ],
                     kingSafety: [
@@ -404,7 +404,7 @@
             name: 'Coach Sophy',
             elo: 1200,
             title: 'Club Coach & Instructor',
-            flag: '🇬🇧',
+            flag: 'GBR',
             blunderInterval: 6,
             skillLevel: 10,
             depthDial: 'instructional',
@@ -568,7 +568,7 @@
             name: 'GM Mangoose',
             elo: 2200,
             title: 'Endgame Wizard',
-            flag: '🇳🇴',
+            flag: 'NOR',
             blunderInterval: 12, // Rarely blunders
             skillLevel: 20,
             depthDial: 'deep',
