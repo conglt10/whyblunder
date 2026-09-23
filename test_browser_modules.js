@@ -1452,6 +1452,8 @@ console.log("✓ Coach board flicker fix regressions passed!");
     assert(indexContent.includes('addSquareAnnotation(userResult.move.to'), "index.html must display move feedback annotation on played squares");
     assert(indexContent.includes('annotation.style.left = `${file * 12.5}%`;'), "index.html must set annotation.style.left");
     assert(indexContent.includes('annotation.style.top = `${rank * 12.5}%`;'), "index.html must set annotation.style.top");
+    assert(indexContent.includes('const CC_EXCELLENT_SVG = \'<svg viewBox="0 0 800 800"'), "index.html must define CC_EXCELLENT_SVG with authentic thumbs-up");
+    assert(!indexContent.includes('M8.864.046'), "index.html must not use legacy bootstrap thumbs-up icon");
     assert(indexContent.includes("drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better')"), "index.html must draw better move arrow on blunder takeback");
     assert(indexContent.includes("drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat')"), "index.html must draw opponent threat arrow on blunder takeback");
 
