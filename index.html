@@ -1079,6 +1079,7 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
             border: none;
             letter-spacing: -0.05em;
+            background-color: #df4444;
         }
         .annotation-blunder::before {
             background-color: #df4444;
@@ -1100,6 +1101,11 @@
         .annotation-great::before,
         .annotation-best::before {
             background-color: #3b82f6;
+            color: #ffffff;
+        }
+        .annotation-miss::before,
+        .annotation-missed-win::before {
+            background-color: #ff7769;
             color: #ffffff;
         }
 
@@ -3984,6 +3990,7 @@
             font-size: 2.6cqw;
             font-weight: 900;
             border: none;
+            background-color: var(--q-miss);
             box-shadow: 0 0.4cqw 1.2cqw rgba(0, 0, 0, 0.5);
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
@@ -3996,11 +4003,13 @@
         body[data-theme="cc"] .annotation-great::before      { background-color: var(--q-great); color: #fff; font-size: 2.7cqw; }
         body[data-theme="cc"] .annotation-best::before       { background-color: var(--q-best); color: #fff; font-size: 2.3cqw; }
         body[data-theme="cc"] .annotation-excellent::before  { background-color: var(--q-excellent); color: #fff; font-size: 2.1cqw; }
-        body[data-theme="cc"] .annotation-good::before       { background-color: var(--q-good); color: #fff; font-size: 2.3cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-good::before,
+        body[data-theme="cc"] .annotation-good-move::before  { background-color: var(--q-good); color: #fff; font-size: 2.3cqw; font-weight: 800; }
         body[data-theme="cc"] .annotation-book::before       { background-color: var(--q-book); color: #fff; font-size: 2.1cqw; }
         body[data-theme="cc"] .annotation-inaccuracy::before { background-color: var(--q-inaccuracy); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
         body[data-theme="cc"] .annotation-mistake::before    { background-color: var(--q-mistake); color: #fff; font-size: 2.7cqw; }
-        body[data-theme="cc"] .annotation-miss::before       { background-color: var(--q-miss); color: #fff; font-size: 2.5cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-miss::before,
+        body[data-theme="cc"] .annotation-missed-win::before { background-color: var(--q-miss); color: #fff; font-size: 2.5cqw; font-weight: 800; }
         body[data-theme="cc"] .annotation-blunder::before    { background-color: var(--q-blunder); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
         body[data-theme="cc"] .board-wrapper { overflow: visible; }
 
@@ -7786,26 +7795,39 @@
 
             function addSquareAnnotation(square, moveQuality) {
                 clearSquareAnnotations();
-                if (!square || !moveQuality || moveQuality === 'good move') return;
+                if (!square || !moveQuality) return;
+                
+                const raw = String(moveQuality).toLowerCase().trim();
+                let norm = raw;
+                if (norm === 'missed win' || norm === 'missed-win' || norm === 'miss') norm = 'miss';
+                else if (norm === 'good move' || norm === 'good-move' || norm === 'good') norm = 'good';
+                
+                if (norm === 'good') return;
                 
                 const isFlipped = board.orientation() === 'black';
                 const file = isFlipped ? 7 - (square.charCodeAt(0) - 97) : (square.charCodeAt(0) - 97);
                 const rank = isFlipped ? parseInt(square.charAt(1)) - 1 : 8 - parseInt(square.charAt(1));
                 
                 let symbol = '';
-                switch(moveQuality) {
-                    case 'blunder': symbol = '??'; break;
-                    case 'mistake': symbol = '?'; break;
-                    case 'inaccuracy': symbol = '?!'; break;
-                    case 'brilliant': symbol = '!!'; break;
-                    case 'great':
-                    case 'best': symbol = '!'; break;
+                if (isCcTheme()) {
+                    symbol = ccGlyph(norm);
+                } else {
+                    switch(norm) {
+                        case 'blunder': symbol = '??'; break;
+                        case 'mistake': symbol = '?'; break;
+                        case 'inaccuracy': symbol = '?!'; break;
+                        case 'brilliant': symbol = '!!'; break;
+                        case 'miss': symbol = '✕'; break;
+                        case 'great':
+                        case 'best': symbol = '!'; break;
+                        default: symbol = '';
+                    }
                 }
-                if (isCcTheme()) symbol = ccGlyph(ccNormalizeQuality(moveQuality));
                 if (!symbol) return;
                 
                 const annotation = document.createElement('div');
-                annotation.className = `square-annotation annotation-${moveQuality.replace(' ', '-')}`;
+                const rawSlug = raw.replace(/\s+/g, '-');
+                annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
                 annotation.style.left = `${file * 12.5}%`;
                 annotation.style.top = `${rank * 12.5}%`;
                 annotation.setAttribute('data-symbol', symbol);
@@ -10445,8 +10467,8 @@
 
             function ccNormalizeQuality(quality) {
                 const q = (quality || '').toLowerCase().trim();
-                if (q === 'missed win') return 'miss';
-                if (q === 'good move') return 'good';
+                if (q === 'missed win' || q === 'missed-win') return 'miss';
+                if (q === 'good move' || q === 'good-move') return 'good';
                 return CC_QUALITY_LABELS[q] ? q : '';
             }
 
