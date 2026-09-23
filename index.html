@@ -1150,6 +1150,24 @@
             background-color: #ff7769;
             color: #ffffff;
         }
+        .annotation-book::before {
+            background-color: var(--q-book, #926f4e);
+            color: #ffffff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v10.748c-.917-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
+        .annotation-excellent::before {
+            background-color: var(--q-excellent, #5d8f2c);
+            color: #ffffff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M8.864.046C7.901-.145 7 .537 7 1.513V4.37a.5.5 0 0 1-.5.5c-.886 0-1.848.423-2.387 1.196L2.348 8.79a1.5 1.5 0 0 0-.348.97V14a1.5 1.5 0 0 0 1.5 1.5h6.75a2.5 2.5 0 0 0 2.45-1.988l1.2-5.4A2.5 2.5 0 0 0 11.45 5H9.5a.5.5 0 0 1-.5-.5V1.513c0-.62-.486-1.144-1.106-1.258zM1 9.5a1 1 0 0 1 1-1h.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H2a1 1 0 0 1-1-1v-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
 
         /* King Checkmate Badges (Winner ⭑ & Loser ×) */
         .king-checkmate-badge {
@@ -4024,6 +4042,13 @@
         .cc-q-icon.q-mistake    { background: var(--q-mistake); }
         .cc-q-icon.q-miss       { background: var(--q-miss); font-size: 9px; }
         .cc-q-icon.q-blunder    { background: var(--q-blunder); letter-spacing: -0.05em; }
+        .cc-q-icon svg {
+            display: inline-block;
+            vertical-align: middle;
+            width: 10px;
+            height: 10px;
+            fill: currentColor;
+        }
 
         /* Board badge on the destination square, scaled to the board via container units */
         body[data-theme="cc"] .board-container { container-type: inline-size; }
@@ -4047,15 +4072,48 @@
         body[data-theme="cc"] .annotation-brilliant::before  { background-color: var(--q-brilliant); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
         body[data-theme="cc"] .annotation-great::before      { background-color: var(--q-great); color: #fff; font-size: 2.7cqw; }
         body[data-theme="cc"] .annotation-best::before       { background-color: var(--q-best); color: #fff; font-size: 2.3cqw; }
-        body[data-theme="cc"] .annotation-excellent::before  { background-color: var(--q-excellent); color: #fff; font-size: 2.1cqw; }
+        body[data-theme="cc"] .annotation-excellent::before  {
+            background-color: var(--q-excellent);
+            color: #fff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M8.864.046C7.901-.145 7 .537 7 1.513V4.37a.5.5 0 0 1-.5.5c-.886 0-1.848.423-2.387 1.196L2.348 8.79a1.5 1.5 0 0 0-.348.97V14a1.5 1.5 0 0 0 1.5 1.5h6.75a2.5 2.5 0 0 0 2.45-1.988l1.2-5.4A2.5 2.5 0 0 0 11.45 5H9.5a.5.5 0 0 1-.5-.5V1.513c0-.62-.486-1.144-1.106-1.258zM1 9.5a1 1 0 0 1 1-1h.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H2a1 1 0 0 1-1-1v-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
         body[data-theme="cc"] .annotation-good::before,
         body[data-theme="cc"] .annotation-good-move::before  { background-color: var(--q-good); color: #fff; font-size: 2.3cqw; font-weight: 800; }
-        body[data-theme="cc"] .annotation-book::before       { background-color: var(--q-book); color: #fff; font-size: 2.1cqw; }
+        body[data-theme="cc"] .annotation-book::before       {
+            background-color: var(--q-book);
+            color: #fff;
+            content: "" !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v10.748c-.917-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 55%;
+        }
         body[data-theme="cc"] .annotation-inaccuracy::before { background-color: var(--q-inaccuracy); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
         body[data-theme="cc"] .annotation-mistake::before    { background-color: var(--q-mistake); color: #fff; font-size: 2.7cqw; }
         body[data-theme="cc"] .annotation-miss::before,
         body[data-theme="cc"] .annotation-missed-win::before { background-color: var(--q-miss); color: #fff; font-size: 2.5cqw; font-weight: 800; }
         body[data-theme="cc"] .annotation-blunder::before    { background-color: var(--q-blunder); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        .coach-color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+        .coach-color-dot.dot-white {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .coach-color-dot.dot-black {
+            background: #181715;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
         body[data-theme="cc"] .board-wrapper { overflow: visible; }
 
         /* --- Coach line (analysis mode "coach voice") --- */
@@ -4076,6 +4134,14 @@
             justify-content: center;
             font-size: 26px;
             line-height: 1;
+        }
+        .cc-coach-avatar svg {
+            width: 24px;
+            height: 24px;
+        }
+        .cc-coach-line.is-compact .cc-coach-avatar svg {
+            width: 18px;
+            height: 18px;
         }
         .cc-coach-bubble {
             position: relative;
@@ -5304,7 +5370,7 @@
                     <div class="coach-dialogue-card">
                         <div class="coach-avatar-col">
                             <div class="coach-avatar-wrapper" id="coachAvatarDisplay">
-                                <span id="coachAvatarEmoji">😎</span>
+                                <span id="coachAvatarEmoji"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg></span>
                             </div>
                         </div>
                         <div class="coach-bubbles-col">
@@ -5550,10 +5616,12 @@
                     <div class="coach-select-grid" id="coachSelectGrid">
                         <!-- Coach Pikaru (1600) -->
                         <div class="coach-option-card active" data-persona="pikaru">
-                            <div class="coach-option-avatar">😎</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach Pikaru 🇺🇸</span>
+                                    <span class="fw-bold">Coach Pikaru <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">USA</span></span>
                                     <span class="badge bg-warning text-dark font-monospace">1600 ELO</span>
                                 </div>
                                 <div class="small text-muted">Speed & Passed Pawn Prodigy. Sharp, witty, and tactical.</div>
@@ -5561,10 +5629,12 @@
                         </div>
                         <!-- Coach McMarty (800) -->
                         <div class="coach-option-card" data-persona="mcmarty">
-                            <div class="coach-option-avatar">🤠</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#95c65f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#95c65f" fill-opacity="0.3"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach McMarty 🇨🇦</span>
+                                    <span class="fw-bold">Coach McMarty <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">CAN</span></span>
                                     <span class="badge bg-success text-white font-monospace">800 ELO</span>
                                 </div>
                                 <div class="small text-muted">Enthusiastic Rookie Coach. Friendly and frequently blunders for you to spot!</div>
@@ -5572,10 +5642,12 @@
                         </div>
                         <!-- Coach Sophy (1200) -->
                         <div class="coach-option-card" data-persona="sophy">
-                            <div class="coach-option-avatar">👩‍🏫</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#749bbf" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" fill="#749bbf" fill-opacity="0.3"/><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Coach Sophy 🇬🇧</span>
+                                    <span class="fw-bold">Coach Sophy <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">GBR</span></span>
                                     <span class="badge bg-info text-dark font-monospace">1200 ELO</span>
                                 </div>
                                 <div class="small text-muted">Club Coach & Instructor. Teaches harmony, king safety, and pins.</div>
@@ -5583,10 +5655,12 @@
                         </div>
                         <!-- GM Mangoose (2200) -->
                         <div class="coach-option-card" data-persona="mangoose">
-                            <div class="coach-option-avatar">🧙‍♂️</div>
+                            <div class="coach-option-avatar">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ff7769" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" fill="#ff7769" fill-opacity="0.3"/><path d="M19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1z" fill="#ff7769"/></svg>
+                            </div>
                             <div class="coach-option-details">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">GM Mangoose 🇳🇴</span>
+                                    <span class="fw-bold">GM Mangoose <span class="badge bg-secondary bg-opacity-25 font-monospace text-muted ms-1" style="font-size:10px;">NOR</span></span>
                                     <span class="badge bg-danger text-white font-monospace">2200 ELO</span>
                                 </div>
                                 <div class="small text-muted">Endgame Wizard. Chilled-out master who rarely slips up.</div>
@@ -5599,9 +5673,9 @@
                         <span class="small text-muted">Play as:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorWhite" value="w" checked autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorWhite">White ⚪</label>
+                            <label class="btn btn-outline-light d-inline-flex align-items-center gap-2" for="colorWhite">White <span class="coach-color-dot dot-white"></span></label>
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorBlack" value="b" autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorBlack">Black ⚫</label>
+                            <label class="btn btn-outline-light d-inline-flex align-items-center gap-2" for="colorBlack">Black <span class="coach-color-dot dot-black"></span></label>
                         </div>
                     </div>
                 </div>
@@ -7317,7 +7391,7 @@
                     case 'brilliant': return '!!';
                     case 'great': return '!';
                     case 'best': return '★';
-                    case 'book': return '📖';
+                    case 'book': return '';
                     default: return '';
                 }
             }
@@ -8002,8 +8076,12 @@
                 const rawSlug = raw.replace(/\s+/g, '-');
                 annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
                 annotation.style.left = `${file * 12.5}%`;
-                annotation.style.top = `${rank * 12.5}%`;
-                annotation.setAttribute('data-symbol', symbol);
+                if (typeof symbol === 'string' && symbol.startsWith('<svg')) {
+                    if (norm === 'best') annotation.setAttribute('data-symbol', '★');
+                    else annotation.setAttribute('data-symbol', '');
+                } else {
+                    annotation.setAttribute('data-symbol', symbol);
+                }
                 
                 boardContainer.appendChild(annotation);
             }
@@ -9501,7 +9579,7 @@
                         'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
                         'great': '<span class="badge bg-primary me-1">! Great</span>',
                         'best': '<span class="badge bg-primary me-1">★ Best</span>',
-                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'book': '<span class="badge bg-secondary me-1"><i class="bi bi-journal-bookmark-fill me-1"></i>Book</span>',
                         'good': '<span class="badge bg-success me-1">✓ Good</span>',
                         'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
                     };
@@ -9554,7 +9632,7 @@
                                 : escapeHtml(baseSan);
                             const glyphBadge = glyph ? `<span class="coach-move-glyph ${qClass}">${glyph}</span>` : '';
                             const hintBadge = (m.isPlayer && m.hintsUsed > 0)
-                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}"><i class="bi bi-lightbulb-fill text-warning me-1"></i>${m.hintsUsed}</span>`
                                 : '';
                             const isActive = (coachCurrentMoveIndex === moveIndex);
                             return `<span class="coach-move-san ${isActive ? 'active' : ''} ${qClass}" data-coach-index="${moveIndex}" title="Move ${Math.floor(moveIndex / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
@@ -9636,7 +9714,7 @@
                             }
 
                             const hintBadge = (m.isPlayer && m.hintsUsed > 0)
-                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}">💡×${m.hintsUsed}</span>`
+                                ? `<span class="coach-hint-indicator" title="Used ${m.hintsUsed} hint${m.hintsUsed > 1 ? 's' : ''}"><i class="bi bi-lightbulb-fill text-warning me-1"></i>${m.hintsUsed}</span>`
                                 : '';
 
                             tickerHtml += `<button type="button" class="ticker-chip ${qClass} ${isActive ? 'active' : ''}" data-coach-index="${idx}" title="Move ${Math.floor(idx / 2) + 1}${isWhite ? '' : '...'}: ${escapeHtml(baseSan)}">
@@ -9946,7 +10024,7 @@
                         'brilliant': '<span class="badge bg-info text-dark me-1">!! Brilliant</span>',
                         'great': '<span class="badge bg-primary me-1">! Great</span>',
                         'best': '<span class="badge bg-primary me-1">★ Best</span>',
-                        'book': '<span class="badge bg-secondary me-1">📖 Book</span>',
+                        'book': '<span class="badge bg-secondary me-1"><i class="bi bi-journal-bookmark-fill me-1"></i>Book</span>',
                         'good': '<span class="badge bg-success me-1">✓ Good</span>',
                         'inaccuracy': '<span class="badge bg-warning text-dark me-1">?! Inaccuracy</span>'
                     };
@@ -10164,8 +10242,13 @@
                 const p = coachManager.getPersona();
                 const coachAvatarEmoji = document.getElementById('coachAvatarEmoji');
                 if (coachAvatarEmoji) {
-                    const emojis = { pikaru: '😎', mcmarty: '🤠', sophy: '👩‍🏫', mangoose: '🧙‍♂️' };
-                    coachAvatarEmoji.textContent = emojis[p.id] || '😎';
+                    const coachSvgs = {
+                        pikaru: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f7c631" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#f7c631" fill-opacity="0.3"/></svg>',
+                        mcmarty: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#95c65f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#95c65f" fill-opacity="0.3"/></svg>',
+                        sophy: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#749bbf" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" fill="#749bbf" fill-opacity="0.3"/><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>',
+                        mangoose: '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#ff7769" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="coach-svg"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" fill="#ff7769" fill-opacity="0.3"/><path d="M19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1z" fill="#ff7769"/></svg>'
+                    };
+                    coachAvatarEmoji.innerHTML = coachSvgs[p.id] || coachSvgs.pikaru;
                 }
 
                 coachCurrentMoveIndex = -1;
@@ -10650,14 +10733,20 @@
                 return ccNormalizeQuality(move.detailed_quality || move.quality);
             }
 
+            const CC_COACH_AVATAR_SVG = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e0e0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>';
+            const CC_GLYPH_SVGS = {
+                excellent: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.864.046C7.901-.145 7 .537 7 1.513V4.37a.5.5 0 0 1-.5.5c-.886 0-1.848.423-2.387 1.196L2.348 8.79a1.5 1.5 0 0 0-.348.97V14a1.5 1.5 0 0 0 1.5 1.5h6.75a2.5 2.5 0 0 0 2.45-1.988l1.2-5.4A2.5 2.5 0 0 0 11.45 5H9.5a.5.5 0 0 1-.5-.5V1.513c0-.62-.486-1.144-1.106-1.258zM1 9.5a1 1 0 0 1 1-1h.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H2a1 1 0 0 1-1-1v-4z"/></svg>',
+                book: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/></svg>'
+            };
+
             function ccGlyph(key) {
                 switch (key) {
                     case 'brilliant': return '!!';
                     case 'great': return '!';
                     case 'best': return '★';
-                    case 'excellent': return '👍';
+                    case 'excellent': return CC_GLYPH_SVGS.excellent;
                     case 'good': return '✓';
-                    case 'book': return '📖';
+                    case 'book': return CC_GLYPH_SVGS.book;
                     case 'inaccuracy': return '?!';
                     case 'mistake': return '?';
                     case 'miss': return '✕';
@@ -10691,12 +10780,12 @@
                 const best = (isBad && a.best_move) ? `<span class="cc-coach-best">Best was <b>${formatSanWithFigurines(a.best_move, move.is_white)}</b></span>` : '';
                 if (compact) {
                     return `<div class="cc-coach-line is-compact">
-                        <span class="cc-coach-avatar" aria-hidden="true">🧑‍🏫</span>
+                        <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                         <div class="cc-coach-text">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}${detail ? `<span class="cc-coach-detail"> ${detail}</span>` : ''}</div>
                     </div>`;
                 }
                 return `<div class="cc-coach-line">
-                    <span class="cc-coach-avatar" aria-hidden="true">🧑‍🏫</span>
+                    <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                     <div class="cc-coach-bubble q-${key}">
                         <div class="cc-coach-head">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}</div>
                         ${detail ? `<div class="cc-coach-detail">${detail}</div>` : ''}
@@ -10835,7 +10924,7 @@
 
                 body.innerHTML = `
                     <div class="cc-coach-line">
-                        <span class="cc-coach-avatar" aria-hidden="true">🧑‍🏫</span>
+                        <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                         <div class="cc-coach-bubble"><div class="cc-coach-detail">${ccHeadline(acc, counts, whiteName, blackName)}</div></div>
                     </div>
                     <div class="cc-review-graph">${ccEvalGraphSvg(list, 'ccEvalGraph')}</div>
@@ -10993,6 +11082,8 @@
             window.clearKingCheckmateBadges = clearKingCheckmateBadges;
             window.getCoachManager = () => coachManager;
             window.getCurrentAppMode = () => currentAppMode;
+            window.renderReviewSummary = renderReviewSummary;
+            window.openReviewSummary = openReviewSummary;
 
             // Also re-check when URL hash changes
             window.addEventListener('hashchange', function() {
