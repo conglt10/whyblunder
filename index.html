@@ -194,6 +194,21 @@
         .lic-btn:active {
             background: #1e1c18;
         }
+        .lic-lang-toggle {
+            border: 1px solid var(--lic-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .lic-btn-lang {
+            padding: 5px 9px;
+            border: 0;
+            border-radius: 0;
+            font-size: var(--lic-fs-sm);
+        }
+        .lic-btn-lang.active {
+            background: var(--lic-blue);
+            color: #fff;
+        }
         .lic-btn-primary {
             background: var(--lic-blue);
             color: #fff;
@@ -3823,11 +3838,11 @@
                 <span>WhyBlunder</span>
             </a>
             <div class="lic-mode-segmented-control" role="tablist">
-                <button type="button" class="lic-mode-btn active" id="tabModeAnalysis" data-mode="analysis" title="Full Game Analysis">
-                    <i class="bi bi-graph-up me-1"></i> Analysis
+                <button type="button" class="lic-mode-btn active" id="tabModeAnalysis" data-mode="analysis" title="Full Game Analysis" data-i18n-title="tip.fullAnalysis">
+                    <i class="bi bi-graph-up me-1"></i> <span data-i18n="chrome.analysis">Analysis</span>
                 </button>
-                <button type="button" class="lic-mode-btn" id="tabModeCoach" data-mode="coach" title="Play with Coach">
-                    <i class="bi bi-person-workspace me-1"></i> <span class="mode-btn-label-full">Play </span>Coach
+                <button type="button" class="lic-mode-btn" id="tabModeCoach" data-mode="coach" title="Play with Coach" data-i18n-title="tip.playWithCoach">
+                    <i class="bi bi-person-workspace me-1"></i> <span class="mode-btn-label-full" data-i18n="chrome.coachPlayPrefix">Play </span><span data-i18n="chrome.coach">Coach</span>
                 </button>
             </div>
         </div>
@@ -3841,34 +3856,39 @@
             </div>
             
             <div class="d-none align-items-center gap-2" id="coachHeaderGroup">
-                <button type="button" id="btnHeaderNewCoachGame" class="lic-btn lic-btn-primary" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="New Sparring Game">
+                <button type="button" id="btnHeaderNewCoachGame" class="lic-btn lic-btn-primary" data-bs-toggle="modal" data-bs-target="#coachSettingsModal" title="New Sparring Game" data-i18n-title="tip.newGame">
                     <i class="bi bi-plus-circle-fill"></i>
-                    <span>New</span>
+                    <span data-i18n="chrome.new">New</span>
                 </button>
             </div>
 
+            <div class="lic-lang-toggle btn-group btn-group-sm ms-1" role="group" aria-label="Language">
+                <button type="button" id="langBtnEN" class="lic-btn lic-btn-lang active" title="English">EN</button>
+                <button type="button" id="langBtnVI" class="lic-btn lic-btn-lang" title="Tiếng Việt">VI</button>
+            </div>
+
             <div class="btn-group" id="importGameGroup">
-                <button type="button" id="btnTogglePgn" class="lic-btn" data-action="toggle-pgn" title="Import game from Lichess or PGN">
+                <button type="button" id="btnTogglePgn" class="lic-btn" data-action="toggle-pgn" title="Import game from Lichess or PGN" data-i18n-title="tip.importGame">
                     <i class="bi bi-box-arrow-in-down"></i>
-                    <span>Import</span>
+                    <span data-i18n="chrome.import">Import</span>
                 </button>
-                <button type="button" class="lic-btn dropdown-toggle dropdown-toggle-split px-2" data-bs-toggle="dropdown" aria-expanded="false" title="Select import source">
-                    <span class="visually-hidden">Toggle Dropdown</span>
+                <button type="button" class="lic-btn dropdown-toggle dropdown-toggle-split px-2" data-bs-toggle="dropdown" aria-expanded="false" title="Select import source" data-i18n-title="tip.selectSource">
+                    <span class="visually-hidden" data-i18n="chrome.toggleDropdown">Toggle Dropdown</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end pgn-dropdown-menu" id="importDropdownMenu">
-                    <li><button type="button" class="dropdown-item" data-action="import-source" data-source="lichess"><i class="bi bi-link-45deg me-2 text-primary"></i>Lichess Game</button></li>
+                    <li><button type="button" class="dropdown-item" data-action="import-source" data-source="lichess"><i class="bi bi-link-45deg me-2 text-primary"></i><span data-i18n="chrome.lichessGame">Lichess Game</span></button></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><button type="button" class="dropdown-item" data-action="import-source" data-source="pgn"><i class="bi bi-file-earmark-text me-2 text-info"></i>Raw PGN Text</button></li>
+                    <li><button type="button" class="dropdown-item" data-action="import-source" data-source="pgn"><i class="bi bi-file-earmark-text me-2 text-info"></i><span data-i18n="chrome.rawPgn">Raw PGN Text</span></button></li>
                 </ul>
             </div>
 
             <!-- Mobile Overflow Button for Options Sheet -->
-            <button type="button" id="mobileBtnMore" class="lic-btn d-lg-none px-2" data-bs-toggle="offcanvas" data-bs-target="#mobileOptionsSheet" aria-controls="mobileOptionsSheet" title="More Options">
+            <button type="button" id="mobileBtnMore" class="lic-btn d-lg-none px-2" data-bs-toggle="offcanvas" data-bs-target="#mobileOptionsSheet" aria-controls="mobileOptionsSheet" title="More Options" data-i18n-title="chrome.moreOptions">
                 <i class="bi bi-three-dots-vertical"></i>
             </button>
 
             <!-- Mobile Header Collapse Button -->
-            <button type="button" id="btnToggleMobileHeader" class="lic-btn d-none d-lg-none px-2" title="Hide Header for extra screen space">
+            <button type="button" id="btnToggleMobileHeader" class="lic-btn d-none d-lg-none px-2" title="Hide Header for extra screen space" data-i18n-title="chrome.hideHeader">
                 <i class="bi bi-chevron-bar-up"></i>
             </button>
         </div>
@@ -3889,25 +3909,25 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-2">
-                    <label for="analysisDepth" class="small mb-0" style="color:var(--lic-text-secondary);">Depth:</label>
+                    <label for="analysisDepth" class="small mb-0" style="color:var(--lic-text-secondary);" data-i18n="chrome.depth">Depth:</label>
                     <select id="analysisDepth" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:28px; font-size:var(--lic-fs-sm);">
-                        <option value="14">Fast (14)</option>
-                        <option value="16">Standard (16)</option>
-                        <option value="18" selected>Deep (18)</option>
-                        <option value="20">Master (20)</option>
-                        <option value="22">Grandmaster (22)</option>
-                        <option value="24">Elite Search (24)</option>
+                        <option value="14" data-i18n="chrome.fast14">Fast (14)</option>
+                        <option value="16" data-i18n="chrome.standard16">Standard (16)</option>
+                        <option value="18" selected data-i18n="chrome.deep18">Deep (18)</option>
+                        <option value="20" data-i18n="chrome.master20">Master (20)</option>
+                        <option value="22" data-i18n="chrome.gm22">Grandmaster (22)</option>
+                        <option value="24" data-i18n="chrome.elite24">Elite Search (24)</option>
                     </select>
-                    <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:28px;min-width:28px;" title="Close Drawer"><i class="bi bi-x-lg"></i></button>
+                    <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:28px;min-width:28px;" title="Close Drawer" data-i18n-title="chrome.closeDrawer"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
 
             <!-- TAB PANEL 1: LICHESS -->
             <div id="tabPanelLichess" class="import-tab-panel">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste Lichess URL (e.g. <code>https://lichess.org/Qa7FJNk2</code>) or 8-char Game ID:</span>
+                    <span class="small" style="color:var(--lic-text-secondary);"><span data-i18n="chrome.lichessHelpPre">Paste Lichess URL (e.g.</span> <code>https://lichess.org/Qa7FJNk2</code><span data-i18n="chrome.lichessHelpPost">) or 8-char Game ID:</span></span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Examples:</span>
+                        <span class="small me-1" style="color:var(--lic-text-secondary);" data-i18n="chrome.examples">Examples:</span>
                         <button type="button" class="lic-chip-btn" data-sample="lichess"><i class="bi bi-link-45deg me-1"></i>Lichess Game</button>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
@@ -3922,9 +3942,9 @@
             <!-- TAB PANEL 2: PGN -->
             <div id="tabPanelPgn" class="import-tab-panel d-none">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste raw PGN notation:</span>
+                    <span class="small" style="color:var(--lic-text-secondary);" data-i18n="chrome.pgnHelp">Paste raw PGN notation:</span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Presets:</span>
+                        <span class="small me-1" style="color:var(--lic-text-secondary);" data-i18n="chrome.presets">Presets:</span>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
                         <button type="button" class="lic-chip-btn" data-sample="scholar">Scholar's Mate</button>
@@ -3937,10 +3957,10 @@
             <div class="d-flex align-items-center justify-content-between pt-1">
                 <div class="d-flex align-items-center gap-2">
                     <button id="analyzeBtn" class="lic-btn lic-btn-primary">
-                        <i class="bi bi-play-circle-fill"></i> Analyze Game
+                        <i class="bi bi-play-circle-fill"></i> <span data-i18n="chrome.analyzeGame">Analyze Game</span>
                     </button>
                     <button id="cancelAnalyzeBtn" class="lic-btn lic-btn-danger d-none">
-                        <i class="bi bi-x-circle"></i> Cancel
+                        <i class="bi bi-x-circle"></i> <span data-i18n="chrome.cancel">Cancel</span>
                     </button>
                 </div>
                 <span id="importSourceNotice" class="small text-muted font-monospace" style="font-size:11px;"></span>
@@ -3952,7 +3972,7 @@
     <div id="analysisProgressContainer" class="progress-strip">
         <div class="progress-strip-inner">
             <div class="d-flex justify-content-between align-items-center mb-1">
-                <span id="progressText" class="fw-medium text-info" style="font-size:var(--lic-fs-sm);">Initializing Stockfish WASM...</span>
+                <span id="progressText" class="fw-medium text-info" style="font-size:var(--lic-fs-sm);" data-i18n="status.init">Initializing Stockfish WASM...</span>
                 <span id="progressPercent" class="badge bg-info text-dark font-monospace" style="font-size:var(--lic-fs-sm);">0%</span>
             </div>
             <div class="progress" style="height: 4px; background: #141311;">
@@ -3971,14 +3991,14 @@
                     <div class="lic-panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-cpu text-info"></i>
-                            <span>Move Analysis</span>
+                            <span data-i18n="chrome.moveAnalysis">Move Analysis</span>
                         </div>
-                        <span id="analysisStatusBadge" class="badge bg-dark border border-secondary text-secondary" style="font-size:var(--lic-fs-sm);">READY</span>
+                        <span id="analysisStatusBadge" class="badge bg-dark border border-secondary text-secondary" style="font-size:var(--lic-fs-sm);" data-i18n="status.ready">READY</span>
                     </div>
                     <div class="lic-panel-body" id="moveExplanation">
                         <div class="diagnosis-empty">
                             <i class="bi bi-search"></i>
-                            <span>Select any move in the list to view engine diagnosis, tactical tags, threats, and alternative variations.</span>
+                            <span data-i18n="chrome.emptyDiagnosis">Select any move in the list to view engine diagnosis, tactical tags, threats, and alternative variations.</span>
                         </div>
                     </div>
                 </div>
@@ -4012,7 +4032,7 @@
                     <!-- Chessboard with Left Lichess Eval Bar -->
                     <div class="board-with-eval">
                         <!-- Lichess Vertical Eval Bar -->
-                        <div class="eval-gauge" id="evalGauge" title="Position Evaluation">
+                        <div class="eval-gauge" id="evalGauge" title="Position Evaluation" data-i18n-title="tip.eval">
                             <div class="eval-gauge-text top-text" id="evalGaugeTop"></div>
                             <div class="eval-gauge-white" id="evalGaugeWhite" style="height: 50%;"></div>
                             <div class="eval-gauge-text bottom-text" id="evalGaugeBottom"></div>
@@ -4030,19 +4050,19 @@
                     <!-- Return to Game Box (shown during/after alt line play) -->
                     <div id="variationBanner" class="variation-under-board d-none">
                         <div class="d-flex align-items-center gap-2 text-truncate me-1">
-                            <span id="variationTypeBadge" class="var-type-badge refutation">Punishing Line</span>
-                            <span id="variationStatusText" class="var-status-text text-truncate">Playing variation...</span>
+                            <span id="variationTypeBadge" class="var-type-badge refutation" data-i18n="chrome.punishingLine">Punishing Line</span>
+                            <span id="variationStatusText" class="var-status-text text-truncate" data-i18n="chrome.playingVariation">Playing variation...</span>
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
                             <div class="var-nav-btn-group" id="varNavBtnGroup">
-                                <button type="button" id="btnVarFirst" class="btn-lic-tool" title="Start of variation (Home)"><i class="bi bi-skip-start-fill"></i></button>
-                                <button type="button" id="btnVarPrev" class="btn-lic-tool" title="Previous variation move (←)"><i class="bi bi-chevron-left"></i></button>
-                                <button type="button" id="btnVarPlay" class="btn-lic-tool btn-lic-play" title="Play/Pause animation (P)"><i class="bi bi-play-fill" id="btnVarPlayIcon"></i></button>
-                                <button type="button" id="btnVarNext" class="btn-lic-tool" title="Next variation move (→)"><i class="bi bi-chevron-right"></i></button>
-                                <button type="button" id="btnVarLast" class="btn-lic-tool" title="End of variation (End)"><i class="bi bi-skip-end-fill"></i></button>
+                                <button type="button" id="btnVarFirst" class="btn-lic-tool" title="Start of variation (Home)" data-i18n-title="tip.varFirst"><i class="bi bi-skip-start-fill"></i></button>
+                                <button type="button" id="btnVarPrev" class="btn-lic-tool" title="Previous variation move (←)" data-i18n-title="tip.varPrev"><i class="bi bi-chevron-left"></i></button>
+                                <button type="button" id="btnVarPlay" class="btn-lic-tool btn-lic-play" title="Play/Pause animation (P)" data-i18n-title="tip.varPlay"><i class="bi bi-play-fill" id="btnVarPlayIcon"></i></button>
+                                <button type="button" id="btnVarNext" class="btn-lic-tool" title="Next variation move (→)" data-i18n-title="tip.varNext"><i class="bi bi-chevron-right"></i></button>
+                                <button type="button" id="btnVarLast" class="btn-lic-tool" title="End of variation (End)" data-i18n-title="tip.varLast"><i class="bi bi-skip-end-fill"></i></button>
                             </div>
-                            <button type="button" id="btnReturnMainLine" class="lic-btn lic-btn-primary py-1 px-2" title="Return to Game (Space or Esc)">
-                                <i class="bi bi-arrow-return-left"></i> <span class="d-none d-sm-inline ms-1">Return</span>
+                            <button type="button" id="btnReturnMainLine" class="lic-btn lic-btn-primary py-1 px-2" title="Return to Game (Space or Esc)" data-i18n-title="chrome.returnGame">
+                                <i class="bi bi-arrow-return-left"></i> <span class="d-none d-sm-inline ms-1" data-i18n="chrome.return">Return</span>
                             </button>
                         </div>
                     </div>
@@ -4083,30 +4103,30 @@
                     <!-- Move List Header -->
                     <div class="lic-panel-header">
                         <div class="d-flex align-items-center gap-2">
-                            <span>Moves</span>
+                            <span data-i18n="chrome.moves">Moves</span>
                             <span id="moveCountSummary" class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size:var(--lic-fs-sm);">0 moves</span>
                             <span id="keyMomentsSummary" class="badge bg-warning bg-opacity-25 text-warning font-monospace d-none" style="font-size:var(--lic-fs-sm);">0 moments</span>
                         </div>
-                        <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)"><i class="bi bi-arrow-left-right me-1"></i> Flip</button>
+                        <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)" data-i18n-title="tip.flipBoardT"><i class="bi bi-arrow-left-right me-1"></i> <span data-i18n="chrome.flip">Flip</span></button>
                     </div>
 
                     <!-- Scrollable 2-Column Move Notation Sheet -->
                     <div class="analysis-container" id="analysisContainer">
                         <div class="text-center text-muted py-5 small px-3">
-                            <p class="mb-3">Import a game from Lichess or paste PGN to begin full analysis.</p>
+                            <p class="mb-3" data-i18n="chrome.importPrompt">Import a game from Lichess or paste PGN to begin full analysis.</p>
                             <button type="button" id="btnOpenPgnInput" class="lic-btn lic-btn-primary" data-action="open-pgn">
-                                <i class="bi bi-box-arrow-in-down"></i> Import
+                                <i class="bi bi-box-arrow-in-down"></i> <span data-i18n="chrome.import">Import</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Bottom Variation Comparison Bar (Lichess Pill) -->
                     <div class="variation-preview-bar d-none" id="variationPreviewBar">
-                        <button type="button" class="var-pill var-pill-played" id="pillPlayedMove" title="Return to played move">
+                        <button type="button" class="var-pill var-pill-played" id="pillPlayedMove" title="Return to played move" data-i18n-title="tip.returnPlayed">
                             <span class="var-san" id="pillPlayedSan">5. O-O?</span>
                             <span class="var-eval" id="pillPlayedEval">+1.1</span>
                         </button>
-                        <button type="button" class="var-pill var-pill-better" id="pillBetterMove" title="Explore recommended line">
+                        <button type="button" class="var-pill var-pill-better" id="pillBetterMove" title="Explore recommended line" data-i18n-title="tip.exploreLine">
                             <span class="var-san" id="pillBetterSan">▶ 5. Nxe5</span>
                             <span class="var-eval" id="pillBetterEval">-0.2</span>
                         </button>
@@ -4115,25 +4135,25 @@
                     <!-- Docked Lichess Move Navigation Controller (Flat) -->
                     <div class="lic-nav-toolbar" id="boardToolbar">
                         <div class="nav-btn-group">
-                            <button id="btnFirst" class="btn-lic-tool" title="First Move (Home)"><i class="bi bi-skip-start-fill"></i></button>
-                            <button id="btnPrev" class="btn-lic-tool" title="Previous Move (←)"><i class="bi bi-chevron-left"></i></button>
-                            <button id="btnPrevKey" class="btn-lic-tool" title="Previous Key Moment (P)"><i class="bi bi-rewind-fill"></i></button>
-                            <button id="btnNextKey" class="btn-lic-tool btn-lic-key-next" title="Next Key Moment (Space or N)">
+                            <button id="btnFirst" class="btn-lic-tool" title="First Move (Home)" data-i18n-title="tip.firstMove"><i class="bi bi-skip-start-fill"></i></button>
+                            <button id="btnPrev" class="btn-lic-tool" title="Previous Move (←)" data-i18n-title="tip.prevMove"><i class="bi bi-chevron-left"></i></button>
+                            <button id="btnPrevKey" class="btn-lic-tool" title="Previous Key Moment (P)" data-i18n-title="tip.prevKey"><i class="bi bi-rewind-fill"></i></button>
+                            <button id="btnNextKey" class="btn-lic-tool btn-lic-key-next" title="Next Key Moment (Space or N)" data-i18n-title="tip.nextKey">
                                 <i class="bi bi-fast-forward-fill text-warning key-icon"></i>
-                                <span class="d-none d-sm-inline ms-1 fw-bold key-label">Next</span>
+                                <span class="d-none d-sm-inline ms-1 fw-bold key-label" data-i18n="chrome.next">Next</span>
                                 <span id="keyMomentBadge" class="key-moment-counter-badge ms-1 d-none">0/0</span>
                             </button>
-                            <button id="btnNext" class="btn-lic-tool" title="Next Move (→)"><i class="bi bi-chevron-right"></i></button>
-                            <button id="btnLast" class="btn-lic-tool" title="Last Move (End)"><i class="bi bi-skip-end-fill"></i></button>
+                            <button id="btnNext" class="btn-lic-tool" title="Next Move (→)" data-i18n-title="tip.nextMove"><i class="bi bi-chevron-right"></i></button>
+                            <button id="btnLast" class="btn-lic-tool" title="Last Move (End)" data-i18n-title="tip.lastMove"><i class="bi bi-skip-end-fill"></i></button>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small d-none d-sm-inline" style="font-size:var(--lic-fs-sm);">Speed:</span>
+                            <span class="text-muted small d-none d-sm-inline" style="font-size:var(--lic-fs-sm);" data-i18n="chrome.speed">Speed:</span>
                             <select id="speedControl" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:28px; font-size:var(--lic-fs-sm);">
-                                <option value="0">Instant (Jump)</option>
-                                <option value="2000">Slow</option>
-                                <option value="1000" selected>Normal</option>
-                                <option value="500">Fast</option>
-                                <option value="200">Very Fast</option>
+                                <option value="0" data-i18n="chrome.instant">Instant (Jump)</option>
+                                <option value="2000" data-i18n="chrome.slow">Slow</option>
+                                <option value="1000" selected data-i18n="chrome.normal">Normal</option>
+                                <option value="500" data-i18n="chrome.fast">Fast</option>
+                                <option value="200" data-i18n="chrome.veryFast">Very Fast</option>
                             </select>
                         </div>
                     </div>
@@ -4147,13 +4167,13 @@
                     <div class="coach-panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-person-workspace text-info"></i>
-                            <span class="coach-header-title">Play Coach</span>
+                            <span class="coach-header-title" data-i18n="chrome.playCoach">Play Coach</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button type="button" id="btnCoachSound" class="coach-icon-btn" title="Toggle Sound">
+                            <button type="button" id="btnCoachSound" class="coach-icon-btn" title="Toggle Sound" data-i18n-title="tip.toggleSound">
                                 <i class="bi bi-volume-up-fill" id="coachSoundIcon"></i>
                             </button>
-                            <button type="button" id="btnCoachSettings" class="coach-icon-btn" title="Coach Persona & Settings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
+                            <button type="button" id="btnCoachSettings" class="coach-icon-btn" title="Coach Persona & Settings" data-i18n-title="tip.coachSettings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
                                 <i class="bi bi-gear-fill"></i>
                             </button>
                         </div>
@@ -4173,11 +4193,11 @@
                             </div>
                             <!-- Blunder Takeback Actions -->
                             <div class="coach-blunder-actions d-none" id="coachBlunderCard">
-                                <button type="button" id="btnCoachRetryMove" class="btn-coach-blunder-retry pulse-takeback" title="Take back and find a better move">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Take Back & Try Again
+                                <button type="button" id="btnCoachRetryMove" class="btn-coach-blunder-retry pulse-takeback" title="Take back and find a better move" data-i18n-title="tip.takeBack">
+                                    <i class="bi bi-arrow-counterclockwise"></i> <span data-i18n="chrome.takeBack">Take Back & Try Again</span>
                                 </button>
-                                <button type="button" id="btnCoachContinueAnyway" class="btn-coach-blunder-continue" title="Continue playing this position anyway">
-                                    Play On <i class="bi bi-play-fill"></i>
+                                <button type="button" id="btnCoachContinueAnyway" class="btn-coach-blunder-continue" title="Continue playing this position anyway" data-i18n-title="tip.playOn">
+                                    <span data-i18n="chrome.playOn">Play On</span> <i class="bi bi-play-fill"></i>
                                 </button>
                             </div>
                         </div>
@@ -4186,11 +4206,11 @@
                     <!-- Opening Info Strip -->
                     <div class="coach-opening-bar">
                         <div class="d-flex align-items-center gap-2 text-truncate">
-                            <span class="coach-opening-name text-truncate" id="coachOpeningName">Standard Game</span>
+                            <span class="coach-opening-name text-truncate" id="coachOpeningName" data-i18n="chrome.standardGame">Standard Game</span>
                             <span class="badge bg-secondary bg-opacity-25 text-secondary font-monospace" id="coachOpeningEco" style="font-size:11px;">A00</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button type="button" id="btnCoachFlip" class="coach-mini-tool-btn" title="Flip Board">
+                            <button type="button" id="btnCoachFlip" class="coach-mini-tool-btn" title="Flip Board" data-i18n-title="tip.flipBoardT">
                                 <i class="bi bi-arrow-left-right"></i>
                             </button>
                         </div>
@@ -4201,7 +4221,7 @@
                         <!-- Desktop View: Normal 2-Column Move Sheet -->
                         <div class="coach-moves-sheet" id="coachMovesSheet">
                             <div class="coach-moves-table" id="coachMovesTable">
-                                <div class="text-center text-muted py-4 small">Game ready. Make a move on the board!</div>
+                                <div class="text-center text-muted py-4 small" data-i18n="chrome.gameReady">Game ready. Make a move on the board!</div>
                             </div>
                         </div>
 
@@ -4211,7 +4231,7 @@
                                 <i class="bi bi-chevron-left"></i>
                             </button>
                             <div class="ticker-scroll" id="coachTickerScroll">
-                                <div class="ticker-empty-text text-muted small px-2">Game ready. Make a move!</div>
+                                <div class="ticker-empty-text text-muted small px-2" data-i18n="chrome.gameReadyShort">Game ready. Make a move!</div>
                             </div>
                             <button type="button" class="ticker-nav-btn ticker-nav-right" id="coachTickerNavRight" aria-label="Next move">
                                 <i class="bi bi-chevron-right"></i>
@@ -4221,17 +4241,17 @@
 
                     <!-- Action Bar Matching Screenshot -->
                     <div class="coach-action-bar" id="coachActionBar">
-                        <button type="button" id="btnCoachResign" class="coach-action-btn btn-coach-resign" title="Resign / New Game">
+                        <button type="button" id="btnCoachResign" class="coach-action-btn btn-coach-resign" title="Resign / New Game" data-i18n-title="tip.resign">
                             <i class="bi bi-flag-fill"></i>
                         </button>
-                        <button type="button" id="btnCoachHint" class="coach-action-btn btn-coach-hint" title="Ask Coach for a Hint">
+                        <button type="button" id="btnCoachHint" class="coach-action-btn btn-coach-hint" title="Ask Coach for a Hint" data-i18n-title="tip.askHint">
                             <i class="bi bi-lightbulb-fill"></i>
                             <span id="coachHintBadge" class="hint-badge d-none"></span>
                         </button>
-                        <button type="button" id="btnCoachReview" class="coach-action-btn btn-coach-review d-none" title="Game Review (Analyze in Analysis Mode)">
-                            <i class="bi bi-graph-up-arrow me-1"></i> Game Review
+                        <button type="button" id="btnCoachReview" class="coach-action-btn btn-coach-review d-none" title="Game Review (Analyze in Analysis Mode)" data-i18n-title="tip.review">
+                            <i class="bi bi-graph-up-arrow me-1"></i> <span data-i18n="chrome.gameReview">Game Review</span>
                         </button>
-                        <button type="button" id="btnCoachTakeback" class="coach-action-btn btn-coach-takeback" title="Takeback Move">
+                        <button type="button" id="btnCoachTakeback" class="coach-action-btn btn-coach-takeback" title="Takeback Move" data-i18n-title="tip.takeback">
                             <i class="bi bi-arrow-counterclockwise"></i>
                         </button>
                     </div>
@@ -4242,13 +4262,13 @@
     </main>
 
     <!-- Large Mobile Move Navigation Controller (Docked below screen) -->
-    <nav class="mobile-nav-toolbar d-lg-none" id="mobileNavToolbar" aria-label="Mobile Game Navigation">
+    <nav class="mobile-nav-toolbar d-lg-none" id="mobileNavToolbar" aria-label="Mobile Game Navigation" data-i18n-aria="tip.mobileNav">
         <!-- ANALYSIS MODE (5 slots) -->
-        <button type="button" id="mobileBtnMovesSheet" class="mobile-nav-tool-btn mobile-slot-analysis" title="Full Move Sheet" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
+        <button type="button" id="mobileBtnMovesSheet" class="mobile-nav-tool-btn mobile-slot-analysis" title="Full Move Sheet" data-i18n-title="tip.fullSheet" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
             <i class="bi bi-list-nested"></i>
-            <span class="mobile-tool-label">Moves</span>
+            <span class="mobile-tool-label" data-i18n="chrome.movesLabel">Moves</span>
         </button>
-        <button type="button" id="mobileBtnPrev" class="mobile-nav-arrow-btn mobile-slot-analysis" title="Previous Move" aria-label="Previous Move">
+        <button type="button" id="mobileBtnPrev" class="mobile-nav-arrow-btn mobile-slot-analysis" title="Previous Move" data-i18n-title="tip.prevMove" aria-label="Previous Move" data-i18n-aria="tip.prevMove">
             <i class="bi bi-chevron-left"></i>
         </button>
         <div class="mobile-nav-capsule mobile-slot-analysis" id="mobileNavCapsule" role="button" tabindex="0" title="Tap to expand analysis">
@@ -4257,50 +4277,50 @@
                 <span class="mobile-nav-move-count" id="mobileNavCount">0 of 0</span>
             </div>
         </div>
-        <button type="button" id="mobileBtnNext" class="mobile-nav-arrow-btn mobile-nav-next-btn mobile-slot-analysis" title="Next Move" aria-label="Next Move">
+        <button type="button" id="mobileBtnNext" class="mobile-nav-arrow-btn mobile-nav-next-btn mobile-slot-analysis" title="Next Move" data-i18n-title="tip.nextMove" aria-label="Next Move" data-i18n-aria="tip.nextMove">
             <i class="bi bi-chevron-right"></i>
         </button>
-        <button type="button" id="mobileBtnKey" class="mobile-nav-tool-btn mobile-nav-key-btn mobile-slot-analysis" title="Next Key Moment">
+        <button type="button" id="mobileBtnKey" class="mobile-nav-tool-btn mobile-nav-key-btn mobile-slot-analysis" title="Next Key Moment" data-i18n-title="tip.nextKey">
             <i class="bi bi-lightning-charge-fill text-warning"></i>
             <span id="mobileKeyBadge" class="mobile-key-badge d-none">0/0</span>
         </button>
 
         <!-- COACH MODE (5 slots) -->
-        <button type="button" id="mobileCoachBtnResign" class="mobile-nav-tool-btn mobile-slot-coach" title="Resign Game">
+        <button type="button" id="mobileCoachBtnResign" class="mobile-nav-tool-btn mobile-slot-coach" title="Resign Game" data-i18n-title="tip.resign">
             <i class="bi bi-flag-fill text-danger"></i>
-            <span class="mobile-tool-label">Resign</span>
+            <span class="mobile-tool-label" data-i18n="chrome.resign">Resign</span>
         </button>
-        <button type="button" id="mobileCoachBtnTakeback" class="mobile-nav-tool-btn mobile-slot-coach" title="Undo Move">
+        <button type="button" id="mobileCoachBtnTakeback" class="mobile-nav-tool-btn mobile-slot-coach" title="Undo Move" data-i18n-title="tip.takeback">
             <i class="bi bi-arrow-counterclockwise"></i>
-            <span class="mobile-tool-label">Undo</span>
+            <span class="mobile-tool-label" data-i18n="chrome.undo">Undo</span>
         </button>
         <div class="mobile-slot-coach w-100 d-flex justify-content-center">
-            <button type="button" id="mobileCoachBtnHint" class="lic-btn lic-btn-success w-100 px-2 py-1 fw-semibold d-flex align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Ask Coach for a Hint">
+            <button type="button" id="mobileCoachBtnHint" class="lic-btn lic-btn-success w-100 px-2 py-1 fw-semibold d-flex align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Ask Coach for a Hint" data-i18n-title="tip.askHint">
                 <i class="bi bi-lightbulb-fill"></i>
-                <span>Hint</span>
+                <span data-i18n="chrome.hint">Hint</span>
             </button>
-            <button type="button" id="mobileCoachBtnReview" class="btn-coach-review w-100 px-2 py-1 fw-semibold d-none align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Game Review">
+            <button type="button" id="mobileCoachBtnReview" class="btn-coach-review w-100 px-2 py-1 fw-semibold d-none align-items-center justify-content-center gap-1" style="height:var(--m-tap);border-radius:var(--m-radius);" title="Game Review" data-i18n-title="tip.review">
                 <i class="bi bi-graph-up-arrow"></i>
-                <span>Review</span>
+                <span data-i18n="chrome.review">Review</span>
             </button>
         </div>
-        <button type="button" id="mobileCoachBtnMoves" class="mobile-nav-tool-btn mobile-slot-coach" title="Move List" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
+        <button type="button" id="mobileCoachBtnMoves" class="mobile-nav-tool-btn mobile-slot-coach" title="Move List" data-i18n-title="tip.moveList" data-bs-toggle="offcanvas" data-bs-target="#mobileMovesOffcanvas" aria-controls="mobileMovesOffcanvas">
             <i class="bi bi-list-nested"></i>
-            <span class="mobile-tool-label">Moves</span>
+            <span class="mobile-tool-label" data-i18n="chrome.movesLabel">Moves</span>
         </button>
-        <button type="button" id="mobileCoachBtnSettings" class="mobile-nav-tool-btn mobile-slot-coach" title="Coach Settings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
+        <button type="button" id="mobileCoachBtnSettings" class="mobile-nav-tool-btn mobile-slot-coach" title="Coach Settings" data-i18n-title="tip.coachSettings" data-bs-toggle="modal" data-bs-target="#coachSettingsModal">
             <i class="bi bi-gear-fill"></i>
-            <span class="mobile-tool-label">Coach</span>
+            <span class="mobile-tool-label" data-i18n="chrome.coachLabel">Coach</span>
         </button>
     </nav>
 
     <!-- Mobile Bottom Sheet (Overlay for Move Analysis / Coach Details) -->
-    <div class="m-sheet" id="mobileSheet" data-state="peek" aria-label="Details">
+    <div class="m-sheet" id="mobileSheet" data-state="peek" aria-label="Details" data-i18n-aria="chrome.details">
         <div class="m-sheet-grip" id="mobileSheetGrip" role="button" tabindex="0"
              aria-expanded="false" aria-controls="mobileSheetBody">
             <span class="m-sheet-handle" aria-hidden="true"></span>
             <div class="m-sheet-summary" id="mobileSheetSummary">
-                <span class="text-muted">Select any move to view analysis</span>
+                <span class="text-muted" data-i18n="chrome.selectMove">Select any move to view analysis</span>
             </div>
             <i class="bi bi-chevron-up m-sheet-chevron" aria-hidden="true"></i>
         </div>
@@ -4313,29 +4333,29 @@
         <div class="offcanvas-header py-2 px-3 border-bottom border-secondary border-opacity-25">
             <div class="d-flex align-items-center gap-2">
                 <h6 class="offcanvas-title fw-bold mb-0 text-light" id="mobileMovesOffcanvasLabel">
-                    <i class="bi bi-list-nested me-1 text-info"></i> Full Game Moves
+                    <i class="bi bi-list-nested me-1 text-info"></i> <span data-i18n="chrome.fullMoves">Full Game Moves</span>
                 </h6>
                 <span id="mobileSheetMoveCount" class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size:var(--lic-fs-sm);">0 moves</span>
             </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body p-2" id="mobileMovesOffcanvasBody">
-            <div class="text-center text-muted py-4 small">Load a game to see full move sheet.</div>
+            <div class="text-center text-muted py-4 small" data-i18n="chrome.loadSheet">Load a game to see full move sheet.</div>
         </div>
     </div>
 
     <!-- Mobile Options Sheet (Offcanvas bottom) -->
     <div class="offcanvas offcanvas-bottom mobile-options-sheet" tabindex="-1" id="mobileOptionsSheet" aria-labelledby="mobileOptionsSheetLabel">
         <div class="offcanvas-header py-2 px-3 border-bottom border-secondary border-opacity-25">
-            <h6 class="offcanvas-title fw-bold mb-0 text-light" id="mobileOptionsSheetLabel">
-                <i class="bi bi-gear-fill me-1 text-info"></i> Options
-            </h6>
+                <h6 class="offcanvas-title fw-bold mb-0 text-light" id="mobileOptionsSheetLabel">
+                    <i class="bi bi-gear-fill me-1 text-info"></i> <span data-i18n="chrome.options">Options</span>
+                </h6>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body p-3">
             <div class="d-flex flex-column gap-3">
                 <div class="mobile-opt-row d-flex align-items-center justify-content-between">
-                    <span class="d-flex align-items-center gap-2"><i class="bi bi-cpu text-info"></i> Analysis Depth</span>
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-cpu text-info"></i> <span data-i18n="chrome.analysisDepth">Analysis Depth</span></span>
                     <select id="mobileAnalysisDepth" class="form-select form-select-sm select-dark" style="width: 140px;">
                         <option value="14">Fast (14)</option>
                         <option value="16">Standard (16)</option>
@@ -4346,7 +4366,7 @@
                     </select>
                 </div>
                 <div class="mobile-opt-row d-flex align-items-center justify-content-between">
-                    <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-info"></i> Animation Speed</span>
+                    <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-info"></i> <span data-i18n="chrome.animSpeed">Animation Speed</span></span>
                     <select id="mobileAnimationSpeed" class="form-select form-select-sm select-dark" style="width: 140px;">
                         <option value="2000">Slow (2s)</option>
                         <option value="1000" selected>Normal (1s)</option>
@@ -4354,13 +4374,13 @@
                     </select>
                 </div>
                 <button type="button" id="mobileBtnFlip" class="lic-btn w-100 justify-content-start py-2 px-3" style="min-height:var(--m-tap);">
-                    <i class="bi bi-arrow-left-right me-2 text-info"></i> Flip Board
+                    <i class="bi bi-arrow-left-right me-2 text-info"></i> <span data-i18n="chrome.flipBoard">Flip Board</span>
                 </button>
                 <button type="button" id="mobileBtnImportDrawer" class="lic-btn w-100 justify-content-start py-2 px-3" data-bs-dismiss="offcanvas" style="min-height:var(--m-tap);">
-                    <i class="bi bi-box-arrow-in-down me-2 text-info"></i> Import PGN / Lichess
+                    <i class="bi bi-box-arrow-in-down me-2 text-info"></i> <span data-i18n="chrome.importPgnLichess">Import PGN / Lichess</span>
                 </button>
                 <button type="button" id="mobileBtnHideHeaderOpt" class="lic-btn w-100 justify-content-start py-2 px-3" data-bs-dismiss="offcanvas" style="min-height:var(--m-tap);">
-                    <i class="bi bi-chevron-bar-up me-2 text-info"></i> Hide Header Bar
+                    <i class="bi bi-chevron-bar-up me-2 text-info"></i> <span data-i18n="chrome.hideHeaderBar">Hide Header Bar</span>
                 </button>
             </div>
         </div>
@@ -4371,7 +4391,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary text-light">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title" id="coachSettingsModalLabel"><i class="bi bi-person-workspace text-info me-2"></i>Choose Your Coach</h5>
+                    <h5 class="modal-title" id="coachSettingsModalLabel"><i class="bi bi-person-workspace text-info me-2"></i><span data-i18n="chrome.chooseCoach">Choose Your Coach</span></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-3">
@@ -4384,7 +4404,7 @@
                                     <span class="fw-bold">Coach Pikaru 🇺🇸</span>
                                     <span class="badge bg-warning text-dark font-monospace">1600 ELO</span>
                                 </div>
-                                <div class="small text-muted">Speed & Passed Pawn Prodigy. Sharp, witty, and tactical.</div>
+                                <div class="small text-muted" data-i18n="coach.card.pikaru">Speed & Passed Pawn Prodigy. Sharp, witty, and tactical.</div>
                             </div>
                         </div>
                         <!-- Coach McMarty (800) -->
@@ -4395,7 +4415,7 @@
                                     <span class="fw-bold">Coach McMarty 🇨🇦</span>
                                     <span class="badge bg-success text-white font-monospace">800 ELO</span>
                                 </div>
-                                <div class="small text-muted">Enthusiastic Rookie Coach. Friendly and frequently blunders for you to spot!</div>
+                                <div class="small text-muted" data-i18n="coach.card.mcmarty">Enthusiastic Rookie Coach. Friendly and frequently blunders for you to spot!</div>
                             </div>
                         </div>
                         <!-- Coach Sophy (1200) -->
@@ -4406,7 +4426,7 @@
                                     <span class="fw-bold">Coach Sophy 🇬🇧</span>
                                     <span class="badge bg-info text-dark font-monospace">1200 ELO</span>
                                 </div>
-                                <div class="small text-muted">Club Coach & Instructor. Teaches harmony, king safety, and pins.</div>
+                                <div class="small text-muted" data-i18n="coach.card.sophy">Club Coach & Instructor. Teaches harmony, king safety, and pins.</div>
                             </div>
                         </div>
                         <!-- GM Mangoose (2200) -->
@@ -4417,25 +4437,25 @@
                                     <span class="fw-bold">GM Mangoose 🇳🇴</span>
                                     <span class="badge bg-danger text-white font-monospace">2200 ELO</span>
                                 </div>
-                                <div class="small text-muted">Endgame Wizard. Chilled-out master who rarely slips up.</div>
+                                <div class="small text-muted" data-i18n="coach.card.mangoose">Endgame Wizard. Chilled-out master who rarely slips up.</div>
                             </div>
                         </div>
                     </div>
 
                     <hr class="border-secondary my-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="small text-muted">Play as:</span>
+                        <span class="small text-muted" data-i18n="chrome.playAs">Play as:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorWhite" value="w" checked autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorWhite">White ⚪</label>
+                            <label class="btn btn-outline-light" for="colorWhite" data-i18n="chrome.white">White ⚪</label>
                             <input type="radio" class="btn-check" name="coachPlayerColor" id="colorBlack" value="b" autocomplete="off">
-                            <label class="btn btn-outline-light" for="colorBlack">Black ⚫</label>
+                            <label class="btn btn-outline-light" for="colorBlack" data-i18n="chrome.black">Black ⚫</label>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnStartCoachGame" data-bs-dismiss="modal">Start New Game</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-i18n="chrome.cancel">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnStartCoachGame" data-bs-dismiss="modal" data-i18n="chrome.startGame">Start New Game</button>
                 </div>
             </div>
         </div>
@@ -4446,6 +4466,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/chess.min.js"></script>
     <script src="js/chessboard-1.0.0.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/chess-evaluator.js"></script>
     <script src="js/opening-detector.js"></script>
     <script src="js/situation-recognizer.js"></script>
@@ -4513,7 +4534,89 @@
             const btnVarLast = document.getElementById('btnVarLast');
             const btnReturnMainLine = document.getElementById('btnReturnMainLine');
             const analysisStatusBadge = document.getElementById('analysisStatusBadge');
-            
+
+            // ---- Bilingual UI (EN/VI): global helper + language state ----
+            // Manual toggle only, defaults to English every visit (in-memory).
+            let siteLang = 'en';
+            function getI18nMod() {
+                if (typeof WhyBlunderI18N !== 'undefined') return WhyBlunderI18N;
+                if (typeof window !== 'undefined' && window.WhyBlunderI18N) return window.WhyBlunderI18N;
+                return null;
+            }
+            function L(key, enDefault, params) {
+                const I18N = getI18nMod();
+                if (I18N && typeof I18N.t === 'function') return I18N.t(key, enDefault, params, siteLang);
+                if (typeof enDefault === 'string' && params) {
+                    return enDefault.replace(/\{(\w+)\}/g, function(m, n) {
+                        return (params[n] !== undefined && params[n] !== null) ? String(params[n]) : m;
+                    });
+                }
+                return enDefault;
+            }
+            function refreshLangToggleButtons() {
+                const btnEN = document.getElementById('langBtnEN');
+                const btnVI = document.getElementById('langBtnVI');
+                if (btnEN) btnEN.classList.toggle('active', siteLang === 'en');
+                if (btnVI) btnVI.classList.toggle('active', siteLang === 'vi');
+            }
+            function refreshDynamicLangLabels() {
+                // Move counts (guarded: only when a game is loaded)
+                try {
+                    if (typeof movesList !== 'undefined' && movesList && movesList.length) {
+                        if (moveCountSummary) moveCountSummary.textContent = L('chrome.movesCount', `${movesList.length} moves`, { n: movesList.length });
+                        const mCount = document.getElementById('mobileSheetMoveCount');
+                        if (mCount) mCount.textContent = L('chrome.movesCount', `${movesList.length} moves`, { n: movesList.length });
+                        if (typeof updateKeyMomentBadge === 'function') updateKeyMomentBadge();
+                    }
+                } catch (e) { /* ignore */ }
+                // Variation banner type label
+                try {
+                    if (variationTypeBadge && variationBanner && !variationBanner.classList.contains('d-none')) {
+                        const isRef = variationTypeBadge.classList.contains('refutation');
+                        variationTypeBadge.textContent = isRef
+                            ? L('chrome.punishingLine', 'Punishing Line')
+                            : L('chrome.recommendedLine', 'Recommended Line');
+                    }
+                } catch (e) { /* ignore */ }
+                // Coach opening default label (only when untouched default)
+                try {
+                    const opNameEl = document.getElementById('coachOpeningName');
+                    if (opNameEl) {
+                        const cur = opNameEl.textContent.trim();
+                        if (cur === 'Standard Game' || cur === 'Ván tiêu chuẩn') {
+                            opNameEl.textContent = L('chrome.standardGame', 'Standard Game');
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+                // Re-render current move explanation card in the new language
+                // when cached analysis data exists for it.
+                try {
+                    if (typeof currentMoveIndex !== 'undefined' && currentMoveIndex >= 0 &&
+                        typeof showMoveExplanation === 'function') {
+                        showMoveExplanation(currentMoveIndex);
+                    }
+                } catch (e) { /* ignore */ }
+            }
+            function setSiteLang(lang) {
+                if (lang !== 'en' && lang !== 'vi') return siteLang;
+                siteLang = lang;
+                const I18N = getI18nMod();
+                if (I18N && typeof I18N.setLang === 'function') {
+                    try { I18N.setLang(lang); } catch (e) { /* ignore */ }
+                    try { I18N.applyStatic(document); } catch (e) { /* ignore */ }
+                }
+                try {
+                    if (typeof coachManager !== 'undefined' && coachManager && typeof coachManager.setLang === 'function') {
+                        coachManager.setLang(lang);
+                    }
+                } catch (e) { /* coach not started yet */ }
+                refreshLangToggleButtons();
+                refreshDynamicLangLabels();
+                try {
+                    window.dispatchEvent(new CustomEvent('whyblunder:lang', { detail: { lang } }));
+                } catch (e) { /* ignore */ }
+                return siteLang;
+            }
             // Player Strip DOM elements
             const topPlayerName = document.getElementById('topPlayerName');
             const topPlayerMeta = document.getElementById('topPlayerMeta');
@@ -5640,12 +5743,12 @@
 
                         if (analysisStatusBadge) {
                             analysisStatusBadge.className = 'badge bg-success text-light';
-                            analysisStatusBadge.textContent = 'CACHED';
+                            analysisStatusBadge.textContent = L('status.cachedBadge', 'CACHED');
                         }
                         analysisProgressContainer.classList.add('show');
                         progressBar.style.width = '100%';
                         progressPercent.textContent = '100%';
-                        progressText.innerHTML = `<i class="bi bi-lightning-charge-fill text-warning me-1"></i>Loaded from local cache (${sourceId || 'PGN'}, Depth ${cached.depth || analysisDepth})`;
+                        progressText.innerHTML = `<i class="bi bi-lightning-charge-fill text-warning me-1"></i>${L('status.cached', `Loaded from local cache (${sourceId || 'PGN'}, Depth ${cached.depth || analysisDepth})`, { n: cached.depth || analysisDepth })}`;
                         setTimeout(() => {
                             analysisProgressContainer.classList.remove('show');
                         }, 800);
@@ -5660,10 +5763,10 @@
                         analysisProgressContainer.classList.add('show');
                         progressBar.style.width = '0%';
                         progressPercent.textContent = '0%';
-                        progressText.textContent = `Fetching game from Lichess (${lichessId})...`;
+                        progressText.textContent = L('status.fetching', `Fetching game from Lichess (${lichessId})...`, { id: lichessId });
                         if (analysisStatusBadge) {
                             analysisStatusBadge.className = 'badge bg-info text-dark';
-                            analysisStatusBadge.textContent = 'FETCHING...';
+                            analysisStatusBadge.textContent = L('status.fetchingBadge', 'FETCHING...');
                         }
                         const fetchedPgn = await fetchLichessGamePgn(lichessId);
                         pgn = fetchedPgn;
@@ -5685,11 +5788,11 @@
 
                                 if (analysisStatusBadge) {
                                     analysisStatusBadge.className = 'badge bg-success text-light';
-                                    analysisStatusBadge.textContent = 'CACHED';
+                                    analysisStatusBadge.textContent = L('status.cachedBadge', 'CACHED');
                                 }
                                 progressBar.style.width = '100%';
                                 progressPercent.textContent = '100%';
-                                progressText.innerHTML = `<i class="bi bi-lightning-charge-fill text-warning me-1"></i>Loaded from local cache (${lichessId}, Depth ${cached.depth || analysisDepth})`;
+                                progressText.innerHTML = `<i class="bi bi-lightning-charge-fill text-warning me-1"></i>${L('status.cached', `Loaded from local cache (${lichessId}, Depth ${cached.depth || analysisDepth})`, { n: cached.depth || analysisDepth })}`;
                                 setTimeout(() => {
                                     analysisProgressContainer.classList.remove('show');
                                 }, 800);
@@ -5702,7 +5805,7 @@
                         analysisProgressContainer.classList.remove('show');
                         if (analysisStatusBadge) {
                             analysisStatusBadge.className = 'badge bg-danger text-light';
-                            analysisStatusBadge.textContent = 'ERROR';
+                            analysisStatusBadge.textContent = L('status.error', 'ERROR');
                         }
                         toggleDrawer(true, 'lichess');
                         return;
@@ -5717,13 +5820,13 @@
                 analysisProgressContainer.classList.add('show');
                 progressBar.style.width = '0%';
                 progressPercent.textContent = '0%';
-                progressText.textContent = 'Spinning up Stockfish WASM...';
+                progressText.textContent = L('status.spinning', 'Spinning up Stockfish WASM...');
                 if (analysisStatusBadge) {
                     analysisStatusBadge.className = 'badge bg-info text-dark';
-                    analysisStatusBadge.textContent = 'ANALYZING...';
+                    analysisStatusBadge.textContent = L('status.analyzingBadge', 'ANALYZING...');
                 }
 
-                analysisContainer.innerHTML = '<div class="text-center text-muted py-5 small"><div class="spinner-border spinner-border-sm text-info me-2"></div>Analyzing moves with Stockfish...</div>';
+                analysisContainer.innerHTML = `<div class="text-center text-muted py-5 small"><div class="spinner-border spinner-border-sm text-info me-2"></div>${L('status.analyzing', 'Analyzing moves with Stockfish...')}</div>`;
 
                 try {
                     if (!browserDoctor) {
@@ -5737,7 +5840,7 @@
                         progressBar.style.width = `${pct}%`;
                         progressPercent.textContent = `${pct}%`;
                         const workersMsg = prog.workers ? ` • ${prog.workers} workers in parallel` : '';
-                        progressText.textContent = `Analyzed ${prog.ply} of ${prog.totalPlies} plies (${prog.move || ''})${workersMsg}...`;
+                        progressText.textContent = L('status.progress', `Analyzed ${prog.ply} of ${prog.totalPlies} plies (${prog.move || ''})${workersMsg}...`, { ply: prog.ply, total: prog.totalPlies });
                     };
 
                     const result = await browserDoctor.analyzeGame(pgn, onProgress, analysisDepth);
@@ -5769,16 +5872,16 @@
                     goToFirstMove();
                     if (analysisStatusBadge) {
                         analysisStatusBadge.className = 'badge bg-success text-light';
-                        analysisStatusBadge.textContent = 'COMPLETE';
+                        analysisStatusBadge.textContent = L('status.complete', 'COMPLETE');
                     }
                 } catch (error) {
                     console.error("Game analysis error:", error);
                     if (analysisStatusBadge) {
                         analysisStatusBadge.className = 'badge bg-danger text-light';
-                        analysisStatusBadge.textContent = 'ERROR';
+                        analysisStatusBadge.textContent = L('status.error', 'ERROR');
                     }
                     if (error.message && error.message.includes('cancelled')) {
-                        analysisContainer.innerHTML = '<div class="text-center text-muted py-4 small">Analysis cancelled.</div>';
+                        analysisContainer.innerHTML = `<div class="text-center text-muted py-4 small">${L('status.cancelledMsg', 'Analysis cancelled.')}</div>`;
                     } else {
                         analysisContainer.innerHTML = `<div class="alert alert-danger m-3 p-2 small">${error.message}</div>`;
                     }
@@ -6256,7 +6359,7 @@
                         const wEvalFormatted = formatEvalForMoveList(wMove.evaluation);
 
                         html += `
-                            <div class="move-cell white-move ${wQualityClass} ${wKeyClass}" data-index="${wIdx}" id="move-${wIdx}" ${isWKey ? 'title="Key Moment"' : ''}>
+                            <div class="move-cell white-move ${wQualityClass} ${wKeyClass}" data-index="${wIdx}" id="move-${wIdx}" ${isWKey ? `title="${L('chrome.keyMoment', 'Key Moment')}"` : ''}>
                                 <span class="move-san-wrap">${wSanFormatted}</span>
                                 ${wEvalFormatted ? `<span class="move-eval">${wEvalFormatted}</span>` : ''}
                             </div>`;
@@ -6277,7 +6380,7 @@
                         const bEvalFormatted = formatEvalForMoveList(bMove.evaluation);
 
                         html += `
-                            <div class="move-cell black-move ${bQualityClass} ${bKeyClass}" data-index="${bIdx}" id="move-${bIdx}" ${isBKey ? 'title="Key Moment"' : ''}>
+                            <div class="move-cell black-move ${bQualityClass} ${bKeyClass}" data-index="${bIdx}" id="move-${bIdx}" ${isBKey ? `title="${L('chrome.keyMoment', 'Key Moment')}"` : ''}>
                                 <span class="move-san-wrap">${bSanFormatted}</span>
                                 ${bEvalFormatted ? `<span class="move-eval">${bEvalFormatted}</span>` : ''}
                             </div>`;
@@ -6300,7 +6403,7 @@
                 html += '</div>';
                 analysisContainer.innerHTML = html;
                 
-                if (moveCountSummary) moveCountSummary.textContent = `${movesList.length} moves`;
+                if (moveCountSummary) moveCountSummary.textContent = L('chrome.movesCount', `${movesList.length} moves`, { n: movesList.length });
                 if (typeof updateKeyMomentBadge === 'function') updateKeyMomentBadge();
 
                 analysisContainer.querySelectorAll('.move-cell[data-index]').forEach(item => {
@@ -6421,7 +6524,7 @@
                     });
                 });
                 if (mobileSheetMoveCount) {
-                    mobileSheetMoveCount.textContent = `${movesList.length} moves`;
+                    mobileSheetMoveCount.textContent = L('chrome.movesCount', `${movesList.length} moves`, { n: movesList.length });
                 }
             }
 
@@ -6456,9 +6559,9 @@
                             <span class="badge-q ${qualityClass}">${qualityTitle}</span>
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            ${evalText ? `<span class="eval-tag" title="Position Evaluation">${evalText}</span>` : ''}
-                            ${(move.quality !== 'good move' && move.analysis && move.analysis.best_evaluation) ? `<span class="eval-best-tag" title="Best line evaluation">Best: ${move.analysis.best_evaluation}</span>` : ''}
-                            ${(move.win_probability !== undefined) ? `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win: ${(move.win_probability * 100).toFixed(1)}%</span>` : ''}
+                            ${evalText ? `<span class="eval-tag" title="${L('tip.eval', 'Position Evaluation')}">${evalText}</span>` : ''}
+                            ${(move.quality !== 'good move' && move.analysis && move.analysis.best_evaluation) ? `<span class="eval-best-tag" title="${L('tip.bestEval', 'Best line evaluation')}">${L('chrome.best', 'Best:')} ${move.analysis.best_evaluation}</span>` : ''}
+                            ${(move.win_probability !== undefined) ? `<span class="metric-chip" title="${L('chrome.winProb', 'Win Probability for {name}', { name: playerName })}"><i class="bi bi-pie-chart-fill me-1"></i>${L('chrome.win', 'Win:')} ${(move.win_probability * 100).toFixed(1)}%</span>` : ''}
                             ${(move.win_prob_loss && move.win_prob_loss > 0.02) ? `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>` : ''}
                         </div>
                     </div>`;
@@ -6527,7 +6630,7 @@
                         const missChanceText = move.analysis.missed_chance || (isMissedWin ? 'Misses a forced winning advantage' : null);
                         if (missChanceText) {
                             const missTitle = missChanceText.charAt(0).toUpperCase() + missChanceText.slice(1);
-                            const badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED';
+                            const badgeLabel = isMissedWin ? L('chrome.missedWin', 'MISSED WIN') : L('chrome.missed', 'MISSED');
                             const badgeIcon = isMissedWin ? 'bi-trophy-fill' : 'bi-crosshair';
                             const badgeClass = isMissedWin ? 'diag-missed-badge badge-missed-win' : 'diag-missed-badge';
                             cardContent += `
@@ -6985,12 +7088,12 @@
                     if (icon) icon.className = 'bi bi-skip-forward-fill text-danger key-icon';
                     if (label) label.textContent = 'Skip';
                     if (badge) badge.classList.add('d-none');
-                    btnNextKey.title = 'Skip forward directly to key moment';
+                    btnNextKey.title = L('tip.nextKeySkip', 'Skip forward directly to key moment');
                 } else {
                     btnNextKey.classList.remove('is-playing');
                     if (icon) icon.className = 'bi bi-fast-forward-fill text-warning key-icon';
                     if (label) label.textContent = 'Next';
-                    btnNextKey.title = 'Next Key Moment (Space or N)';
+                    btnNextKey.title = L('tip.nextKey', 'Next Key Moment (Space or N)');
                     updateKeyMomentBadge();
                 }
             }
@@ -7657,7 +7760,7 @@
                     variationBanner.classList.remove('d-none');
                     if (variationTypeBadge) {
                         variationTypeBadge.className = `var-type-badge ${activeVariation.isRefutation ? 'refutation' : 'better'}`;
-                        variationTypeBadge.textContent = activeVariation.isRefutation ? 'Punishing Line' : 'Recommended Line';
+                        variationTypeBadge.textContent = activeVariation.isRefutation ? L('chrome.punishingLine', 'Punishing Line') : L('chrome.recommendedLine', 'Recommended Line');
                     }
                     if (variationStatusText) {
                         if (stepIndex === -1) {
@@ -7695,7 +7798,7 @@
                     } else {
                         const outcome = getVariationOutcome(activeVariation.move, activeVariation.isRefutation, activeVariation.startingFen, varMoves, chess);
                         if (variationStatusText) {
-                            variationStatusText.innerHTML = `<span class="text-${activeVariation.isRefutation ? 'danger' : 'success'} fw-semibold">${activeVariation.isRefutation ? 'Punishment: ' : 'Outcome: '}</span> <span>${outcome.punchline}</span>`;
+                            variationStatusText.innerHTML = `<span class="text-${activeVariation.isRefutation ? 'danger' : 'success'} fw-semibold">${activeVariation.isRefutation ? L('chrome.punishLabel', 'Punishment: ') : L('chrome.outcomeLabel', 'Outcome: ')}</span> <span>${outcome.punchline}</span>`;
                         }
                     }
                 }
@@ -7993,7 +8096,7 @@
                                 </div>
                             </div>
                             <div class="outcome-diff-cell">
-                                <span class="outcome-diff-label">${isRefutation ? 'Punishing Line' : 'Recommended Line'}</span>
+                                <span class="outcome-diff-label">${isRefutation ? L('chrome.punishingLine', 'Punishing Line') : L('chrome.recommendedLine', 'Recommended Line')}</span>
                                 <div class="outcome-diff-val text-success">
                                     <span>${outcome.lineSummary}</span>
                                     <span class="font-monospace small opacity-75">${outcome.lineEval}</span>
@@ -8060,7 +8163,7 @@
                 const outcome = getVariationOutcome(move, isRefutation, startingFen, variationMoves, chess);
 
                 if (variationStatusText) {
-                    variationStatusText.innerHTML = `<span class="text-${isRefutation ? 'danger' : 'success'} fw-semibold">${isRefutation ? 'Punishment: ' : 'Outcome: '}</span> <span>${outcome.punchline}</span>`;
+                    variationStatusText.innerHTML = `<span class="text-${isRefutation ? 'danger' : 'success'} fw-semibold">${isRefutation ? L('chrome.punishLabel', 'Punishment: ') : L('chrome.outcomeLabel', 'Outcome: ')}</span> <span>${outcome.punchline}</span>`;
                 }
 
                 renderVariationOutcomeCard(outcome, move, isRefutation);
@@ -8717,7 +8820,7 @@
                     const op = OpeningDetector.identifyOpening(historySans);
                     const opNameEl = document.getElementById('coachOpeningName');
                     const opEcoEl = document.getElementById('coachOpeningEco');
-                    if (opNameEl) opNameEl.textContent = op.name || 'Standard Game';
+                    if (opNameEl) opNameEl.textContent = op.name || L('chrome.standardGame', 'Standard Game');
                     if (opEcoEl) opEcoEl.textContent = op.eco || 'A00';
                 }
             }
@@ -8927,7 +9030,8 @@
                     personaId: selectedCoachPersona,
                     worker: coachWorker,
                     playerColor: selectedCoachColor,
-                    adaptive: true
+                    adaptive: true,
+                    lang: (typeof siteLang !== 'undefined' ? siteLang : 'en')
                 });
 
                 if (coachWorker && typeof coachWorker.init === 'function') {
@@ -9056,6 +9160,13 @@
             const tabModeCoach = document.getElementById('tabModeCoach');
             if (tabModeAnalysis) tabModeAnalysis.addEventListener('click', () => switchAppMode('analysis'));
             if (tabModeCoach) tabModeCoach.addEventListener('click', () => switchAppMode('coach'));
+
+            // Language toggle (EN/VI): manual, in-memory, defaults to EN.
+            const langBtnEN = document.getElementById('langBtnEN');
+            const langBtnVI = document.getElementById('langBtnVI');
+            if (langBtnEN) langBtnEN.addEventListener('click', () => setSiteLang('en'));
+            if (langBtnVI) langBtnVI.addEventListener('click', () => setSiteLang('vi'));
+            refreshLangToggleButtons();
 
             const btnCoachSound = document.getElementById('btnCoachSound');
             if (btnCoachSound) {

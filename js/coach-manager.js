@@ -56,6 +56,34 @@
         }
     }
 
+    function getI18n() {
+        if (typeof WhyBlunderI18N !== 'undefined') return WhyBlunderI18N;
+        if (typeof window !== 'undefined' && window.WhyBlunderI18N) return window.WhyBlunderI18N;
+        if (typeof global !== 'undefined' && global.WhyBlunderI18N) return global.WhyBlunderI18N;
+        try {
+            return require('./i18n.js');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Localize a template with English fallback (byte-identical EN).
+     * Deterministic — pure function of (lang, key, enDefault, params).
+     */
+    function tx(lang, key, enDefault, params) {
+        const I18N = getI18n();
+        if (I18N && typeof I18N.t === 'function') {
+            return I18N.t(key, enDefault, params, lang);
+        }
+        if (typeof enDefault === 'string' && params) {
+            return enDefault.replace(/\{(\w+)\}/g, function(m, n) {
+                return (params[n] !== undefined && params[n] !== null) ? String(params[n]) : m;
+            });
+        }
+        return enDefault;
+    }
+
     function getDiagnostics() {
         if (typeof MoveDiagnostics !== 'undefined') return MoveDiagnostics;
         if (typeof window !== 'undefined' && window.MoveDiagnostics) return window.MoveDiagnostics;
@@ -1024,11 +1052,75 @@
             };
             this.pendingOpportunity = null;
             this.lastBaitType = null;
+            this.lang = (options.lang === 'vi' || options.lang === 'en')
+                ? options.lang
+                : 'en';
 
             // Current speech commentary
-            this.currentBubble1 = this.persona.voice.intro;
-            this.currentBubble2 = "Make your opening move to get started!";
-            this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
+            this.currentBubble1 = this.voiceText('intro', this.persona.voice.intro);
+            this.currentBubble2 = tx(this.lang, 'coach.makeMoveFull', 'Make your opening move to get started!');
+            this.currentDialogue = `${this.currentBubble1}${tx(this.lang, 'coach.makeMove', ' Make your opening move to get started!')}`;
+        }
+
+        /**
+         * Language: 'en' (default) or 'vi'. Manual toggle only; in-memory,
+         * no persistence. Re-renders only newly generated speech — history
+         * bubbles keep the language they were created in.
+         */
+        setLang(lang) {
+            if (lang === 'vi' || lang === 'en') this.lang = lang;
+            const I18N = getI18n();
+            if (I18N && typeof I18N.setLang === 'function') {
+                try { I18N.setLang(this.lang); } catch (e) { /* ignore */ }
+            }
+            return this.lang;
+        }
+
+        getLang() {
+            return this.lang;
+        }
+
+        /** Template lookup bound to this coach's language (EN fallback). */
+        L(key, enDefault, params) {
+            return tx(this.lang, key, enDefault, params);
+        }
+
+        /**
+         * Persona voice array with VI override + EN fallback.
+         * Same deterministic contract as before (caller picks index).
+         */
+        voiceLines(key, fallback) {
+            const enValue = (this.persona.voice && this.persona.voice[key] !== undefined)
+                ? this.persona.voice[key]
+                : fallback;
+            const I18N = getI18n();
+            if (this.lang === 'vi' && I18N && typeof I18N.voice === 'function') {
+                return I18N.voice(this.personaId, key, enValue, undefined, this.lang);
+            }
+            return enValue;
+        }
+
+        /** Single-string persona voice (intro/thinking) with VI override. */
+        voiceText(key, fallback) {
+            const enValue = (this.persona.voice && this.persona.voice[key] !== undefined)
+                ? this.persona.voice[key]
+                : fallback;
+            const I18N = getI18n();
+            if (this.lang === 'vi' && I18N && typeof I18N.voice === 'function') {
+                return I18N.voice(this.personaId, key, enValue, undefined, this.lang);
+            }
+            return enValue;
+        }
+
+        /** Bait-by-motif voice list with VI override + EN fallback. */
+        baitLines(motifType, fallback) {
+            const enValue = (this.persona.voice && this.persona.voice.baitByMotif &&
+                this.persona.voice.baitByMotif[motifType]) || fallback;
+            const I18N = getI18n();
+            if (this.lang === 'vi' && I18N && typeof I18N.voice === 'function') {
+                return I18N.voice(this.personaId, 'baitByMotif', enValue, motifType, this.lang);
+            }
+            return enValue;
         }
 
         _resetHintState() {
@@ -1052,9 +1144,9 @@
                 this.personaId = personaId;
                 this.persona = COACH_PERSONAS[personaId];
                 if (this.moveHistory.length === 0) {
-                    this.currentBubble1 = this.persona.voice.intro;
-                    this.currentBubble2 = "Make your opening move to get started!";
-                    this.currentDialogue = `${this.persona.voice.intro} Make your opening move to get started!`;
+                    this.currentBubble1 = this.voiceText('intro', this.persona.voice.intro);
+                    this.currentBubble2 = tx(this.lang, 'coach.makeMoveFull', 'Make your opening move to get started!');
+                    this.currentDialogue = `${this.currentBubble1}${tx(this.lang, 'coach.makeMove', ' Make your opening move to get started!')}`;
                     this._resetHintState();
                 }
                 this._configureWorkerElo();
@@ -1185,11 +1277,11 @@
             this.pendingOpportunity = null;
             this.lastBaitType = null;
 
-            this.currentBubble1 = this.persona.voice.intro;
+            this.currentBubble1 = this.voiceText('intro', this.persona.voice.intro);
             this.currentBubble2 = (this.playerColor === 'w')
-                ? "Make your opening move to get started!"
-                : "I'll make the first move. Let's see what you've got!";
-            this.currentDialogue = `${this.persona.voice.intro} ${this.currentBubble2}`;
+                ? tx(this.lang, 'coach.makeMoveFull', 'Make your opening move to get started!')
+                : tx(this.lang, 'coach.coachFirst', "I'll make the first move. Let's see what you've got!");
+            this.currentDialogue = `${this.currentBubble1} ${this.currentBubble2}`;
         }
 
         /**
@@ -1316,13 +1408,13 @@
                     let praiseText;
                     if (hintsOnThisMove === 0) {
                         this.hintStats.challengesSolved.unaided = (this.hintStats.challengesSolved.unaided || 0) + 1;
-                        praiseText = pickRandom(this.persona.voice.praiseSpotBlunder);
+                        praiseText = pickRandom(this.voiceLines('praiseSpotBlunder', this.persona.voice.praiseSpotBlunder));
                     } else if (hintsOnThisMove <= 2) {
                         this.hintStats.challengesSolved.withHints = (this.hintStats.challengesSolved.withHints || 0) + 1;
-                        praiseText = pickRandom(this.persona.voice.praiseWithHint || ["Nice, you got it with a nudge!"]);
+                        praiseText = pickRandom(this.voiceLines('praiseWithHint', this.persona.voice.praiseWithHint || [this.L('coach.praiseHintFallback', 'Nice, you got it with a nudge!')]));
                     } else {
                         this.hintStats.challengesSolved.withHints = (this.hintStats.challengesSolved.withHints || 0) + 1;
-                        praiseText = pickRandom(this.persona.voice.praiseAfterReveal || ["Good execution on the tactic."]);
+                        praiseText = pickRandom(this.voiceLines('praiseAfterReveal', this.persona.voice.praiseAfterReveal || [this.L('coach.praiseRevealFallback', 'Good execution on the tactic.')]));
                     }
                     challengeFeedback = {
                         success: true,
@@ -1333,7 +1425,7 @@
                     const bestText = this.pendingChallenge.bestSan || 'the tactical refutation';
                     challengeFeedback = {
                         success: false,
-                        text: `${pickRandom(this.persona.voice.missedBlunder)} (${bestText} was the punishing tactic!)`
+                        text: `${pickRandom(this.voiceLines('missedBlunder', this.persona.voice.missedBlunder))}${this.L('coach.missedSuffix', ` (${bestText} was the punishing tactic!)`, { best: bestText })}`
                     };
                 }
 
@@ -1650,7 +1742,8 @@
                                     detailedQuality: classification.detailedQuality,
                                     wpLoss: classification.wpLoss,
                                     ply,
-                                    openingPrincipleViolation: opViolation
+                                    openingPrincipleViolation: opViolation,
+                                    lang: this.lang
                                 });
                                 blunderAnalysis = fallbackDiag ? fallbackDiag.explanation : null;
                                 tags = fallbackDiag ? fallbackDiag.tags || [] : [];
@@ -1738,45 +1831,45 @@
 
             if (challengeFeedback) {
                 bubble1 = challengeFeedback.text;
-                bubble2 = "Calculating response...";
+                bubble2 = this.L('coach.calcResp', 'Calculating response...');
             } else if (wasSuggested) {
-                bubble1 = `Great adjustment! Playing ${legalMove.san} keeps your position solid and maintains control.`;
-                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+                bubble1 = this.L('coach.greatAdjust', `Great adjustment! Playing ${legalMove.san} keeps your position solid and maintains control.`, { san: legalMove.san });
+                bubble2 = this.voiceText('thinking', 'Calculating candidate responses...');
             } else if (isBlunder) {
-                let blunderVoice = pickRandom(this.persona.voice.playerBlunder);
+                let blunderVoice = pickRandom(this.voiceLines('playerBlunder', this.persona.voice.playerBlunder));
                 if (this.errorProfile.hangingPiece >= 3 && tags.includes('Hanging Piece')) {
-                    blunderVoice = "Careful! That's another piece left hanging. Scan every undefended piece before committing!";
+                    blunderVoice = this.L('coach.hangRepeat', "Careful! That's another piece left hanging. Scan every undefended piece before committing!");
                 } else if (this.errorProfile.tacticalBlunder >= 3 && (tags.includes('Tactical Blunder') || tags.includes('Tactical Fork'))) {
-                    blunderVoice = "Tactical danger again! Always look for opponent forcing replies before making your move.";
+                    blunderVoice = this.L('coach.tactRepeat', 'Tactical danger again! Always look for opponent forcing replies before making your move.');
                 } else if (this.errorProfile.openingPrinciple >= 2 && tags.includes('Opening Principle')) {
-                    blunderVoice = "Watch the opening fundamentals: complete development and avoid unnecessary early piece maneuvers.";
+                    blunderVoice = this.L('coach.openRepeat', 'Watch the opening fundamentals: complete development and avoid unnecessary early piece maneuvers.');
                 }
                 bubble1 = blunderVoice;
-                bubble2 = blunderAnalysis || "That move might be a mistake. Review the tactical oversight card below!";
+                bubble2 = blunderAnalysis || this.L('coach.blunderFallback', 'That move might be a mistake. Review the tactical oversight card below!');
             } else if (classification.detailedQuality === 'book') {
-                bubble1 = `Book move! ${legalMove.san} follows standard opening theory.`;
-                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+                bubble1 = this.L('coach.bookMove', `Book move! ${legalMove.san} follows standard opening theory.`, { san: legalMove.san });
+                bubble2 = this.voiceText('thinking', 'Calculating candidate responses...');
             } else if (classification.detailedQuality === 'miss') {
-                bubble1 = `You had something special here: ${opportunityKind === 'brilliant' ? 'a brilliant sacrifice' : 'a winning tactic'}. Want to take it back and find it?`;
-                bubble2 = "Don't rush! Let's look at that position again.";
+                bubble1 = this.L('coach.missChance', `You had something special here: ${opportunityKind === 'brilliant' ? 'a brilliant sacrifice' : 'a winning tactic'}. Want to take it back and find it?`, { what: opportunityKind === 'brilliant' ? this.L('coach.missBrilliant', 'a brilliant sacrifice') : this.L('coach.missTactic', 'a winning tactic') });
+                bubble2 = this.L('coach.dontRush', "Don't rush! Let's look at that position again.");
                 if (opportunityKind === 'brilliant') {
                     this.hintStats.brilliantMissed = (this.hintStats.brilliantMissed || 0) + 1;
                 }
             } else if (classification.detailedQuality === 'brilliant') {
-                bubble1 = pickRandom(this.persona.voice.playerBrilliant || ["Brilliant move!"]);
+                bubble1 = pickRandom(this.voiceLines('playerBrilliant', this.persona.voice.playerBrilliant || [this.L('coach.brilliantFallback', 'Brilliant move!')]));
                 if (diag && diag.sacrificedPiece) {
                     const pieces = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen' };
                     const pieceName = pieces[diag.sacrificedPiece] || 'piece';
-                    bubble2 = `You gave up your ${pieceName} on ${diag.sacrificeSquare} to rip open the position.`;
+                    bubble2 = this.L('coach.sacRip', `You gave up your ${pieceName} on ${diag.sacrificeSquare} to rip open the position.`, { piece: pieceName, sq: diag.sacrificeSquare });
                 } else if (diag && diag.explanation) {
                     bubble2 = diag.explanation;
                 } else {
-                    bubble2 = "A spectacular sacrifice.";
+                    bubble2 = this.L('coach.spectacular', 'A spectacular sacrifice.');
                 }
                 this.hintStats.brilliantFound = (this.hintStats.brilliantFound || 0) + 1;
             } else if (classification.uiQuality === 'inaccuracy') {
-                bubble1 = `${legalMove.san} is playable, but slightly inaccurate. Let's see how you handle my counterplay.`;
-                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+                bubble1 = this.L('coach.playable', `${legalMove.san} is playable, but slightly inaccurate. Let's see how you handle my counterplay.`, { san: legalMove.san });
+                bubble2 = this.voiceText('thinking', 'Calculating candidate responses...');
             } else {
                 let goodReason = (diag && diag.explanation) ? diag.explanation : "";
                 const isBest = (classification.detailedQuality === 'best' || classification.detailedQuality === 'brilliant');
@@ -1789,7 +1882,8 @@
                             boardAfter,
                             move: legalMove,
                             san: legalMove.san,
-                            isBest
+                            isBest,
+                            lang: this.lang
                         });
                         if (goodDiag && goodDiag.explanation) {
                             goodReason = goodDiag.explanation;
@@ -1800,8 +1894,8 @@
                 }
 
                 const personaPraise = isBest
-                    ? (pickRandom(this.persona.voice.playerBestMove) || pickRandom(this.persona.voice.playerGoodMove))
-                    : pickRandom(this.persona.voice.playerGoodMove);
+                    ? (pickRandom(this.voiceLines('playerBestMove', this.persona.voice.playerBestMove)) || pickRandom(this.voiceLines('playerGoodMove', this.persona.voice.playerGoodMove)))
+                    : pickRandom(this.voiceLines('playerGoodMove', this.persona.voice.playerGoodMove));
 
                 if (goodReason && personaPraise) {
                     bubble1 = `${personaPraise} ${goodReason}`;
@@ -1810,9 +1904,9 @@
                 } else if (personaPraise) {
                     bubble1 = `${personaPraise}`;
                 } else {
-                    bubble1 = `Good move with ${legalMove.san}!`;
+                    bubble1 = this.L('coach.goodMoveFallback', `Good move with ${legalMove.san}!`, { san: legalMove.san });
                 }
-                bubble2 = this.persona.voice.thinking || "Calculating candidate responses...";
+                bubble2 = this.voiceText('thinking', 'Calculating candidate responses...');
             }
 
             // Persona-scaled explanation tuning for bubble2 / dialogue
@@ -2013,12 +2107,12 @@
                                 bestUci: cand.bestUci,
                                 bestWp: cand.wpAfter
                             };
-                            const voiceLines = this.persona.voice && this.persona.voice.brilliantNudge ? this.persona.voice.brilliantNudge : [];
+                            const voiceLines = this.voiceLines('brilliantNudge', (this.persona.voice && this.persona.voice.brilliantNudge) ? this.persona.voice.brilliantNudge : []);
                             let nudgeText = "";
                             if (voiceLines.length > 0) {
                                 nudgeText = " " + voiceLines[ply % voiceLines.length];
                             } else {
-                                nudgeText = " A strong player would find the sacrifice here.";
+                                nudgeText = this.L('coach.sacrificeNudge', ' A strong player would find the sacrifice here.');
                             }
                             bubbles.bubble2 = (bubbles.bubble2 || "") + nudgeText;
                         }
@@ -2056,11 +2150,11 @@
 
                                         let nudgeText = "";
                                         if (this.persona.id === 'mcmarty') {
-                                            nudgeText = " Hmm, I have a feeling you might have something tricky here!";
+                                            nudgeText = this.L('coach.oppNudgeMcmarty', " Hmm, I have a feeling you might have something tricky here!");
                                         } else if (this.persona.id === 'sophy') {
-                                            nudgeText = " Look closely at this position—there could be a tactical opportunity.";
+                                            nudgeText = this.L('coach.oppNudgeSophy', " Look closely at this position—there could be a tactical opportunity.");
                                         } else if (this.persona.id === 'pikaru') {
-                                            nudgeText = " Wait a second, do you have a tactical shot here?";
+                                            nudgeText = this.L('coach.oppNudgePikaru', " Wait a second, do you have a tactical shot here?");
                                         }
                                         if (nudgeText) {
                                             bubbles.bubble2 = (bubbles.bubble2 || "") + nudgeText;
@@ -2523,21 +2617,27 @@
             if (this.isGameOver) {
                 return {
                     bubble1: this._getGameOverMessage(),
-                    bubble2: "Click 'New Game' or the Flag button whenever you're ready to play again."
+                    bubble2: this.L('coach.newGameAgain', "Click 'New Game' or the Flag button whenever you're ready to play again.")
                 };
             }
 
             if (isChallenge) {
-                coachMoveDesc = `I played ${move.san}...`;
+                coachMoveDesc = this.L('coach.playedChallenge', `I played ${move.san}...`, { san: move.san });
                 let baitVoiceList = null;
-                if (challengeData && challengeData.type && this.persona.voice && this.persona.voice.baitByMotif && this.persona.voice.baitByMotif[challengeData.type]) {
-                    baitVoiceList = this.persona.voice.baitByMotif[challengeData.type];
+                if (challengeData && challengeData.type) {
+                    baitVoiceList = this.baitLines(challengeData.type, null);
+                    if (!baitVoiceList && this.persona.voice && this.persona.voice.baitByMotif) {
+                        baitVoiceList = this.persona.voice.baitByMotif[challengeData.type] || null;
+                    }
                 }
                 challengeText = (baitVoiceList && baitVoiceList.length > 0)
                     ? pickRandom(baitVoiceList)
-                    : `Wait, take a close look at the board! ${pickRandom(this.persona.voice.challengeBlunderBait)}`;
+                    : (() => {
+                        const baitBlunder = pickRandom(this.voiceLines('challengeBlunderBait', this.persona.voice.challengeBlunderBait));
+                        return this.L('coach.baitFallback', `Wait, take a close look at the board! ${baitBlunder}`, { x: baitBlunder });
+                    })();
                 return {
-                    bubble1: `I played ${move.san}. Spot the tactical punish!`,
+                    bubble1: this.L('coach.playedPunish', `I played ${move.san}. Spot the tactical punish!`, { san: move.san }),
                     bubble2: `${coachMoveDesc} ${challengeText}`
                 };
             }
@@ -2545,8 +2645,8 @@
             // Check if player has only 1 legal reply
             const legalMovesCount = this.chess.moves().length;
             if (legalMovesCount === 1) {
-                coachMoveDesc = `I play ${move.san}.`;
-                challengeText = pickRandom(this.persona.voice.challengeOnlyMove || ["Only one legal move for you here—let's see it!"]);
+                coachMoveDesc = this.L('coach.playSan', `I play ${move.san}.`, { san: move.san });
+                challengeText = pickRandom(this.voiceLines('challengeOnlyMove', this.persona.voice.challengeOnlyMove || [this.L('coach.onlyMoveFallback', "Only one legal move for you here—let's see it!")]));
                 return {
                     bubble1: coachMoveDesc,
                     bubble2: `${coachMoveDesc} ${challengeText}`
@@ -2555,15 +2655,15 @@
 
             // 1. Detect tactical & positional motif of coach move
             if (move.san === 'O-O' || move.san === 'O-O-O') {
-                coachMoveDesc = `I castle ${move.san} to tuck my king away safely and activate the rook.`;
-                challengeText = "Coordinate your pieces and make sure your own king is safe!";
+                coachMoveDesc = this.L('coach.castle', `I castle ${move.san} to tuck my king away safely and activate the rook.`, { san: move.san });
+                challengeText = this.L('coach.castleChallenge', 'Coordinate your pieces and make sure your own king is safe!');
             } else if (move.san.includes('+')) {
-                coachMoveDesc = `Check! My ${pName} on ${move.to} (${move.san}) attacks your king.`;
-                challengeText = "Find the cleanest escape square or interposition.";
+                coachMoveDesc = this.L('coach.check', `Check! My ${pName} on ${move.to} (${move.san}) attacks your king.`, { piece: pName, to: move.to, san: move.san });
+                challengeText = this.L('coach.checkChallenge', 'Find the cleanest escape square or interposition.');
             } else if (move.captured) {
                 const capName = PIECE_NAMES[move.captured] || 'piece';
-                coachMoveDesc = `I play ${move.san}, capturing your ${capName} on ${move.to}.`;
-                challengeText = "How do you plan to recapture or counter-attack?";
+                coachMoveDesc = this.L('coach.capture', `I play ${move.san}, capturing your ${capName} on ${move.to}.`, { san: move.san, cap: capName, to: move.to });
+                challengeText = this.L('coach.captureChallenge', 'How do you plan to recapture or counter-attack?');
             } else if (Recognizer) {
                 try {
                     const attackedSquares = Recognizer.getPieceAttacks(boardAfter, move.to);
@@ -2574,36 +2674,36 @@
                     const attackedRook = attackedPieces.find(x => x.p.type === 'r');
 
                     if (attackedQueen) {
-                        coachMoveDesc = `I play ${move.san}, putting pressure on your Queen on ${attackedQueen.sq}!`;
-                        challengeText = "Where will your Queen move to maintain active pressure?";
+                        coachMoveDesc = this.L('coach.pressureQueen', `I play ${move.san}, putting pressure on your Queen on ${attackedQueen.sq}!`, { san: move.san, sq: attackedQueen.sq });
+                        challengeText = this.L('coach.pressureQueenChallenge', 'Where will your Queen move to maintain active pressure?');
                     } else if (attackedRook) {
-                        coachMoveDesc = `I play ${move.san}, taking aim at your rook on ${attackedRook.sq}.`;
-                        challengeText = "How will you defend or counter the threat?";
+                        coachMoveDesc = this.L('coach.aimRook', `I play ${move.san}, taking aim at your rook on ${attackedRook.sq}.`, { san: move.san, sq: attackedRook.sq });
+                        challengeText = this.L('coach.aimRookChallenge', 'How will you defend or counter the threat?');
                     } else if (Recognizer.detectPin && Recognizer.detectPin(boardAfter, move)) {
-                        coachMoveDesc = `I play ${move.san}, creating an annoying pin against your piece.`;
-                        challengeText = pickRandom(this.persona.voice.challengePinDefense || [
+                        coachMoveDesc = this.L('coach.pinAnnoy', `I play ${move.san}, creating an annoying pin against your piece.`, { san: move.san });
+                        challengeText = pickRandom(this.voiceLines('challengePinDefense', this.persona.voice.challengePinDefense || [
                             "Can you unpin or reinforce the defended square?"
-                        ]);
+                        ]));
                     } else if (move.piece === 'p' && Recognizer.detectCenterStrike && Recognizer.detectCenterStrike(boardBefore, move)) {
-                        coachMoveDesc = `I strike at the center with ${move.san}!`;
-                        challengeText = pickRandom(this.persona.voice.challengeCenter || [
+                        coachMoveDesc = this.L('coach.strikeCenter', `I strike at the center with ${move.san}!`, { san: move.san });
+                        challengeText = pickRandom(this.voiceLines('challengeCenter', this.persona.voice.challengeCenter || [
                             "Central tension! Will you capture, push, or support the center?"
-                        ]);
+                        ]));
                     } else if (move.piece === 'p' && Recognizer.detectPassedPawn && Recognizer.detectPassedPawn(boardAfter, move)) {
-                        coachMoveDesc = `Pushing my passed pawn to ${move.to} (${move.san}).`;
-                        challengeText = "Can you blockade or target the advancing pawn?";
+                        coachMoveDesc = this.L('coach.pushPassed', `Pushing my passed pawn to ${move.to} (${move.san}).`, { to: move.to, san: move.san });
+                        challengeText = this.L('coach.pushPassedChallenge', 'Can you blockade or target the advancing pawn?');
                     } else if ((move.piece === 'n' || move.piece === 'b') && Recognizer.isTrueOutpost && Recognizer.isTrueOutpost(boardAfter, move.to, move.color)) {
-                        coachMoveDesc = `Anchoring my ${pName} on ${move.to} (${move.san}) as an active outpost.`;
-                        challengeText = `How will you challenge this well-placed ${pName}?`;
+                        coachMoveDesc = this.L('coach.outpost', `Anchoring my ${pName} on ${move.to} (${move.san}) as an active outpost.`, { piece: pName, to: move.to, san: move.san });
+                        challengeText = this.L('coach.outpostChallenge', `How will you challenge this well-placed ${pName}?`, { piece: pName });
                     } else if (move.piece === 'r' && Recognizer.detectFileControl && Recognizer.detectFileControl(boardBefore, move)) {
                         const fileCtrl = Recognizer.detectFileControl(boardBefore, move);
                         if (fileCtrl && fileCtrl.includes('7th rank')) {
-                            coachMoveDesc = `Invading the 7th rank with my rook on ${move.to} (${move.san}).`;
-                            challengeText = "Rooks on the 7th rank are dangerous! Can you challenge it or defend your pawns?";
+                            coachMoveDesc = this.L('coach.invade7', `Invading the 7th rank with my rook on ${move.to} (${move.san}).`, { to: move.to, san: move.san });
+                            challengeText = this.L('coach.invade7Challenge', 'Rooks on the 7th rank are dangerous! Can you challenge it or defend your pawns?');
                         } else {
                             const isSemi = fileCtrl && fileCtrl.includes('semi-open');
-                            coachMoveDesc = `Sliding my rook to ${move.to} (${move.san}) to control the ${isSemi ? 'semi-open' : 'open'} file.`;
-                            challengeText = "How will you contest control of this file?";
+                            coachMoveDesc = this.L('coach.rookFile', `Sliding my rook to ${move.to} (${move.san}) to control the ${isSemi ? 'semi-open' : 'open'} file.`, { to: move.to, san: move.san, file: isSemi ? 'semi-open' : 'open' });
+                            challengeText = this.L('coach.rookFileChallenge', 'How will you contest control of this file?');
                         }
                     }
                 } catch (e) {
@@ -2619,7 +2719,7 @@
                     this.announcedOpening = true;
                     const opDialogue = this._getOpeningDialogue(op);
                     if (opDialogue) {
-                        coachMoveDesc = `I play ${move.san} in the ${op.name}.`;
+                        coachMoveDesc = this.L('coach.playOpening', `I play ${move.san} in the ${op.name}.`, { san: move.san, name: op.name });
                         challengeText = opDialogue.bubble2;
                     }
                 }
@@ -2628,41 +2728,41 @@
             // 3. Piece development or central advance
             if (!coachMoveDesc) {
                 if (move.piece === 'n') {
-                    coachMoveDesc = `Developing my knight to ${move.to} (${move.san}) to contest key squares.`;
-                    challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
+                    coachMoveDesc = this.L('coach.developN', `Developing my knight to ${move.to} (${move.san}) to contest key squares.`, { to: move.to, san: move.san });
+                    challengeText = pickRandom(this.voiceLines('challengeDevelopment', this.persona.voice.challengeDevelopment || [
                         "Which piece will you mobilize next to complete your development?"
-                    ]);
+                    ]));
                 } else if (move.piece === 'b') {
-                    coachMoveDesc = `Developing my bishop to ${move.to} (${move.san}) to control key diagonals.`;
-                    challengeText = pickRandom(this.persona.voice.challengeDevelopment || [
+                    coachMoveDesc = this.L('coach.developB', `Developing my bishop to ${move.to} (${move.san}) to control key diagonals.`, { to: move.to, san: move.san });
+                    challengeText = pickRandom(this.voiceLines('challengeDevelopment', this.persona.voice.challengeDevelopment || [
                         "Which piece will you mobilize next to complete your development?"
-                    ]);
+                    ]));
                 } else if (move.piece === 'p') {
                     if (['e4', 'd4', 'e5', 'd5', 'c4', 'c5'].includes(move.to)) {
-                        coachMoveDesc = `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`;
-                        challengeText = pickRandom(this.persona.voice.challengeCenter || [
+                        coachMoveDesc = this.L('coach.pushCenter', `Pushing pawn to ${move.to} (${move.san}) to fight for central control.`, { to: move.to, san: move.san });
+                        challengeText = pickRandom(this.voiceLines('challengeCenter', this.persona.voice.challengeCenter || [
                             "How will you stake your claim in the center?"
-                        ]);
+                        ]));
                     } else {
-                        coachMoveDesc = `Advancing pawn to ${move.to} (${move.san}) to adjust my pawn structure.`;
-                        challengeText = "Every pawn move creates lasting structural changes. What is your plan?";
+                        coachMoveDesc = this.L('coach.advancePawn', `Advancing pawn to ${move.to} (${move.san}) to adjust my pawn structure.`, { to: move.to, san: move.san });
+                        challengeText = this.L('coach.pawnStruct', 'Every pawn move creates lasting structural changes. What is your plan?');
                     }
                 } else if (move.piece === 'r') {
-                    coachMoveDesc = `Mobilizing my rook to ${move.to} (${move.san}) to improve its activity.`;
-                    challengeText = "Active rooks need open lines. How will you contest or limit its reach?";
+                    coachMoveDesc = this.L('coach.mobilizeRook', `Mobilizing my rook to ${move.to} (${move.san}) to improve its activity.`, { to: move.to, san: move.san });
+                    challengeText = this.L('coach.mobilizeRookChallenge', 'Active rooks need open lines. How will you contest or limit its reach?');
                 } else if (move.piece === 'q') {
                     if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) {
-                        coachMoveDesc = `Centralizing my Queen on ${move.to} (${move.san}) to dominate key squares and diagonals.`;
-                        challengeText = "A centralized Queen commands huge diagonal and vertical influence. How will you challenge her?";
+                        coachMoveDesc = this.L('coach.centralizeQ', `Centralizing my Queen on ${move.to} (${move.san}) to dominate key squares and diagonals.`, { to: move.to, san: move.san });
+                        challengeText = this.L('coach.centralizeQChallenge', "A centralized Queen commands huge diagonal and vertical influence. How will you challenge her?");
                     } else {
-                        coachMoveDesc = `Repositioning my Queen to ${move.to} (${move.san}) to increase pressure.`;
-                        challengeText = "Keep an eye on my Queen's diagonals. Where is your safest counterplay?";
+                        coachMoveDesc = this.L('coach.repositionQ', `Repositioning my Queen to ${move.to} (${move.san}) to increase pressure.`, { to: move.to, san: move.san });
+                        challengeText = this.L('coach.repositionQChallenge', "Keep an eye on my Queen's diagonals. Where is your safest counterplay?");
                     }
                 } else if (move.piece === 'k') {
-                    coachMoveDesc = `Stepping my king to ${move.to} (${move.san}) for better safety.`;
-                    challengeText = "King placement is critical. How will you organize your pieces now?";
+                    coachMoveDesc = this.L('coach.stepKing', `Stepping my king to ${move.to} (${move.san}) for better safety.`, { to: move.to, san: move.san });
+                    challengeText = this.L('coach.stepKingChallenge', 'King placement is critical. How will you organize your pieces now?');
                 } else {
-                    coachMoveDesc = `I play ${move.san} with my ${pName} to improve piece activity.`;
+                    coachMoveDesc = this.L('coach.improveActivity', `I play ${move.san} with my ${pName} to improve piece activity.`, { san: move.san, piece: pName });
                     challengeText = this._getContextualChallenge(boardAfter);
                 }
             }
@@ -2680,55 +2780,55 @@
 
             if (name.includes('sicilian') || eco.startsWith('B2') || eco.startsWith('B3') || eco.startsWith('B4') || eco.startsWith('B5') || eco.startsWith('B6') || eco.startsWith('B7') || eco.startsWith('B8') || eco.startsWith('B9')) {
                 return {
-                    bubble1: "The Sicilian Defense! A sharp, combative opening with rich counter-attacking potential.",
-                    bubble2: "How will you develop your kingside and challenge my pawn on e4?"
+                    bubble1: this.L('coach.open.sicilian1', "The Sicilian Defense! A sharp, combative opening with rich counter-attacking potential."),
+                    bubble2: this.L('coach.open.sicilian2', "How will you develop your kingside and challenge my pawn on e4?")
                 };
             }
             if (name.includes('french') || eco.startsWith('C0') || eco.startsWith('C1')) {
                 return {
-                    bubble1: "The French Defense! Building a rock-solid central pawn chain.",
-                    bubble2: "Watch that light-squared bishop! How do you plan to activate it?"
+                    bubble1: this.L('coach.open.french1', "The French Defense! Building a rock-solid central pawn chain."),
+                    bubble2: this.L('coach.open.french2', "Watch that light-squared bishop! How do you plan to activate it?")
                 };
             }
             if (name.includes('italian') || eco === 'C50' || eco === 'C53' || eco === 'C54' || eco === 'C55') {
                 return {
-                    bubble1: "The Italian Game! Classical open piece play targeting the vulnerable f7 square.",
-                    bubble2: "Can you neutralize my bishop and fight for central control?"
+                    bubble1: this.L('coach.open.italian1', "The Italian Game! Classical open piece play targeting the vulnerable f7 square."),
+                    bubble2: this.L('coach.open.italian2', "Can you neutralize my bishop and fight for central control?")
                 };
             }
             if (name.includes('caro-kann') || eco.startsWith('B1')) {
                 return {
-                    bubble1: "The Caro-Kann! Renowned for pawn structure solidity and endgame resilience.",
-                    bubble2: "Are you preparing to strike at the center with ...d5?"
+                    bubble1: this.L('coach.open.caro1', "The Caro-Kann! Renowned for pawn structure solidity and endgame resilience."),
+                    bubble2: this.L('coach.open.caro2', "Are you preparing to strike at the center with ...d5?")
                 };
             }
             if (name.includes('ruy lopez') || name.includes('spanish') || eco.startsWith('C6') || eco.startsWith('C7') || eco.startsWith('C8') || eco.startsWith('C9')) {
                 return {
-                    bubble1: "The Spanish Game! Deep, classical positional maneuvering from move 3.",
-                    bubble2: "Can you maintain piece harmony under central pressure?"
+                    bubble1: this.L('coach.open.spanish1', "The Spanish Game! Deep, classical positional maneuvering from move 3."),
+                    bubble2: this.L('coach.open.spanish2', "Can you maintain piece harmony under central pressure?")
                 };
             }
             if (name.includes("queen's gambit") || eco.startsWith('D0') || eco.startsWith('D1') || eco.startsWith('D2') || eco.startsWith('D3') || eco.startsWith('D4') || eco.startsWith('D5') || eco.startsWith('D6')) {
                 return {
-                    bubble1: "The Queen's Gambit! A battle of will and central space from move 2.",
-                    bubble2: "Do you take the gambit pawn or stand firm in the center?"
+                    bubble1: this.L('coach.open.queensGambit1', "The Queen's Gambit! A battle of will and central space from move 2."),
+                    bubble2: this.L('coach.open.queensGambit2', "Do you take the gambit pawn or stand firm in the center?")
                 };
             }
             if (name.includes("king's indian") || eco.startsWith('E6') || eco.startsWith('E7') || eco.startsWith('E8') || eco.startsWith('E9')) {
                 return {
-                    bubble1: "The King's Indian! You're letting me claim space to prepare a kingside storm.",
-                    bubble2: "How do you plan to challenge my central pawn chain?"
+                    bubble1: this.L('coach.open.kingsIndian1', "The King's Indian! You're letting me claim space to prepare a kingside storm."),
+                    bubble2: this.L('coach.open.kingsIndian2', "How do you plan to challenge my central pawn chain?")
                 };
             }
             if (name.includes('scandinavian') || eco === 'B01') {
                 return {
-                    bubble1: "The Scandinavian! An immediate strike against e4 right on move 1.",
-                    bubble2: "Developing your queen early can be risky. Keep her safe!"
+                    bubble1: this.L('coach.open.scandinavian1', "The Scandinavian! An immediate strike against e4 right on move 1."),
+                    bubble2: this.L('coach.open.scandinavian2', "Developing your queen early can be risky. Keep her safe!")
                 };
             }
             return {
-                bubble1: `Entering the ${op.name}! Let's see who controls the key squares.`,
-                bubble2: "What is your primary strategic plan in this opening?"
+                bubble1: this.L('coach.entering', `Entering the ${op.name}! Let's see who controls the key squares.`, { name: op.name }),
+                bubble2: this.L('coach.strategicPlan', "What is your primary strategic plan in this opening?")
             };
         }
 
@@ -2774,10 +2874,10 @@
             });
 
             if (sleepingMinors >= 2 && this.moveHistory.length < 16) {
-                return pickRandom(this.persona.voice.challengeDevelopment || [
+                return pickRandom(this.voiceLines('challengeDevelopment', this.persona.voice.challengeDevelopment || [
                     "You still have pieces asleep on the back rank. Can you mobilize them?",
                     "Bringing your minor pieces into play is top priority. Which piece will you develop next?"
-                ]);
+                ]));
             }
 
             // Check if queens are traded (endgame)
@@ -2791,13 +2891,13 @@
             }
 
             if (queensCount === 0 && this.moveHistory.length >= 16) {
-                return pickRandom(this.persona.voice.challengeEndgame || [
+                return pickRandom(this.voiceLines('challengeEndgame', this.persona.voice.challengeEndgame || [
                     "In the endgame, the active king is worth a minor piece. Time to march!",
                     "Precision matters in the endgame. Look ahead a few moves before deciding!"
-                ]);
+                ]));
             }
 
-            return pickRandom(this.persona.voice.challengeGeneric);
+            return pickRandom(this.voiceLines('challengeGeneric', this.persona.voice.challengeGeneric));
         }
 
         /**
@@ -3050,7 +3150,8 @@
             else if (this.persona.elo >= 2000) tier = 'master';
 
             // Format target names
-            let targetNames = "enemy pieces";
+            const joinAnd = this.L('coach.joinAnd', ' and ');
+            let targetNames = this.L('coach.enemyPieces', 'enemy pieces');
             const targets = (plan.keySquares && plan.keySquares.targets) ? plan.keySquares.targets : [];
             if (targets.length > 0) {
                 const names = targets.map(sq => {
@@ -3061,20 +3162,28 @@
                     return sq;
                 });
                 if (names.length === 1) targetNames = names[0];
-                else if (names.length === 2) targetNames = names[0] + ' and ' + names[1];
-                else targetNames = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+                else if (names.length === 2) targetNames = names[0] + joinAnd + names[1];
+                else targetNames = names.slice(0, -1).join(', ') + joinAnd + names[names.length - 1];
             }
 
             let followUpText = "";
             if (plan.followUp) {
-                followUpText = ` Next you have ${plan.followUp}.`;
+                followUpText = this.L('coach.followUp', ` Next you have ${plan.followUp}.`, { x: plan.followUp });
             }
 
-            let template = HINT_TEMPLATES[motifKey][levelKey][tier] || HINT_TEMPLATES[motifKey][levelKey].default;
+            const enTemplate = HINT_TEMPLATES[motifKey][levelKey][tier] || HINT_TEMPLATES[motifKey][levelKey].default;
+            let template = enTemplate;
+            // Vietnamese override with EN fallback (deterministic: same selection)
+            try {
+                const I18N = getI18n();
+                if (this.lang === 'vi' && I18N && typeof I18N.hintTemplate === 'function') {
+                    template = I18N.hintTemplate(motifKey, levelKey, tier, enTemplate, this.lang);
+                }
+            } catch (e) { template = enTemplate; }
 
             // Suggested move override for backwards compatibility with tests
             if (plan.source === 'suggestion' && levelKey === 1) {
-                template = `Coach Hint: Consider mobilizing your {piece} toward {to} ({san}) as we discussed!`;
+                template = this.L('coach.suggestion', `Coach Hint: Consider mobilizing your {piece} toward {to} ({san}) as we discussed!`);
             }
 
             const hintText = template
@@ -3141,7 +3250,7 @@
         async generateHint() {
             if (this.isGameOver || !this.isPlayerTurn()) {
                 return {
-                    hintText: "No hints needed right now.",
+                    hintText: this.L('error.hintNone', 'No hints needed right now.'),
                     highlightSquares: [],
                     targetSquares: [],
                     arrow: null,
@@ -3167,7 +3276,7 @@
 
             if (!this.hintState.plan) {
                 return {
-                    hintText: "No hints available for this position.",
+                    hintText: this.L('error.hintNonePos', 'No hints available for this position.'),
                     highlightSquares: [],
                     targetSquares: [],
                     arrow: null,
@@ -3382,43 +3491,44 @@
         getErrorSummary() {
             if (!this.errorProfile) return [];
             const themes = [
-                { key: 'hangingPiece', count: this.errorProfile.hangingPiece || 0, label: 'hanging pieces' },
-                { key: 'tacticalBlunder', count: this.errorProfile.tacticalBlunder || 0, label: 'tactical oversights' },
-                { key: 'missedFork', count: this.errorProfile.missedFork || 0, label: 'missed tactical forks' },
-                { key: 'kingSafety', count: this.errorProfile.kingSafety || 0, label: 'king safety vulnerabilities' },
-                { key: 'endgameTechnique', count: this.errorProfile.endgameTechnique || 0, label: 'endgame technique' },
-                { key: 'openingPrinciple', count: this.errorProfile.openingPrinciple || 0, label: 'opening principles' }
+                { key: 'hangingPiece', count: this.errorProfile.hangingPiece || 0, label: this.L('coach.err.hanging', 'hanging pieces'), labelEn: 'hanging pieces' },
+                { key: 'tacticalBlunder', count: this.errorProfile.tacticalBlunder || 0, label: this.L('coach.err.tactical', 'tactical oversights'), labelEn: 'tactical oversights' },
+                { key: 'missedFork', count: this.errorProfile.missedFork || 0, label: this.L('coach.err.fork', 'missed tactical forks'), labelEn: 'missed tactical forks' },
+                { key: 'kingSafety', count: this.errorProfile.kingSafety || 0, label: this.L('coach.err.king', 'king safety vulnerabilities'), labelEn: 'king safety vulnerabilities' },
+                { key: 'endgameTechnique', count: this.errorProfile.endgameTechnique || 0, label: this.L('coach.err.endgame', 'endgame technique'), labelEn: 'endgame technique' },
+                { key: 'openingPrinciple', count: this.errorProfile.openingPrinciple || 0, label: this.L('coach.err.opening', 'opening principles'), labelEn: 'opening principles' }
             ].filter(t => t.count > 0).sort((a, b) => b.count - a.count);
 
             return themes.slice(0, 2);
         }
 
         _getGameOverMessage() {
-            let baseMsg = "Game over!";
+            let baseMsg = this.L('coach.over.base', 'Game over!');
             if (this.resigned) {
                 baseMsg = (this.resignedColor === this.playerColor)
-                    ? "You resigned. No worries, every game is a learning opportunity!"
-                    : "Coach resigned! Outstanding play!";
+                    ? this.L('coach.over.resignedPlayer', 'You resigned. No worries, every game is a learning opportunity!')
+                    : this.L('coach.over.resignedCoach', 'Coach resigned! Outstanding play!');
             } else if (this.chess.in_checkmate()) {
                 baseMsg = (this.chess.turn() === this.playerColor)
-                    ? "Checkmate! Good game! Don't worry, every loss is a lesson."
-                    : "Checkmate! Spectacular play! You won the game!";
+                    ? this.L('coach.over.mateLoss', "Checkmate! Good game! Don't worry, every loss is a lesson.")
+                    : this.L('coach.over.mateWin', 'Checkmate! Spectacular play! You won the game!');
             } else if (this.chess.in_stalemate()) {
-                baseMsg = "Stalemate! The game ends in a peaceful draw.";
+                baseMsg = this.L('coach.over.stalemate', 'Stalemate! The game ends in a peaceful draw.');
             } else if (this.chess.in_draw()) {
-                baseMsg = "Draw! A well-fought battle on both sides.";
+                baseMsg = this.L('coach.over.draw', 'Draw! A well-fought battle on both sides.');
             }
 
             if (this.hintStats && this.hintStats.totalPresses > 0) {
                 const pCount = this.hintStats.totalPresses;
                 const mCount = this.hintStats.movesWithHints;
-                baseMsg += ` You used ${pCount} hint${pCount === 1 ? '' : 's'} across ${mCount} move${mCount === 1 ? '' : 's'}.`;
+                baseMsg += this.L('coach.over.hintsUsed', ` You used ${pCount} hint${pCount === 1 ? '' : 's'} across ${mCount} move${mCount === 1 ? '' : 's'}.`, { p: pCount, m: mCount });
             }
 
             const topErrors = this.getErrorSummary();
             if (topErrors.length > 0) {
-                const summaryStr = topErrors.map(e => `${e.count} ${e.label}`).join(' and ');
-                baseMsg += ` Key takeaways from this game: watch out for ${summaryStr}.`;
+                const joiner = this.L('coach.joinAnd', ' and ');
+                const summaryStr = topErrors.map(e => `${e.count} ${this.lang === 'vi' ? e.label : (e.labelEn || e.label)}`).join(joiner);
+                baseMsg += this.L('coach.over.takeaways', ` Key takeaways from this game: watch out for ${summaryStr}.`, { s: summaryStr });
             }
             return baseMsg;
         }

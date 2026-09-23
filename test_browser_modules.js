@@ -483,7 +483,7 @@ const fs = require('fs');
 const indexHtml = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 
 assert(!indexHtml.includes("Missed Opportunity"), "index.html should not have old 'Missed Opportunity' label");
-assert(indexHtml.includes("badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED'"), "index.html should use MISSED and MISSED WIN labels");
+assert(indexHtml.includes("badgeLabel = isMissedWin ? L('chrome.missedWin', 'MISSED WIN') : L('chrome.missed', 'MISSED')"), "index.html should use i18n MISSED and MISSED WIN labels with EN fallbacks");
 assert(indexHtml.includes(".diag-missed-banner {"), "index.html must include .diag-missed-banner CSS");
 assert(indexHtml.includes(".diag-missed-text {"), "index.html must include .diag-missed-text CSS");
 assert(indexHtml.includes("align-items: flex-start;"), "index.html banner must align to flex-start for multi-line text");
@@ -2310,6 +2310,42 @@ console.log("✓ Coach board flicker fix regressions passed!");
     console.log("✓ Coach Mode Responsive Move List & Game Review tests passed!");
     console.log("✓ Coach Play code review regression tests passed!");
     console.log("✓ CoachManager passed!");
+
+    // 12. Bilingual UI (EN/VI) i18n Tests (additive: EN behavior unchanged)
+    console.log("Testing bilingual i18n module...");
+    const I18N = require('./js/i18n.js');
+    assert.deepStrictEqual(I18N.SUPPORTED, ['en', 'vi'], "i18n must support en + vi");
+    assert.strictEqual(I18N.getLang(), 'en', "default language must be English");
+    assert(!/Math\.random/.test(fs.readFileSync(require('path').join(__dirname, 'js/i18n.js'), 'utf8')),
+        "i18n.js must stay deterministic (no Math.random)");
+    // Every data-i18n key used by index.html must resolve in VI
+    const attrKeys = new Set();
+    for (const m of indexHtml.matchAll(/data-i18n(?:-title|-aria|-placeholder)?="([^"]+)"/g)) attrKeys.add(m[1]);
+    assert(attrKeys.size > 100, `index.html should tag 100+ strings, got ${attrKeys.size}`);
+    const missingVi = [...attrKeys].filter(k => !I18N.hasVi(k));
+    assert.strictEqual(missingVi.length, 0, `VI dict missing keys: ${missingVi.join(', ')}`);
+    // Fallback + interpolation
+    assert.strictEqual(I18N.t('no.such.key', 'Fallback Text'), 'Fallback Text', "missing key falls back to EN");
+    assert.strictEqual(I18N.t('chrome.movesCount', '{n} moves', { n: 5 }), '5 moves', "EN interpolation must work");
+    I18N.setLang('vi');
+    assert.strictEqual(I18N.t('chrome.movesCount', '{n} moves', { n: 5 }), '5 nước', "VI interpolation must work");
+    assert.strictEqual(I18N.t('no.such.key', 'Fallback Text'), 'Fallback Text', "VI missing key falls back to EN");
+    I18N.setLang('en');
+    // Toggle + wiring present, IDs untouched
+    assert(indexHtml.includes('id="langBtnEN"') && indexHtml.includes('id="langBtnVI"'), "index.html must have EN/VI toggle");
+    assert(indexHtml.includes('<script src="js/i18n.js">'), "index.html must load js/i18n.js");
+    assert(indexHtml.includes('>Import<'), "EN Import label must stay byte-identical");
+    assert(indexHtml.includes("langBtnEN) langBtnEN.addEventListener('click', () => setSiteLang('en'))"), "toggle must call setSiteLang");
+    // Coach language: default EN identical, VI localized
+    const coachEn = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
+    assert.strictEqual(coachEn.getLang(), 'en', "coach defaults to English");
+    assert.strictEqual(coachEn.currentBubble1, coachEn.persona.voice.intro, "EN coach intro byte-identical");
+    coachEn.setLang('vi');
+    assert.strictEqual(coachEn.getLang(), 'vi', "coach setLang('vi') sticks");
+    assert.notStrictEqual(coachEn.voiceText('intro', coachEn.persona.voice.intro), coachEn.persona.voice.intro, "VI coach intro must differ");
+    assert.strictEqual(coachEn.voiceLines('noSuchKey', ['EN1'])[0], 'EN1', "untranslated voice key falls back to EN");
+    I18N.setLang('en');
+    console.log("✓ Bilingual i18n tests passed!");
     console.log("ALL BROWSER MODULE TESTS PASSED SUCCESSFULLY! 🎉");
 })().catch(err => {
     console.error("Test error:", err);
