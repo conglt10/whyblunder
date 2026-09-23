@@ -515,47 +515,6 @@
             opacity: 0.4;
         }
 
-        .diagnosis-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--lic-border-subtle);
-        }
-
-        .move-title-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .player-badge {
-            font-size: var(--lic-fs-sm);
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 3px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        .player-badge.white {
-            background: #f0f0f0;
-            color: #161512;
-        }
-        .player-badge.black {
-            background: #141311;
-            color: #bababa;
-            border: 1px solid var(--lic-border-subtle);
-        }
-
-        .move-san {
-            font-family: monospace;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            color: var(--lic-text-bright);
-        }
 
         .badge-q {
             font-size: var(--lic-fs-sm);
@@ -639,83 +598,6 @@
             border-color: rgba(59, 130, 246, 0.3);
         }
 
-        /* Better Move Callout */
-        .better-move-strip {
-            background: var(--lic-green-dim);
-            border: 1px solid rgba(98, 153, 36, 0.3);
-            border-radius: 4px;
-            padding: 9px 12px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px 8px;
-            line-height: 1.4;
-        }
-        .badge-better {
-            background: var(--lic-green);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* Threats Alert Box */
-        .threat-alert-box {
-            background: var(--lic-red-dim);
-            border: 1px solid rgba(204, 51, 51, 0.3);
-            border-radius: 4px;
-            padding: 9px 12px;
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-        .threat-alert-box.opponent-threat {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .threat-item {
-            font-size: var(--lic-fs-sm);
-            background: rgba(204, 51, 51, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(204, 51, 51, 0.3);
-            padding: 2px 8px;
-            border-radius: 3px;
-            display: inline-flex;
-            align-items: center;
-            word-break: break-word;
-            max-width: 100%;
-        }
-        .threat-refutation-badge {
-            background: var(--lic-red);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: var(--lic-fs-base);
-            font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* Diagnosis Text */
-        .diagnosis-text {
-            font-size: var(--lic-fs-base);
-            line-height: 1.6;
-            color: var(--lic-text-primary);
-            margin-bottom: 12px;
-            padding: 11px 14px;
-            background: var(--lic-bg-surface-subtle);
-            border-radius: 5px;
-            border: 1px solid var(--lic-border-subtle);
-        }
         .diag-missed-banner {
             display: flex;
             align-items: flex-start;
@@ -768,7 +650,7 @@
             word-break: break-word;
         }
 
-        /* Variation Boxes */
+        /* Variation Boxes (variation outcome screen) */
         .variation-box {
             background: var(--lic-bg-surface-subtle);
             border: 1px solid var(--lic-border-subtle);
@@ -2238,14 +2120,6 @@
             }
 
             /* Mobile diagnostic content density */
-            .diagnosis-header {
-                padding-bottom: 4px;
-                margin-bottom: 3px;
-                gap: 4px;
-            }
-            .move-title-wrap {
-                gap: 6px;
-            }
             .move-san {
                 font-size: 1.05rem;
             }
@@ -2265,29 +2139,16 @@
                 font-size: 0.65rem;
                 padding: 1px 5px;
             }
-            .better-move-strip {
-                padding: 4px 8px;
-                margin-bottom: 3px;
-                font-size: 0.75rem;
+            .diag-meta {
+                margin-bottom: 6px;
+                gap: 4px 8px;
             }
-            .threat-alert-box {
-                padding: 4px 8px;
-                margin-bottom: 3px;
-                font-size: 0.72rem;
-            }
-            .diagnosis-text {
+            .diag-lines {
                 padding: 6px 8px;
-                margin-bottom: 3px;
-                font-size: 0.78rem;
-                line-height: 1.4;
+                margin-bottom: 6px;
             }
-            .variation-box {
-                padding: 6px 8px;
-                margin-top: 3px;
-            }
-            .variation-box .lic-btn {
-                padding: 3px 8px;
-                font-size: 0.75rem;
+            .diag-line-row {
+                padding: 4px 6px;
             }
 
             /* 3. HIDE DESKTOP MOVE COLUMN */
@@ -3750,11 +3611,6 @@
 
         /* --- Density & Type Scale (< 600px) --- */
         @media (max-width: 599.98px) {
-            .diagnosis-text {
-                font-size: var(--m-fs-body);
-                line-height: 1.5;
-                padding: 10px 12px;
-            }
             .move-san {
                 font-size: 1.125rem;
             }
@@ -3768,14 +3624,6 @@
                 min-height: 24px;
                 display: inline-flex;
                 align-items: center;
-            }
-            .better-move-strip, .threat-alert-box {
-                font-size: var(--m-fs-ui);
-                padding: 8px 10px;
-            }
-            .variation-box .lic-btn {
-                min-height: var(--m-tap);
-                font-size: var(--m-fs-ui);
             }
             .ticker-nav-btn {
                 width: var(--m-tap);
@@ -3924,8 +3772,6 @@
             --q-blunder: #fa412d;
         }
         body[data-theme="cc"] .cc-hide-when-cc { display: none !important; }
-        body:not([data-theme="cc"]) .cc-coach-line,
-        body:not([data-theme="cc"]) .cc-q-icon,
         body:not([data-theme="cc"]) .cc-cta-label,
         body:not([data-theme="cc"]) .cc-eval-graph-strip,
         body:not([data-theme="cc"]) #mobileBtnReviewSummary {
@@ -4938,6 +4784,189 @@
             background: #3c3a37 !important;
             color: #fff !important;
         }
+
+        /* Simplified Move Analysis Panel (One narrative, One meta row, One lines card) */
+        .cc-coach-bubble .diag-body {
+            color: #312e2b;
+            font-size: 0.9375rem;
+            line-height: 1.45;
+            margin-top: 6px;
+        }
+        .cc-coach-bubble .diag-highlight-move {
+            color: #1a1a18;
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+        }
+        .cc-coach-bubble .diag-missed-banner {
+            background: rgba(220, 38, 38, 0.08);
+            border-color: rgba(220, 38, 38, 0.25);
+            color: #991b1b;
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        .cc-coach-bubble .diag-missed-text {
+            color: #991b1b;
+        }
+        .cc-coach-foot {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            font-size: var(--lic-fs-sm);
+            color: #62605d;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .cc-coach-foot .threat-lead {
+            color: #73706d;
+            font-weight: 600;
+        }
+
+        .diag-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            margin-bottom: 12px;
+            padding: 2px 0 6px;
+        }
+        .diag-meta-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .player-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 2px;
+            flex-shrink: 0;
+        }
+        .player-dot.is-white {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.35);
+        }
+        .player-dot.is-black {
+            background: #141311;
+            border: 1px solid #73706d;
+        }
+        .diag-meta-tags {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .diag-tag.tag-overflow {
+            cursor: help;
+            opacity: 0.85;
+            font-weight: 600;
+        }
+
+        .diag-lines {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .diag-lines-title {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--lic-text-muted);
+            margin-bottom: 2px;
+        }
+        .diag-line-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            background: var(--lic-bg-surface-subtle);
+            border-left: 3px solid transparent;
+            transition: background 0.15s ease;
+        }
+        .diag-line-row.is-refutation {
+            border-left-color: var(--lic-red);
+            background: rgba(204, 51, 51, 0.06);
+        }
+        .diag-line-row.is-better {
+            border-left-color: var(--lic-green);
+            background: rgba(98, 153, 36, 0.06);
+        }
+        body[data-theme="cc"] .diag-line-row.is-refutation {
+            border-left-color: var(--q-blunder);
+            background: rgba(250, 65, 45, 0.08);
+        }
+        body[data-theme="cc"] .diag-line-row.is-better {
+            border-left-color: var(--q-best);
+            background: rgba(129, 182, 76, 0.08);
+        }
+        .diag-line-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: var(--lic-fs-sm);
+            font-weight: 600;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .diag-line-label .line-icon {
+            font-size: 0.8125rem;
+            font-weight: 800;
+        }
+        .diag-line-label .line-name {
+            color: var(--lic-text-primary);
+        }
+        .diag-line-label .line-move-san {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--lic-text-bright);
+        }
+        .diag-line-label .line-best-eval {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--lic-text-muted);
+            margin-left: 2px;
+        }
+        /* Label + play button share the first line; the PV gets the full width below */
+        .diag-line-row .principal-variation {
+            order: 3;
+            flex: 1 1 100%;
+            min-width: 0;
+            background: transparent;
+            padding: 0;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+        }
+        .diag-line-row .play-button,
+        .diag-line-row .play-refutation-button {
+            order: 2;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
         /* ===== CHESS.COM THEME — END ===== */
     </style>
 </head>
@@ -7713,35 +7742,76 @@
                 let html = '';
                 
                 const playerName = move.player || (move.is_white ? 'White' : 'Black');
-                const qualityTitle = (move.detailed_quality || move.quality || 'move').toUpperCase();
-                const qualityClass = getQualityClass(move.detailed_quality || move.quality);
-                
                 let evalText = (move.evaluation !== undefined && move.evaluation !== null) ? `${move.evaluation}` : '';
                 if (evalText && !evalText.startsWith('+') && !evalText.startsWith('-') && !evalText.startsWith('#') && !evalText.startsWith('M')) {
                     evalText = '+' + evalText;
                 }
 
-                html += ccCoachLineHtml(move);
+                // 1. COACH BUBBLE (One narrative)
+                let bodyHtml = '';
+                if (move.analysis) {
+                    const isMissedWin = (move.detailed_quality === 'missed win') || 
+                        (Array.isArray(move.tags) && move.tags.some(t => {
+                            const lower = t.toLowerCase();
+                            return lower.includes('missed win') || lower.includes('missed mate');
+                        }));
+                    const missChanceText = move.analysis.missed_chance || (isMissedWin ? 'Misses a forced winning advantage' : null);
+                    if (missChanceText) {
+                        const missTitle = missChanceText.charAt(0).toUpperCase() + missChanceText.slice(1);
+                        const badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED';
+                        const badgeIcon = isMissedWin ? 'bi-trophy-fill' : 'bi-crosshair';
+                        const badgeClass = isMissedWin ? 'diag-missed-badge badge-missed-win' : 'diag-missed-badge';
+                        bodyHtml += `
+                            <div class="diag-missed-banner mb-2">
+                                <span class="${badgeClass}"><i class="bi ${badgeIcon} me-1"></i>${badgeLabel}</span>
+                                <span class="diag-missed-text">${escapeHtml(missTitle)}</span>
+                            </div>`;
+                    }
 
-                html += `
-                    <div class="diagnosis-header">
-                        <div class="move-title-wrap">
-                            <span class="player-badge ${move.is_white ? 'white' : 'black'}">${playerName}</span>
-                            <span class="move-san">${formatSanWithFigurines(move.move, move.is_white)}</span>
-                            <span class="badge-q ${qualityClass}">${qualityTitle}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            ${evalText ? `<span class="eval-tag" title="Position Evaluation">${evalText}</span>` : ''}
-                            ${(move.quality !== 'good move' && move.analysis && move.analysis.best_evaluation) ? `<span class="eval-best-tag" title="Best line evaluation">Best: ${move.analysis.best_evaluation}</span>` : ''}
-                            ${(move.win_probability !== undefined) ? `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win: ${(move.win_probability * 100).toFixed(1)}%</span>` : ''}
-                            ${(move.win_prob_loss && move.win_prob_loss > 0.02) ? `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>` : ''}
-                        </div>
-                    </div>`;
-                
-                // Tactical, positional, or opening tags
-                if (move.tags && move.tags.length > 0) {
-                    html += `<div class="tags-cluster">`;
-                    move.tags.forEach(tag => {
+                    if (move.analysis.explanation) {
+                        let formattedExpl = escapeHtml(move.analysis.explanation);
+                        const highlightMoves = [move.move, move.analysis.best_move, move.analysis.refutation].filter(Boolean);
+                        highlightMoves.forEach(m => {
+                            const escapedM = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            formattedExpl = formattedExpl.replace(new RegExp(`\\b${escapedM}\\b`, 'g'), `<span class="diag-highlight-move">${m}</span>`);
+                        });
+
+                        bodyHtml += `<div class="diag-body">${formattedExpl}</div>`;
+                    }
+                }
+                if (!bodyHtml) {
+                    bodyHtml = '<div class="diag-body text-muted"><i class="bi bi-check2-circle text-success me-1"></i>This move is considered solid by the engine.</div>';
+                }
+
+                let footHtml = '';
+                if (move.analysis && move.analysis.threats_created && move.analysis.threats_created.length > 0) {
+                    const threats = move.analysis.threats_created.map(t => escapeHtml(t.description || t)).join('; ');
+                    footHtml = `<i class="bi bi-arrow-right me-1 opacity-75"></i><span class="threat-lead">Also: </span>${threats}`;
+                }
+
+                // Unknown quality keys render no bubble; keep the narrative visible anyway
+                html += ccCoachLineHtml(move, false, { bodyHtml, footHtml })
+                    || `<div class="diag-fallback">${bodyHtml}${footHtml ? `<div class="cc-coach-foot">${footHtml}</div>` : ''}</div>`;
+
+                // 2. ONE META ROW (eval + win% + <=3 tags)
+                let metaHtml = '<div class="diag-meta">';
+                metaHtml += '<div class="diag-meta-stats d-flex align-items-center gap-2 flex-wrap">';
+                metaHtml += `<span class="player-dot ${move.is_white ? 'is-white' : 'is-black'}" title="${playerName}"></span>`;
+                if (evalText) {
+                    metaHtml += `<span class="eval-tag" title="Position Evaluation">${evalText}</span>`;
+                }
+                if (move.win_probability !== undefined) {
+                    metaHtml += `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win ${(move.win_probability * 100).toFixed(1)}%</span>`;
+                }
+                if (move.win_prob_loss && move.win_prob_loss > 0.02) {
+                    metaHtml += `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>`;
+                }
+                metaHtml += '</div>';
+
+                const displayTags = ccDisplayTags(move);
+                if (displayTags.length > 0) {
+                    metaHtml += '<div class="diag-meta-tags d-flex align-items-center gap-1 flex-wrap">';
+                    displayTags.forEach(tag => {
                         const isMiss = tag.startsWith('Missed') || tag.includes('Attack') || tag === 'Tactical Fork' || tag === 'Hanging Piece';
                         const isControl = tag.includes('Center') || tag.includes('File') || tag.includes('Outpost') || tag.includes('Diagonal');
                         let tagClass = 'diag-tag';
@@ -7753,124 +7823,75 @@
                             tagClass += ' tag-control';
                             icon = 'bi-compass-fill';
                         }
-                        html += `<span class="${tagClass}"><i class="bi ${icon} me-1 opacity-75"></i>${tag}</span>`;
+                        metaHtml += `<span class="${tagClass}"><i class="bi ${icon} me-1 opacity-75"></i>${escapeHtml(tag)}</span>`;
                     });
-                    html += `</div>`;
+                    if (displayTags.overflow && displayTags.overflow.length > 0) {
+                        metaHtml += `<span class="diag-tag tag-overflow" title="${escapeHtml(displayTags.all.join(', '))}">+${displayTags.overflow.length}</span>`;
+                    }
+                    metaHtml += '</div>';
                 }
+                metaHtml += '</div>';
+                html += metaHtml;
 
+                // 3. ONE LINES CARD (refutation row + recommended row)
                 if (move.analysis) {
-                    // Better move callout (if not a good move)
-                    if (move.quality !== 'good move' && move.analysis.best_move) {
-                        html += `
-                            <div class="better-move-strip">
-                                <span class="text-success fw-semibold small me-1"><i class="bi bi-lightbulb me-1"></i>Better:</span>
-                                <span class="badge-better font-monospace">${formatSanWithFigurines(move.analysis.best_move, move.is_white)}</span>
-                                ${move.analysis.best_evaluation ? `<span class="text-muted small ms-1">(${move.analysis.best_evaluation})</span>` : ''}
-                            </div>`;
-                    }
+                    const isRefutationApplicable = (move.quality !== 'good move');
+                    const refVarData = isRefutationApplicable ? getVariationData(index, 'refutation') : null;
+                    const hasRefutation = Boolean(refVarData && refVarData.moves && refVarData.moves.length > 0);
 
-                    // Threats created by the played move
-                    if (move.analysis.threats_created && move.analysis.threats_created.length > 0) {
-                        html += `
-                            <div class="threat-alert-box created-threat">
-                                <div class="d-flex align-items-center gap-1 text-danger fw-semibold small mb-1">
-                                    <i class="bi bi-bullseye"></i> <span>Threat created by ${move.move}:</span>
-                                </div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${move.analysis.threats_created.map(t => `<span class="threat-item"><i class="bi bi-arrow-right-short"></i>${t.description || t}</span>`).join('')}
-                                </div>
-                            </div>`;
-                    }
+                    const betterVarData = getVariationData(index, 'better');
+                    const hasBetterLine = Boolean(betterVarData && betterVarData.moves && betterVarData.moves.length > 0);
+                    // When the played move was the engine's choice, the line is its continuation, not an alternative
+                    const bestDiffers = Boolean(move.analysis.best_move) && move.analysis.best_move.replace(/[?!+#]+$/, '') !== (move.move || '').replace(/[?!+#]+$/, '');
 
-                    // Opponent's counter-threat / refutation
-                    if (move.analysis.refutation) {
-                        html += `
-                            <div class="threat-alert-box opponent-threat d-flex align-items-center flex-wrap gap-2">
-                                <span class="text-danger fw-semibold small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Opponent's threat:</span>
-                                <span class="threat-refutation-badge font-monospace">${formatSanWithFigurines(move.analysis.refutation, !move.is_white)}</span>
-                            </div>`;
-                    }
+                    if (hasRefutation || hasBetterLine) {
+                        let linesHtml = '<div class="diag-lines">';
+                        linesHtml += '<div class="diag-lines-title">LINES</div>';
 
-                    // Explanation / Why
-                    if (move.analysis.explanation) {
-                        let cardContent = '';
-                        const isMissedWin = (move.detailed_quality === 'missed win') || 
-                            (Array.isArray(move.tags) && move.tags.some(t => {
-                                const lower = t.toLowerCase();
-                                return lower.includes('missed win') || lower.includes('missed mate');
-                            }));
-                        const missChanceText = move.analysis.missed_chance || (isMissedWin ? 'Misses a forced winning advantage' : null);
-                        if (missChanceText) {
-                            const missTitle = missChanceText.charAt(0).toUpperCase() + missChanceText.slice(1);
-                            const badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED';
-                            const badgeIcon = isMissedWin ? 'bi-trophy-fill' : 'bi-crosshair';
-                            const badgeClass = isMissedWin ? 'diag-missed-badge badge-missed-win' : 'diag-missed-badge';
-                            cardContent += `
-                                <div class="diag-missed-banner mb-2">
-                                    <span class="${badgeClass}"><i class="bi ${badgeIcon} me-1"></i>${badgeLabel}</span>
-                                    <span class="diag-missed-text">${escapeHtml(missTitle)}</span>
+                        if (hasRefutation) {
+                            const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'refutation');
+                            const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
+                            linesHtml += `
+                                <div class="diag-line-row is-refutation" id="varBox-refutation-${index}">
+                                    <div class="diag-line-label">
+                                        <span class="line-icon text-danger">✕</span>
+                                        <span class="line-name">After</span>
+                                        <span class="line-move-san">${formatSanWithFigurines(move.move, move.is_white)}</span>
+                                    </div>
+                                    <div class="principal-variation refutation-line" data-index="${index}" data-type="refutation">
+                                        ${renderVariationLineHtml(refVarData, activeStep)}
+                                    </div>
+                                    <button type="button" class="lic-btn lic-btn-danger play-refutation-button" data-index="${index}" title="Play punishment line" aria-label="Play punishment line">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
                                 </div>`;
                         }
 
-                        let formattedExpl = escapeHtml(move.analysis.explanation);
-                        const highlightMoves = [move.move, move.analysis.best_move, move.analysis.refutation].filter(Boolean);
-                        highlightMoves.forEach(m => {
-                            const escapedM = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            formattedExpl = formattedExpl.replace(new RegExp(`\\b${escapedM}\\b`, 'g'), `<span class="diag-highlight-move">${m}</span>`);
-                        });
-
-                        cardContent += `<div class="diag-body"><i class="bi bi-info-circle me-1 text-info opacity-75"></i>${formattedExpl}</div>`;
-                        html += `<div class="diagnosis-text">${cardContent}</div>`;
-                    }
-
-                    // Variations: Punishing Line & Recommended Line
-                    const refVarData = (move.quality !== 'good move') ? getVariationData(index, 'refutation') : null;
-                    if (refVarData && refVarData.moves.length > 0) {
-                        const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'refutation');
-                        const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
-                        html += `
-                            <div class="variation-box box-refutation" id="varBox-refutation-${index}">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="text-danger fw-semibold small">
-                                        <i class="bi bi-shield-slash me-1"></i>Punishing line (why this is bad):
-                                    </span>
-                                    <span class="text-muted font-monospace small">${refVarData.moves.length} moves</span>
-                                </div>
-                                <div class="principal-variation refutation-line" data-index="${index}" data-type="refutation">
-                                    ${renderVariationLineHtml(refVarData, activeStep)}
-                                </div>
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <button type="button" class="lic-btn lic-btn-danger py-1 px-2 play-refutation-button" data-index="${index}">
-                                        <i class="bi bi-play-fill"></i> Play punishment line
+                        if (hasBetterLine) {
+                            const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'better');
+                            const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
+                            const bestEvalStr = move.analysis.best_evaluation ? `<span class="line-best-eval text-muted small">${move.analysis.best_evaluation}</span>` : '';
+                            linesHtml += `
+                                <div class="diag-line-row is-better" id="varBox-better-${index}">
+                                    <div class="diag-line-label">
+                                        <span class="line-icon text-success">✓</span>
+                                        ${bestDiffers ? `
+                                        <span class="line-name">Best</span>
+                                        <span class="line-move-san">${formatSanWithFigurines(move.analysis.best_move, move.is_white)}</span>
+                                        ${bestEvalStr}` : `<span class="line-name">Main line</span>`}
+                                    </div>
+                                    <div class="principal-variation" data-index="${index}" data-type="better">
+                                        ${renderVariationLineHtml(betterVarData, activeStep)}
+                                    </div>
+                                    <button type="button" class="lic-btn lic-btn-success play-button" data-index="${index}" title="Play better line" aria-label="Play better line">
+                                        <i class="bi bi-play-fill"></i>
                                     </button>
-                                </div>
-                            </div>`;
-                    }
+                                </div>`;
+                        }
 
-                    const betterVarData = getVariationData(index, 'better');
-                    if (betterVarData && betterVarData.moves.length > 0) {
-                        const isCurrentVarActive = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'better');
-                        const activeStep = isCurrentVarActive ? activeVariation.stepIndex : -1;
-                        html += `
-                            <div class="variation-box box-better" id="varBox-better-${index}">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="text-success fw-semibold small">
-                                        <i class="bi bi-check-circle me-1"></i>Recommended line:
-                                    </span>
-                                    <span class="text-muted font-monospace small">${betterVarData.moves.length} moves</span>
-                                </div>
-                                <div class="principal-variation" data-index="${index}" data-type="better">
-                                    ${renderVariationLineHtml(betterVarData, activeStep)}
-                                </div>
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <button type="button" class="lic-btn lic-btn-success py-1 px-2 play-button" data-index="${index}">
-                                        <i class="bi bi-play-fill"></i> Play better line
-                                    </button>
-                                </div>
-                            </div>`;
+                        linesHtml += '</div>';
+                        html += linesHtml;
                     }
-                } else {
-                    html += '<div class="diagnosis-text text-muted mb-0"><i class="bi bi-check2-circle text-success me-1"></i>This move is considered solid by the engine.</div>';
                 }
 
                 moveExplanation.innerHTML = html;
@@ -10784,26 +10805,71 @@
                 return escapeHtml(sentence);
             }
 
-            function ccCoachLineHtml(move, compact = false) {
+            function ccDisplayTags(move) {
+                if (!move || !Array.isArray(move.tags) || move.tags.length === 0) {
+                    const empty = [];
+                    empty.all = [];
+                    empty.overflow = [];
+                    return empty;
+                }
+                const quality = (move.detailed_quality || move.quality || '').toLowerCase();
+                let tags = Array.from(new Set(move.tags.filter(Boolean)));
+
+                // Drop tags that contradict the quality label
+                if (quality !== 'blunder') {
+                    tags = tags.filter(t => t !== 'Tactical Blunder' && t !== 'Blunder');
+                }
+                if (['good move', 'best', 'great', 'brilliant', 'book'].includes(quality)) {
+                    tags = tags.filter(t => !['Tactical Blunder', 'Blunder', 'Mistake', 'Inaccuracy', 'Losing Material'].includes(t));
+                }
+
+                // Drop generic tags when a more specific one exists
+                const hasSpecificLoss = tags.some(t => ['Hanging Piece', 'Tactical Fork', 'Fork', 'Pin', 'Skewer', 'Discovered Attack'].includes(t));
+                if (hasSpecificLoss) {
+                    tags = tags.filter(t => t !== 'Losing Material' && t !== 'Winning Material');
+                }
+                if (tags.includes('Pawn Promotion') && tags.includes('Promotion')) {
+                    tags = tags.filter(t => t !== 'Promotion');
+                }
+                if (tags.includes('Opposition') && tags.includes('King Activity')) {
+                    tags = tags.filter(t => t !== 'King Activity');
+                }
+
+                const allFiltered = [...tags];
+                const visible = tags.slice(0, 3);
+                visible.all = allFiltered;
+                visible.overflow = allFiltered.slice(3);
+                return visible;
+            }
+
+            function ccCoachLineHtml(move, compact = false, opts = {}) {
+                if (compact && typeof compact === 'object') {
+                    opts = compact;
+                    compact = false;
+                }
                 const key = ccQualityKey(move);
                 if (!move || !key) return '';
                 const san = formatSanWithFigurines((move.move || '').replace(/[?!]+$/, ''), move.is_white);
                 const a = move.analysis || {};
                 const isBad = ['inaccuracy', 'mistake', 'miss', 'blunder'].includes(key);
                 let detail = ccFirstSentence(isBad ? (a.flaw || a.missed_chance || a.explanation) : (a.explanation || a.flaw));
-                const best = (isBad && a.best_move) ? `<span class="cc-coach-best">Best was <b>${formatSanWithFigurines(a.best_move, move.is_white)}</b></span>` : '';
+                const hasCustomBody = Boolean(opts && opts.bodyHtml !== undefined);
+                const best = (hasCustomBody || compact || !isBad || !a.best_move) ? '' : `<span class="cc-coach-best">Best was <b>${formatSanWithFigurines(a.best_move, move.is_white)}</b></span>`;
                 if (compact) {
                     return `<div class="cc-coach-line is-compact">
                         <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                         <div class="cc-coach-text">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}${detail ? `<span class="cc-coach-detail"> ${detail}</span>` : ''}</div>
                     </div>`;
                 }
+                const bodyContent = hasCustomBody ? opts.bodyHtml : (detail ? `<div class="cc-coach-detail">${detail}</div>` : '');
+                const footContent = (opts && opts.footHtml) ? `<div class="cc-coach-foot">${opts.footHtml}</div>` : '';
                 return `<div class="cc-coach-line">
                     <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                     <div class="cc-coach-bubble q-${key}">
                         <div class="cc-coach-head">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}</div>
-                        ${detail ? `<div class="cc-coach-detail">${detail}</div>` : ''}
+                        ${bodyContent}
                         ${best}
+                        ${footContent}
                     </div>
                 </div>`;
             }
