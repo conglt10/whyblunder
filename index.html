@@ -3954,24 +3954,25 @@
             border-radius: 50%;
             background: var(--q-good);
             color: #fff;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             font-size: 10px;
             font-weight: 900;
             line-height: 1;
             letter-spacing: -0.04em;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
             vertical-align: middle;
+            border: none;
         }
-        .cc-q-icon.q-brilliant  { background: var(--q-brilliant); }
+        .cc-q-icon.q-brilliant  { background: var(--q-brilliant); letter-spacing: -0.05em; }
         .cc-q-icon.q-great      { background: var(--q-great); }
-        .cc-q-icon.q-best       { background: var(--q-best); }
+        .cc-q-icon.q-best       { background: var(--q-best); font-size: 9px; }
         .cc-q-icon.q-excellent  { background: var(--q-excellent); font-size: 9px; }
-        .cc-q-icon.q-good       { background: var(--q-good); }
+        .cc-q-icon.q-good       { background: var(--q-good); font-size: 9px; }
         .cc-q-icon.q-book       { background: var(--q-book); font-size: 9px; }
-        .cc-q-icon.q-inaccuracy { background: var(--q-inaccuracy); }
+        .cc-q-icon.q-inaccuracy { background: var(--q-inaccuracy); letter-spacing: -0.05em; }
         .cc-q-icon.q-mistake    { background: var(--q-mistake); }
-        .cc-q-icon.q-miss       { background: var(--q-miss); }
-        .cc-q-icon.q-blunder    { background: var(--q-blunder); }
+        .cc-q-icon.q-miss       { background: var(--q-miss); font-size: 9px; }
+        .cc-q-icon.q-blunder    { background: var(--q-blunder); letter-spacing: -0.05em; }
 
         /* Board badge on the destination square, scaled to the board via container units */
         body[data-theme="cc"] .board-container { container-type: inline-size; }
@@ -3982,19 +3983,25 @@
             height: 5.4cqw;
             font-size: 2.6cqw;
             font-weight: 900;
-            border: 0.25cqw solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0.4cqw 1cqw rgba(0, 0, 0, 0.45);
+            border: none;
+            box-shadow: 0 0.4cqw 1.2cqw rgba(0, 0, 0, 0.5);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-align: center;
         }
-        body[data-theme="cc"] .annotation-brilliant::before  { background-color: var(--q-brilliant); color: #fff; }
-        body[data-theme="cc"] .annotation-great::before      { background-color: var(--q-great); color: #fff; }
-        body[data-theme="cc"] .annotation-best::before       { background-color: var(--q-best); color: #fff; }
-        body[data-theme="cc"] .annotation-excellent::before  { background-color: var(--q-excellent); color: #fff; font-size: 2.2cqw; }
-        body[data-theme="cc"] .annotation-good::before       { background-color: var(--q-good); color: #fff; }
-        body[data-theme="cc"] .annotation-book::before       { background-color: var(--q-book); color: #fff; font-size: 2.2cqw; }
-        body[data-theme="cc"] .annotation-inaccuracy::before { background-color: var(--q-inaccuracy); color: #fff; }
-        body[data-theme="cc"] .annotation-mistake::before    { background-color: var(--q-mistake); color: #fff; }
-        body[data-theme="cc"] .annotation-miss::before       { background-color: var(--q-miss); color: #fff; }
-        body[data-theme="cc"] .annotation-blunder::before    { background-color: var(--q-blunder); color: #fff; }
+        body[data-theme="cc"] .annotation-brilliant::before  { background-color: var(--q-brilliant); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        body[data-theme="cc"] .annotation-great::before      { background-color: var(--q-great); color: #fff; font-size: 2.7cqw; }
+        body[data-theme="cc"] .annotation-best::before       { background-color: var(--q-best); color: #fff; font-size: 2.3cqw; }
+        body[data-theme="cc"] .annotation-excellent::before  { background-color: var(--q-excellent); color: #fff; font-size: 2.1cqw; }
+        body[data-theme="cc"] .annotation-good::before       { background-color: var(--q-good); color: #fff; font-size: 2.3cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-book::before       { background-color: var(--q-book); color: #fff; font-size: 2.1cqw; }
+        body[data-theme="cc"] .annotation-inaccuracy::before { background-color: var(--q-inaccuracy); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
+        body[data-theme="cc"] .annotation-mistake::before    { background-color: var(--q-mistake); color: #fff; font-size: 2.7cqw; }
+        body[data-theme="cc"] .annotation-miss::before       { background-color: var(--q-miss); color: #fff; font-size: 2.5cqw; font-weight: 800; }
+        body[data-theme="cc"] .annotation-blunder::before    { background-color: var(--q-blunder); color: #fff; font-size: 2.25cqw; letter-spacing: -0.06em; }
         body[data-theme="cc"] .board-wrapper { overflow: visible; }
 
         /* --- Coach line (analysis mode "coach voice") --- */
@@ -4293,7 +4300,9 @@
                 text-align: center;
             }
             .cc-sidebar-item:hover { background: #3c3a37; color: #fff; }
-            .cc-sidebar-item.active { background: #3c3a37; color: #fff; box-shadow: inset 3px 0 0 var(--cc-cta); }
+            .cc-sidebar-item.active { background: var(--cc-cta); color: #fff; box-shadow: none; }
+            .cc-sidebar-item.active .cc-sidebar-label { color: #fff; }
+            .cc-sidebar-item.active:hover { background: var(--cc-cta-hover); color: #fff; }
             .cc-sidebar-item:focus-visible { outline: 2px solid var(--cc-cta); outline-offset: -2px; }
             .cc-sidebar-spacer { flex: 1; }
 
@@ -4540,6 +4549,172 @@
             body[data-theme="cc"] #mobileBtnNext { background: #3c3a37 !important; color: #fff !important; box-shadow: none; }
             body[data-theme="cc"] .m-sheet:not([data-state="peek"]) #mobileSheetSummary .cc-coach-line { display: none; }
             body[data-theme="cc"] .m-sheet:not([data-state="peek"]) #mobileSheetSummary .cc-hide-when-cc { display: flex !important; }
+        }
+
+        /* --- Choose Your Coach Modal (Chess.com theme styling) --- */
+        body[data-theme="cc"] #coachSettingsModal .modal-content {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            color: var(--lic-text-primary);
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-header {
+            border-bottom: 1px solid var(--lic-border);
+            padding: 16px 20px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-title {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-title i {
+            color: var(--cc-cta) !important;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-close {
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-close:hover {
+            opacity: 1;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-body {
+            padding: 20px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer {
+            border-top: 1px solid var(--lic-border);
+            padding: 14px 20px;
+            gap: 10px;
+        }
+        body[data-theme="cc"] .coach-option-card {
+            background: #1e1d1a;
+            border: 1.5px solid #383530;
+            border-radius: var(--cc-radius);
+            padding: 12px 14px;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+        body[data-theme="cc"] .coach-option-card:hover {
+            background: #2b2926;
+            border-color: #4a4742;
+        }
+        body[data-theme="cc"] .coach-option-card.active {
+            background: rgba(129, 182, 76, 0.12);
+            border-color: var(--cc-cta);
+            box-shadow: 0 0 0 1px var(--cc-cta);
+        }
+        body[data-theme="cc"] .coach-option-avatar {
+            background: #262522;
+            border: 1px solid #3c3a37;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+        body[data-theme="cc"] .coach-option-details .fw-bold {
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        body[data-theme="cc"] .coach-option-details .text-muted {
+            color: var(--lic-text-muted) !important;
+            font-size: 0.8125rem;
+            line-height: 1.35;
+            margin-top: 2px;
+        }
+        body[data-theme="cc"] .coach-option-details .badge {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 800;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="pikaru"] .badge {
+            background: rgba(247, 198, 49, 0.16) !important;
+            color: #f7c631 !important;
+            border: 1px solid rgba(247, 198, 49, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="mcmarty"] .badge {
+            background: rgba(129, 182, 76, 0.16) !important;
+            color: #95c65f !important;
+            border: 1px solid rgba(129, 182, 76, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="sophy"] .badge {
+            background: rgba(116, 155, 191, 0.16) !important;
+            color: #749bbf !important;
+            border: 1px solid rgba(116, 155, 191, 0.35);
+        }
+        body[data-theme="cc"] .coach-option-card[data-persona="mangoose"] .badge {
+            background: rgba(250, 65, 45, 0.16) !important;
+            color: #ff7769 !important;
+            border: 1px solid rgba(250, 65, 45, 0.35);
+        }
+        body[data-theme="cc"] #coachSettingsModal hr {
+            border-color: var(--lic-border);
+            opacity: 1;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group {
+            background: #1b1916;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid var(--lic-border);
+            gap: 2px;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group .btn {
+            border: none !important;
+            border-radius: 6px !important;
+            color: var(--lic-text-secondary) !important;
+            font-weight: 700;
+            font-size: 0.8125rem;
+            padding: 6px 14px;
+            background: transparent !important;
+            transition: background 0.15s, color 0.15s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-group .btn:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        body[data-theme="cc"] #coachSettingsModal .btn-check:checked + .btn {
+            background: #3c3a37 !important;
+            color: #fff !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer .btn-secondary {
+            background: #312e2a;
+            border: 1px solid #3c3a37;
+            color: var(--lic-text-primary);
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 8px 18px;
+            border-radius: var(--cc-radius);
+            transition: background 0.12s, color 0.12s;
+        }
+        body[data-theme="cc"] #coachSettingsModal .modal-footer .btn-secondary:hover {
+            background: #3c3a37;
+            color: #fff;
+        }
+        body[data-theme="cc"] #btnStartCoachGame {
+            background: var(--cc-cta) !important;
+            border: none !important;
+            color: #fff !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 800;
+            font-size: 0.9375rem;
+            padding: 9px 22px;
+            border-radius: var(--cc-radius);
+            box-shadow: 0 3px 0 var(--cc-cta-shadow);
+            transition: background 0.12s, transform 0.06s, box-shadow 0.06s;
+            cursor: pointer;
+        }
+        body[data-theme="cc"] #btnStartCoachGame:hover {
+            background: var(--cc-cta-hover) !important;
+        }
+        body[data-theme="cc"] #btnStartCoachGame:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 var(--cc-cta-shadow);
         }
         /* ===== CHESS.COM THEME — END ===== */
     </style>
