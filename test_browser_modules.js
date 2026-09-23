@@ -482,6 +482,43 @@ console.log("Testing index.html banner markup & styling integrity...");
 const fs = require('fs');
 const indexHtml = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 
+// Game Review accuracy helpers (chess.com-style UI)
+console.log("Testing Game Review accuracy helpers...");
+{
+    const mk = (isWhite, loss, dq) => ({ is_white: isWhite, win_prob_loss: loss, detailed_quality: dq || 'best' });
+    assert.ok(ChessEvaluator.moveAccuracy(0) > 99.9, "Zero WP loss must be ~100% accuracy");
+    assert.strictEqual(ChessEvaluator.moveAccuracy(1), 0, "Total WP loss must clamp to 0% accuracy");
+    assert.ok(ChessEvaluator.moveAccuracy(0.05) > ChessEvaluator.moveAccuracy(0.25), "Accuracy must decrease with WP loss");
+
+    const perfect = [mk(true, 0), mk(false, 0), mk(true, 0), mk(false, 0)];
+    const perfectAcc = ChessEvaluator.gameAccuracy(perfect);
+    assert.ok(perfectAcc.white >= 99.9 && perfectAcc.black >= 99.9, "All-best game must be ~100% for both sides");
+
+    const withBlunder = [mk(true, 0), mk(false, 0), mk(true, 0.35, 'blunder'), mk(false, 0)];
+    const blunderAcc = ChessEvaluator.gameAccuracy(withBlunder);
+    assert.ok(blunderAcc.white < 90, "A blunder must lower the mover's accuracy");
+    assert.ok(blunderAcc.black >= 99.9, "A blunder must not lower the opponent's accuracy");
+    assert.deepStrictEqual(ChessEvaluator.gameAccuracy(withBlunder), blunderAcc, "Accuracy must be deterministic");
+
+    const book = ChessEvaluator.gameAccuracy([mk(true, 0.2, 'book')]);
+    assert.ok(book.white >= 99.9, "Book moves count as perfect");
+    assert.deepStrictEqual(ChessEvaluator.gameAccuracy([]), { white: null, black: null }, "Empty game has no accuracy");
+
+    const phases = ChessEvaluator.phaseAccuracy(withBlunder, ['start', 'start', 'start', 'start']);
+    assert.ok(phases.opening.white < 90 && phases.middlegame.white === null, "phaseAccuracy buckets moves by pre-move FEN phase");
+}
+
+// chess.com-style UI markup
+assert(indexHtml.includes('id="ccSidebar"'), "index.html must include the desktop sidebar");
+assert(indexHtml.includes('id="ccReviewSummary"'), "index.html must include the Game Review summary");
+assert(indexHtml.includes('id="ccStartReview"'), "index.html must include the Start Review CTA");
+assert(indexHtml.includes('id="ccEvalGraphStrip"'), "index.html must include the eval graph strip");
+assert(indexHtml.includes('function renderReviewSummary('), "index.html must define renderReviewSummary");
+assert(indexHtml.includes('function ccEvalGraphSvg('), "index.html must define ccEvalGraphSvg");
+assert(indexHtml.includes('ChessEvaluator.gameAccuracy(list)'), "Review summary must use ChessEvaluator.gameAccuracy");
+assert(indexHtml.includes('body[data-theme="cc"]'), "index.html must include the chess.com theme token layer");
+assert(indexHtml.includes("localStorage.getItem('whyblunder_theme')"), "Theme preference must persist");
+
 assert(!indexHtml.includes("Missed Opportunity"), "index.html should not have old 'Missed Opportunity' label");
 assert(indexHtml.includes("badgeLabel = isMissedWin ? 'MISSED WIN' : 'MISSED'"), "index.html should use MISSED and MISSED WIN labels");
 assert(indexHtml.includes(".diag-missed-banner {"), "index.html must include .diag-missed-banner CSS");

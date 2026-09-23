@@ -755,6 +755,67 @@
         };
     }
 
+    /**
+     * Per-move accuracy (0-100) from win-probability loss (0.0-1.0), using the
+     * exponential curve popularised by Lichess/chess.com accuracy scores.
+     * @param {number} wpLoss - win probability lost by the mover (0.0 to 1.0)
+     * @returns {number} accuracy percentage
+     */
+    function moveAccuracy(wpLoss) {
+        const lossPct = Math.max(0, Math.min(1, Number(wpLoss) || 0)) * 100;
+        const acc = 103.1668 * Math.exp(-0.04354 * lossPct) - 3.1669;
+        return Math.max(0, Math.min(100, acc));
+    }
+
+    function aggregateAccuracy(values) {
+        if (!values.length) return null;
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        // Harmonic mean punishes isolated blunders the way players expect.
+        const harmonic = values.length / values.reduce((a, v) => a + 1 / Math.max(v, 1), 0);
+        return Math.round(((mean + harmonic) / 2) * 10) / 10;
+    }
+
+    function isBookMove(move) {
+        return (move.detailed_quality || '').toLowerCase() === 'book';
+    }
+
+    /**
+     * Game accuracy per side from analyzed moves (output-contract objects).
+     * Book moves count as perfect. Deterministic for a given move list.
+     * @param {Array} moves - analyzed moves with is_white and win_prob_loss
+     * @returns {{white: number|null, black: number|null}}
+     */
+    function gameAccuracy(moves) {
+        const white = [];
+        const black = [];
+        (moves || []).forEach(move => {
+            if (!move) return;
+            const acc = isBookMove(move) ? 100 : moveAccuracy(move.win_prob_loss);
+            (move.is_white ? white : black).push(acc);
+        });
+        return { white: aggregateAccuracy(white), black: aggregateAccuracy(black) };
+    }
+
+    /**
+     * Accuracy per side for each game phase.
+     * @param {Array} moves - analyzed moves
+     * @param {Array<string>} fens - pre-move FEN for each move (same indexing)
+     * @returns {{opening: object, middlegame: object, endgame: object}}
+     */
+    function phaseAccuracy(moves, fens) {
+        const buckets = { opening: [], middlegame: [], endgame: [] };
+        (moves || []).forEach((move, i) => {
+            if (!move) return;
+            const phase = gamePhase(fens && fens[i]);
+            buckets[phase].push(move);
+        });
+        return {
+            opening: gameAccuracy(buckets.opening),
+            middlegame: gameAccuracy(buckets.middlegame),
+            endgame: gameAccuracy(buckets.endgame)
+        };
+    }
+
     return {
         MATE_SCORE_CP,
         DEFAULT_THRESHOLDS,
@@ -772,6 +833,10 @@
         classificationConfidence,
         deriveIsOnlyMove,
         deriveMateMissed,
-        deriveIsSacrifice
+        deriveIsSacrifice,
+        // Game Review accuracy
+        moveAccuracy,
+        gameAccuracy,
+        phaseAccuracy
     };
 }));
