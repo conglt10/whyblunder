@@ -7128,6 +7128,17 @@
                 const blackElo = (currentGameInfo && currentGameInfo.black_elo) ? `(${currentGameInfo.black_elo})` : '';
                 const result = (currentGameInfo && currentGameInfo.result) ? currentGameInfo.result : '';
 
+                const topPlayerElo = document.getElementById('topPlayerElo');
+                const bottomPlayerElo = document.getElementById('bottomPlayerElo');
+                if (topPlayerElo) {
+                    topPlayerElo.textContent = '';
+                    topPlayerElo.classList.add('d-none');
+                }
+                if (bottomPlayerElo) {
+                    bottomPlayerElo.textContent = '';
+                    bottomPlayerElo.classList.add('d-none');
+                }
+
                 if (isFlipped) {
                     // White on top, Black on bottom
                     if (topPlayerName) topPlayerName.textContent = whiteName;
@@ -10321,13 +10332,13 @@
 
                     clearHintHighlights();
                     highlightLastMove(null, null);
+                    updatePlayerStripsOrientation();
 
                     if (moves.length > 0 && currentMoveIndex >= 0) {
                         goToMove(currentMoveIndex);
                     } else {
                         board.orientation('white');
                         board.position('start');
-                        updatePlayerStripsOrientation();
                         clearKingCheckmateBadges();
                         if (window.MobileSheet) {
                             window.MobileSheet.setSummary('<span class="text-muted">Select any move to view analysis</span>');

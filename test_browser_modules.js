@@ -1982,6 +1982,12 @@ console.log("✓ Coach board flicker fix regressions passed!");
     assert.strictEqual(mockHintVisible, true, "Hint button must be restored upon takeback");
     assert.strictEqual(mockReviewVisible, false, "Game Review button must be hidden upon takeback");
 
+    // H. Verify Elo chips are hidden in analyze mode
+    assert(coachHtml.includes("if (topPlayerElo) {\n                    topPlayerElo.textContent = '';\n                    topPlayerElo.classList.add('d-none');\n                }"),
+        "index.html updatePlayerStripsOrientation must clear and hide topPlayerElo in Analyze mode");
+    assert(coachHtml.includes("if (bottomPlayerElo) {\n                    bottomPlayerElo.textContent = '';\n                    bottomPlayerElo.classList.add('d-none');\n                }"),
+        "index.html updatePlayerStripsOrientation must clear and hide bottomPlayerElo in Analyze mode");
+
     // 10. Coach Learner Model & ErrorProfile Escalation Tests
     console.log("Testing Coach Learner Model & ErrorProfile Escalation...");
     const learnerCoach = new CoachManager({ personaId: 'pikaru', playerColor: 'w' });
