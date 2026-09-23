@@ -290,28 +290,33 @@
             margin: 4px 0;
         }
 
-        /* Collapsible PGN Drawer */
+        /* Import Game Modal */
         .pgn-drawer {
-            background: var(--lic-bg-surface-header);
-            border-bottom: none;
-            box-shadow: none;
-            max-height: 0;
-            overflow: hidden;
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
             visibility: hidden;
             pointer-events: none;
-            transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
         }
         .pgn-drawer.open {
-            max-height: 480px;
+            opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            border-bottom: 1px solid var(--lic-border-subtle);
         }
         /* Import Source Tabs */
         .import-tabs-group {
             background: var(--lic-bg-surface);
             border: 1px solid var(--lic-border);
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 2px;
             display: inline-flex;
             gap: 2px;
@@ -320,10 +325,10 @@
             background: transparent;
             color: var(--lic-text-secondary);
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             font-size: var(--lic-fs-base);
             font-weight: 600;
-            padding: 4px 12px;
+            padding: 6px 14px;
             cursor: pointer;
             transition: all 0.12s ease;
             display: inline-flex;
@@ -338,12 +343,49 @@
             background: var(--lic-blue);
         }
         .pgn-drawer-inner {
-            max-width: 1680px;
-            margin: 0 auto;
-            padding: 14px 1.25rem;
+            max-width: 620px;
+            width: 100%;
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
+            margin: auto;
+            padding: 22px 24px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
+            transform: scale(0.96) translateY(-8px);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pgn-drawer.open .pgn-drawer-inner {
+            transform: scale(1) translateY(0);
+        }
+        .import-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--lic-border-subtle);
+        }
+        .import-modal-icon-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: rgba(54, 146, 231, 0.15);
+            color: var(--lic-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .import-modal-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--lic-text-bright);
+            margin: 0;
         }
 
         .pgn-textarea {
@@ -2235,24 +2277,28 @@
                 display: none !important;
             }
 
-            /* Mobile PGN drawer overlay */
+            /* Mobile PGN Import Modal */
             .pgn-drawer {
                 position: fixed;
-                top: 42px;
-                left: 0;
-                right: 0;
-                z-index: 1050;
-                box-shadow: none;
-                border-bottom: none;
+                inset: 0;
+                top: 0 !important;
+                z-index: 1100;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
-            body.mobile-header-hidden .pgn-drawer {
-                top: 0;
+            .pgn-drawer-inner {
+                max-width: 100%;
+                max-height: calc(100dvh - 24px);
+                padding: 16px;
+                gap: 12px;
             }
             .pgn-drawer.open {
-                max-height: calc(100dvh - 50px);
-                overflow-y: auto;
-                border-bottom: 1px solid var(--lic-border-subtle);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+                max-height: none;
+                overflow-y: visible;
+                border-bottom: none;
+                box-shadow: none;
             }
 
             .variation-under-board {
@@ -3864,7 +3910,6 @@
         body:not([data-theme="cc"]) .cc-q-icon,
         body:not([data-theme="cc"]) .cc-cta-label,
         body:not([data-theme="cc"]) .cc-eval-graph-strip,
-        body:not([data-theme="cc"]) #ccSidebarReview,
         body:not([data-theme="cc"]) #mobileBtnReviewSummary {
             display: none !important;
         }
@@ -4725,6 +4770,108 @@
             transform: translateY(2px);
             box-shadow: 0 1px 0 var(--cc-cta-shadow);
         }
+
+        /* --- Import Game Modal (Chess.com theme styling) --- */
+        body[data-theme="cc"] .pgn-drawer-inner {
+            background: var(--lic-bg-surface);
+            border: 1px solid var(--lic-border);
+            border-radius: 12px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            color: var(--lic-text-primary);
+        }
+        body[data-theme="cc"] .import-modal-header {
+            border-bottom: 1px solid var(--lic-border);
+            padding-bottom: 14px;
+        }
+        body[data-theme="cc"] .import-modal-title {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+        body[data-theme="cc"] .import-modal-icon-badge {
+            background: rgba(129, 182, 76, 0.15);
+            color: var(--cc-cta);
+        }
+        body[data-theme="cc"] .import-tabs-group {
+            background: #1e1d1a;
+            border-color: #383530;
+            border-radius: 8px;
+            padding: 3px;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn {
+            border-radius: 6px;
+            font-weight: 700;
+            color: #9c9a96;
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn.active {
+            background: var(--cc-cta);
+            color: #ffffff;
+        }
+        body[data-theme="cc"] .import-tabs-group .lic-tab-btn:hover:not(.active) {
+            color: #ffffff;
+            background: #2c2a26;
+        }
+        body[data-theme="cc"] .pgn-textarea,
+        body[data-theme="cc"] #lichessInput {
+            background-color: #181715 !important;
+            border-color: #383530 !important;
+            color: #ffffff !important;
+            border-radius: 8px;
+        }
+        body[data-theme="cc"] .pgn-textarea:focus,
+        body[data-theme="cc"] #lichessInput:focus {
+            border-color: var(--cc-cta) !important;
+            box-shadow: 0 0 0 2px rgba(129, 182, 76, 0.25) !important;
+        }
+        body[data-theme="cc"] #analyzeBtn {
+            background: var(--cc-cta) !important;
+            border: none !important;
+            box-shadow: 0 3px 0 var(--cc-cta-shadow) !important;
+            border-radius: var(--cc-radius);
+            font-weight: 800;
+            font-size: 0.9375rem;
+            padding: 9px 22px;
+            color: #ffffff;
+            transition: background 0.12s, transform 0.06s, box-shadow 0.06s;
+        }
+        body[data-theme="cc"] #analyzeBtn:hover {
+            background: var(--cc-cta-hover) !important;
+        }
+        body[data-theme="cc"] #analyzeBtn:active {
+            transform: translateY(2px) !important;
+            box-shadow: 0 1px 0 var(--cc-cta-shadow) !important;
+        }
+        body[data-theme="cc"] .lic-chip-btn {
+            background: #2b2926;
+            border-color: #383530;
+            border-radius: 6px;
+            color: #bababa;
+        }
+        body[data-theme="cc"] .lic-chip-btn:hover {
+            background: #363430;
+            border-color: #55524c;
+            color: #ffffff;
+        }
+        body[data-theme="cc"] .import-modal-footer {
+            border-top: 1px solid var(--lic-border);
+            padding-top: 14px;
+        }
+        body[data-theme="cc"] #btnCancelImport {
+            background: #312e2a !important;
+            border: 1px solid #3c3a37 !important;
+            color: var(--lic-text-primary) !important;
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 8px 18px;
+            border-radius: var(--cc-radius);
+            transition: background 0.12s, color 0.12s;
+        }
+        body[data-theme="cc"] #btnCancelImport:hover {
+            background: #3c3a37 !important;
+            color: #fff !important;
+        }
         /* ===== CHESS.COM THEME — END ===== */
     </style>
 </head>
@@ -4750,12 +4897,6 @@
         </button>
         <button type="button" class="cc-sidebar-item" data-cc-mode="coach" title="Play vs Coach">
             <i class="bi bi-person-workspace"></i><span class="cc-sidebar-label">Play Coach</span>
-        </button>
-        <button type="button" class="cc-sidebar-item" id="ccSidebarImport" title="Import game from Lichess or PGN">
-            <i class="bi bi-box-arrow-in-down"></i><span class="cc-sidebar-label">Import</span>
-        </button>
-        <button type="button" class="cc-sidebar-item" id="ccSidebarReview" title="Game Review summary">
-            <i class="bi bi-star-fill"></i><span class="cc-sidebar-label">Review</span>
         </button>
         <div class="cc-sidebar-spacer"></div>
         <div class="dropend">
@@ -4853,10 +4994,25 @@
         </div>
     </header>
 
-    <!-- Collapsible Import Drawer -->
-    <div id="pgnDrawer" class="pgn-drawer">
+    <!-- Import Game Modal -->
+    <div id="pgnDrawer" class="pgn-drawer" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
         <div class="pgn-drawer-inner">
-            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+            <!-- Modal Header -->
+            <div class="import-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="import-modal-icon-badge">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                    </div>
+                    <div>
+                        <h5 class="import-modal-title" id="importModalTitle">Import Game</h5>
+                        <div class="small text-muted" style="font-size:12px;">Analyze with Stockfish 16 WASM</div>
+                    </div>
+                </div>
+                <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:32px;min-width:32px;border-radius:6px;" title="Close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <!-- Tab Switcher & Depth Controls -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <!-- 2-Source Tabs -->
                 <div class="d-flex align-items-center gap-1 import-tabs-group" role="tablist">
                     <button type="button" class="lic-tab-btn active" data-import-tab="lichess" role="tab" aria-selected="true">
@@ -4868,8 +5024,8 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-2">
-                    <label for="analysisDepth" class="small mb-0" style="color:var(--lic-text-secondary);">Depth:</label>
-                    <select id="analysisDepth" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:28px; font-size:var(--lic-fs-sm);">
+                    <label for="analysisDepth" class="small mb-0 text-muted" style="font-size:12px;">Search Depth:</label>
+                    <select id="analysisDepth" class="form-select form-select-sm py-0 px-2 select-dark" style="width:auto; height:30px; font-size:var(--lic-fs-sm);">
                         <option value="14">Fast (14)</option>
                         <option value="16">Standard (16)</option>
                         <option value="18" selected>Deep (18)</option>
@@ -4877,16 +5033,15 @@
                         <option value="22">Grandmaster (22)</option>
                         <option value="24">Elite Search (24)</option>
                     </select>
-                    <button type="button" id="btnCloseDrawer" class="btn-lic-tool" style="min-height:28px;min-width:28px;" title="Close Drawer"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
 
             <!-- TAB PANEL 1: LICHESS -->
             <div id="tabPanelLichess" class="import-tab-panel">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste Lichess URL (e.g. <code>https://lichess.org/Qa7FJNk2</code>) or 8-char Game ID:</span>
+                    <span class="small text-muted" style="font-size:12px;">Paste Lichess URL (e.g. <code>https://lichess.org/Qa7FJNk2</code>) or 8-char Game ID:</span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Examples:</span>
+                        <span class="small me-1 text-muted" style="font-size:11px;">Examples:</span>
                         <button type="button" class="lic-chip-btn" data-sample="lichess"><i class="bi bi-link-45deg me-1"></i>Lichess Game</button>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
@@ -4901,9 +5056,9 @@
             <!-- TAB PANEL 2: PGN -->
             <div id="tabPanelPgn" class="import-tab-panel d-none">
                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                    <span class="small" style="color:var(--lic-text-secondary);">Paste raw PGN notation:</span>
+                    <span class="small text-muted" style="font-size:12px;">Paste raw PGN notation:</span>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="small me-1" style="color:var(--lic-text-secondary);">Presets:</span>
+                        <span class="small me-1 text-muted" style="font-size:11px;">Presets:</span>
                         <button type="button" class="lic-chip-btn" data-sample="opera">Morphy's Opera</button>
                         <button type="button" class="lic-chip-btn" data-sample="kasparov">Kasparov</button>
                         <button type="button" class="lic-chip-btn" data-sample="scholar">Scholar's Mate</button>
@@ -4913,16 +5068,17 @@
             </div>
 
             <!-- Bottom Action Row -->
-            <div class="d-flex align-items-center justify-content-between pt-1">
-                <div class="d-flex align-items-center gap-2">
+            <div class="import-modal-footer d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25 flex-wrap gap-2">
+                <span id="importSourceNotice" class="small text-muted font-monospace" style="font-size:11px;"></span>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <button type="button" id="btnCancelImport" class="lic-btn">Cancel</button>
                     <button id="analyzeBtn" class="lic-btn lic-btn-primary">
-                        <i class="bi bi-play-circle-fill"></i> Analyze Game
+                        <i class="bi bi-play-circle-fill me-1"></i> Analyze Game
                     </button>
                     <button id="cancelAnalyzeBtn" class="lic-btn lic-btn-danger d-none">
-                        <i class="bi bi-x-circle"></i> Cancel
+                        <i class="bi bi-x-circle me-1"></i> Cancel
                     </button>
                 </div>
-                <span id="importSourceNotice" class="small text-muted font-monospace" style="font-size:11px;"></span>
             </div>
         </div>
     </div>
@@ -5066,7 +5222,10 @@
                             <span id="moveCountSummary" class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size:var(--lic-fs-sm);">0 moves</span>
                             <span id="keyMomentsSummary" class="badge bg-warning bg-opacity-25 text-warning font-monospace d-none" style="font-size:var(--lic-fs-sm);">0 moments</span>
                         </div>
-                        <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)"><i class="bi bi-arrow-left-right me-1"></i> Flip</button>
+                        <div class="d-flex align-items-center gap-1">
+                            <button id="btnMovesImport" class="lic-chip-btn" title="Import game"><i class="bi bi-box-arrow-in-down me-1"></i> Import</button>
+                            <button id="btnFlip" class="lic-chip-btn" title="Flip Board (F)"><i class="bi bi-arrow-left-right me-1"></i> Flip</button>
+                        </div>
                     </div>
 
                     <!-- Eval Graph (Game Review) -->
@@ -6139,6 +6298,20 @@
             });
 
             if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', () => toggleDrawer(false));
+            const btnCancelImport = document.getElementById('btnCancelImport');
+            if (btnCancelImport) btnCancelImport.addEventListener('click', () => toggleDrawer(false));
+            if (pgnDrawer) {
+                pgnDrawer.addEventListener('click', function(e) {
+                    if (e.target === pgnDrawer) toggleDrawer(false);
+                });
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && pgnDrawer && pgnDrawer.classList.contains('open')) {
+                    toggleDrawer(false);
+                }
+            });
+            const btnMovesImport = document.getElementById('btnMovesImport');
+            if (btnMovesImport) btnMovesImport.addEventListener('click', () => toggleDrawer(true));
 
             // Auto-switch tabs if the user pastes a URL or PGN into an input
             function handleSourceAutoDetection(val, currentField) {
