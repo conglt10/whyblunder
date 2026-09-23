@@ -8076,6 +8076,7 @@
                 const rawSlug = raw.replace(/\s+/g, '-');
                 annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
                 annotation.style.left = `${file * 12.5}%`;
+                annotation.style.top = `${rank * 12.5}%`;
                 if (typeof symbol === 'string' && symbol.startsWith('<svg')) {
                     if (norm === 'best') annotation.setAttribute('data-symbol', '★');
                     else annotation.setAttribute('data-symbol', '');
@@ -11084,6 +11085,8 @@
             window.getCurrentAppMode = () => currentAppMode;
             window.renderReviewSummary = renderReviewSummary;
             window.openReviewSummary = openReviewSummary;
+            window.addSquareAnnotation = addSquareAnnotation;
+            window.board = board;
 
             // Also re-check when URL hash changes
             window.addEventListener('hashchange', function() {

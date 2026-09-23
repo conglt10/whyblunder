@@ -1450,6 +1450,8 @@ console.log("✓ Coach board flicker fix regressions passed!");
     assert(indexContent.includes('.coach-move-glyph'), "index.html must define .coach-move-glyph CSS");
     assert(indexContent.includes('.coach-move-san.quality-blunder'), "index.html must style blunder coach moves");
     assert(indexContent.includes('addSquareAnnotation(userResult.move.to'), "index.html must display move feedback annotation on played squares");
+    assert(indexContent.includes('annotation.style.left = `${file * 12.5}%`;'), "index.html must set annotation.style.left");
+    assert(indexContent.includes('annotation.style.top = `${rank * 12.5}%`;'), "index.html must set annotation.style.top");
     assert(indexContent.includes("drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better')"), "index.html must draw better move arrow on blunder takeback");
     assert(indexContent.includes("drawArrow(userResult.refMoveObj.from, userResult.refMoveObj.to, 'opponent-threat')"), "index.html must draw opponent threat arrow on blunder takeback");
 
