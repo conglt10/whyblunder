@@ -5787,13 +5787,22 @@
 
             // chessboard.js rounds squares down to whole pixels, so the board can be a few px
             // smaller than .board-container; overlays position from the real square size instead.
+            // Observe the inner board itself: #board has aspect-ratio so it resizes before the
+            // debounced board.resize() does, and chessboard.js replaces the inner board on re-init.
+            let observedBoardInner = null;
+            const boardSizeObserver = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(() => syncBoardSquareSize()) : null;
             function syncBoardSquareSize() {
                 const boardInner = document.querySelector('#board .board-b72b1');
+                if (boardSizeObserver && boardInner && boardInner !== observedBoardInner) {
+                    if (observedBoardInner) boardSizeObserver.unobserve(observedBoardInner);
+                    boardSizeObserver.observe(boardInner);
+                    observedBoardInner = boardInner;
+                }
                 if (!boardContainer || !boardInner || !boardInner.clientWidth) return;
                 boardContainer.style.setProperty('--sq', `${boardInner.clientWidth / 8}px`);
             }
-            if (typeof ResizeObserver !== 'undefined' && document.getElementById('board')) {
-                new ResizeObserver(syncBoardSquareSize).observe(document.getElementById('board'));
+            if (document.getElementById('board')) {
+                new MutationObserver(syncBoardSquareSize).observe(document.getElementById('board'), { childList: true });
             }
             const btnTogglePgn = document.getElementById('btnTogglePgn');
             const btnCloseDrawer = document.getElementById('btnCloseDrawer');
@@ -10195,6 +10204,8 @@
                     board.position(coachManager.chess.fen(), false);
                     return;
                 }
+                // Hint level resets once the move is made; refresh so the old "n/4" doesn't linger
+                updateCoachHintBadge();
 
                 const currentFen = board.fen();
                 const targetFen = coachManager.chess.fen().split(' ')[0];
