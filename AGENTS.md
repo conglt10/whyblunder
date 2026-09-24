@@ -144,10 +144,19 @@ The UI in `index.html` expects analyzed moves from `BrowserWhyBlunder` / `MoveDi
     refutation_variation: "c6 Nc3",
     refutation_from: "c7",
     refutation_to: "c6",
-    threats_created: [...]
+    threats_created: [...],
+    why: {                        // "Why" card data (MoveDiagnostics.diagnose → why)
+      verdict: "Bxf5 is the engine's top choice, but Ke7 and Be8 are about as good.",
+      nearTie: true,
+      situation: { band: "worse", text: "White is clearly better (+3.36). ..." },
+      threat: { san, from, to, fen, pv, evaluation, gainCp, text } | null, // null-move search, key moments only
+      idea: { text, pv, pvFormatted } | null,
+      alternatives: [{ san, uci, from, to, evaluation, cp, wp, deltaWp, verdict, reason, pv, pvFormatted }]
+    }
   }
 }
 ```
+`why` is optional: games in the analysis cache from before it existed render the older layout.
 Any changes to diagnostic fields must be **additive** (e.g. `evidence`, `confidence`).
 
 ---

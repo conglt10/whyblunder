@@ -2689,9 +2689,17 @@
             }
         }
 
-        if (isSacrifice) {
+        // Only call it a sacrifice when the classifier agreed it was sound (brilliant).
+        // Otherwise describe what the line actually does with the material.
+        const lineSummary = options.lineSummary || null;
+        const ledgerText = (lineSummary && lineSummary.ledgerText) || '';
+        if (isSacrifice && detailedQuality === 'brilliant') {
             tags.push('Sacrifice');
-            reasons.push('offers a sound sacrifice to secure dynamic counterplay and decisive activity');
+            reasons.push(ledgerText
+                ? `${ledgerText}, a sound sacrifice the opponent cannot exploit`
+                : 'offers a sound sacrifice the opponent cannot exploit');
+        } else if (ledgerText) {
+            reasons.push(ledgerText);
         }
         if (isOnlyMove) {
             tags.push('Only Move');
@@ -2699,7 +2707,7 @@
         }
 
         const captured = boardBefore.get(move.to);
-        if (captured) {
+        if (captured && !ledgerText) {
             reasons.push(`captures the ${PIECE_NAMES[captured.type] || 'piece'}`);
         }
 
@@ -2772,9 +2780,9 @@
         }
 
         let prefix = isBest ? 'Best move! ' : 'Strong move. ';
-        if (detailedQuality === 'brilliant' || isSacrifice) {
+        if (detailedQuality === 'brilliant') {
             prefix = 'Brilliant move! ';
-        } else if (detailedQuality === 'great' || isOnlyMove) {
+        } else if (detailedQuality === 'great') {
             prefix = 'Great move! ';
         }
 

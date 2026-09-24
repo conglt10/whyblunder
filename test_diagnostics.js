@@ -75,7 +75,31 @@ function post(bestMove, line) {
 // mustContain / mustNotContain are matched case-insensitively against the
 // explanation text.
 
+const BXF5_FEN = '8/1r1b1k2/8/2R2PPp/p2B4/8/5K2/8 b - - 0 42';
+const BXF5_LINES = {
+    1: cpLine(-336, ['d7f5', 'c5f5', 'f7g6', 'f5a5', 'h5h4', 'f2f3', 'h4h3', 'd4e3', 'h3h2', 'a5a6']),
+    2: cpLine(-348, ['f7e7', 'g5g6', 'd7e8', 'c5c8', 'e7d7', 'g6g7', 'e8f7', 'g7g8q', 'f7g8', 'c8g8', 'd7d6']),
+    3: cpLine(-348, ['d7e8', 'g5g6', 'f7e7', 'c5c8', 'e7d7', 'g6g7', 'e8f7', 'g7g8q', 'f7g8', 'c8g8'])
+};
+
 const FIXTURES = [
+    // Keymer-Ding 42...Bxf5: the engine's top move in a lost endgame gives the bishop
+    // back for a pawn. It is NOT brilliant and NOT a "sound sacrifice", and Ke7/Be8 are
+    // within 0.12 of it.
+    {
+        name: 'endgame-desperado-Bxf5',
+        fenBefore: BXF5_FEN,
+        playedUci: 'd7f5',
+        sanHistory: [],
+        ply: 84,
+        phase: 'endgame',
+        engine: { bestMove: 'd7f5', lines: BXF5_LINES },
+        expect: {
+            detailedQuality: 'best',
+            mustContain: ['gives up the bishop for the f-pawn'],
+            mustNotContain: ['brilliant', 'sound sacrifice', 'dynamic counterplay', 'captures the pawn']
+        }
+    },
     // --- NEW STRICT BRILLIANT NEGATIVE FIXTURES ---
     {
         name: 'neg-brilliant-even-trade',
@@ -372,6 +396,7 @@ const FIXTURES = [
         },
         expect: {
             detailedQuality: 'brilliant',
+            mustContain: ['Brilliant move!'],
             mustNotContain: ['hanging', 'en prise', 'left the', 'loses a']
         }
     },
@@ -1439,6 +1464,84 @@ for (const fx of FIXTURES) {
         console.log(`      explanation: ${out.explanation}`);
     }
 }
+
+// ---------------------------------------------------------------------------
+// "Why" builders: situation / threat / idea / alternatives
+// ---------------------------------------------------------------------------
+
+function whyCheck(name, fn) {
+    try {
+        fn();
+        passed++;
+        console.log(`✓ ${name}`);
+    } catch (e) {
+        failed++;
+        failList.push(`${name}: ${e.message}`);
+        console.log(`✗ ${name} — ${e.message}`);
+    }
+}
+
+whyCheck('why-Bxf5-verdict-alternatives-threat', () => {
+    const threatEval = { lines: { 1: cpLine(483, ['g5g6', 'f7g8', 'f5f6', 'd7e6', 'c5c6', 'e6f5']) } };
+    const d = MoveDiagnostics.diagnose({
+        fenBefore: BXF5_FEN,
+        playedMove: 'd7f5',
+        engine: { bestMove: 'd7f5', lines: BXF5_LINES, threat: threatEval },
+        context: { ply: 84, adaptive: true }
+    });
+    const why = d.why;
+    assert(why, 'diagnose must return a why object');
+    assert(why.nearTie, 'Bxf5 vs Ke7/Be8 is a near tie');
+    assert(/top choice/.test(why.verdict) && /Ke7 and Be8/.test(why.verdict), `verdict: ${why.verdict}`);
+    assert(/Black is|White is/.test(why.situation.text) && why.situation.text.includes('+3.36'), `situation: ${why.situation.text}`);
+    assert(/Kg6/.test(why.idea.text) && /bishop for the f-pawn/.test(why.idea.text), `idea: ${why.idea.text}`);
+    assert.strictEqual(why.alternatives.length, 2);
+    const ke7 = why.alternatives.find(a => a.san === 'Ke7');
+    assert(ke7, 'Ke7 must be listed');
+    assert.strictEqual(ke7.verdict, 'about equal');
+    assert(/g8=Q/.test(ke7.reason) && /bishop for the g-pawn anyway/.test(ke7.reason), `reason: ${ke7.reason}`);
+    assert.strictEqual(ke7.evaluation, '+3.48');
+    assert(why.threat, 'the g6 threat must be reported');
+    assert.strictEqual(why.threat.from, 'g5');
+    assert.strictEqual(why.threat.to, 'g6');
+    assert(/White was threatening g6\+ followed by f6/.test(why.threat.text), `threat: ${why.threat.text}`);
+    assert(!d.tags.includes('Sacrifice'), 'no Sacrifice tag in a lost position');
+});
+
+whyCheck('why-threat-ignored-when-small', () => {
+    const weak = { lines: { 1: cpLine(350, ['g5g6', 'f7g8']) } };
+    assert.strictEqual(MoveDiagnostics.describeThreat(BXF5_FEN, weak, { cp: -336 }), null);
+});
+
+whyCheck('why-null-move-illegal-in-check', () => {
+    // Black king on e8 in check from the rook on e1
+    assert.strictEqual(MoveDiagnostics.nullMoveFen('4k3/8/8/8/8/8/8/4R1K1 b - - 0 1'), null);
+    assert.strictEqual(MoveDiagnostics.nullMoveFen(BXF5_FEN), '8/1r1b1k2/8/2R2PPp/p2B4/8/5K2/8 w - - 0 42');
+});
+
+whyCheck('why-situation-bands-and-mate', () => {
+    assert(/roughly equal/.test(MoveDiagnostics.describeSituation({ cp: 10 }, 'w').text));
+    assert(/White is winning/.test(MoveDiagnostics.describeSituation({ cp: 600 }, 'w').text));
+    assert(/Black is losing \(\+6\.00\)/.test(MoveDiagnostics.describeSituation({ cp: -600 }, 'b').text));
+    assert(/White has a forced mate \(M3\)/.test(MoveDiagnostics.describeSituation({ mate: 3 }, 'w').text));
+    assert(/White has a forced mate/.test(MoveDiagnostics.describeSituation({ mate: -2 }, 'b').text));
+});
+
+whyCheck('why-summarize-line-ledger', () => {
+    // Winning a clean knight: 1.Bxc6 (bishop takes knight) dxc6 is a trade; 1.Nxe5 grabs a pawn
+    const s1 = MoveDiagnostics.summarizeLine('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 3', ['b5c6', 'd7c6']);
+    assert(/trades/.test(s1.ledgerText), `ledger: ${s1.ledgerText}`);
+    const s2 = MoveDiagnostics.summarizeLine(BXF5_FEN, ['d7f5', 'c5f5', 'f7g6']);
+    assert.strictEqual(s2.net, -2);
+    assert.strictEqual(s2.ledgerText, 'gives up the bishop for the f-pawn');
+    assert(s2.kingBlock && s2.kingBlock.square === 'g6');
+    assert.deepStrictEqual(MoveDiagnostics.summarizeLine(BXF5_FEN, []).events, []);
+});
+
+whyCheck('why-alternatives-single-line', () => {
+    const alts = MoveDiagnostics.buildAlternatives(BXF5_FEN, { 1: BXF5_LINES[1] }, 'd7f5', { cp: -336 });
+    assert.deepStrictEqual(alts, []);
+});
 
 console.log('');
 if (knownFailList.length > 0) {
