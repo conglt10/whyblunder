@@ -977,8 +977,8 @@
         /* Square Annotations (Lichess Large Floating Move Badges) */
         .square-annotation {
             position: absolute;
-            width: 12.5%;
-            height: 12.5%;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
             z-index: 1010;
             pointer-events: none;
             box-sizing: border-box;
@@ -1054,8 +1054,8 @@
         /* King Checkmate Badges (Winner ⭑ & Loser ×) */
         .king-checkmate-badge {
             position: absolute;
-            width: 12.5%;
-            height: 12.5%;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
             z-index: 1015;
             pointer-events: none !important;
             box-sizing: border-box;
@@ -1068,8 +1068,8 @@
 
         .king-square-cover {
             position: absolute;
-            width: 12.5%;
-            height: 12.5%;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
             z-index: 1014;
             pointer-events: none !important;
             animation: kingCoverFade 0.3s ease-out forwards;
@@ -1121,23 +1121,22 @@
             line-height: 1;
         }
 
-        .king-badge-winner .king-badge-icon {
-            background-color: #f59e0b;
-            color: #ffffff;
-            font-size: 2.25rem;
-        }
-        .king-badge-winner .king-badge-symbol {
-            transform: translateY(-2.5px);
-        }
-
+        .king-badge-winner .king-badge-icon,
         .king-badge-loser .king-badge-icon {
-            background-color: #ef4444;
+            width: auto;
+            height: auto;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            white-space: nowrap;
             color: #ffffff;
-            font-size: 1.625rem;
+            font-size: 0.8125rem;
             font-weight: 700;
         }
-        .king-badge-loser .king-badge-symbol {
-            transform: translateY(-2px);
+        .king-badge-winner .king-badge-icon {
+            background-color: #f59e0b;
+        }
+        .king-badge-loser .king-badge-icon {
+            background-color: #ef4444;
         }
 
         .king-badge-stalemate .king-badge-icon,
@@ -1157,17 +1156,12 @@
                 width: 1.75rem;
                 height: 1.75rem;
             }
-            .king-badge-winner .king-badge-icon {
-                font-size: 1.75rem;
-            }
-            .king-badge-winner .king-badge-symbol {
-                transform: translateY(-2px);
-            }
+            .king-badge-winner .king-badge-icon,
             .king-badge-loser .king-badge-icon {
-                font-size: 1.25rem;
-            }
-            .king-badge-loser .king-badge-symbol {
-                transform: translateY(-1.5px);
+                width: auto;
+                height: auto;
+                padding: 0.15rem 0.4rem;
+                font-size: 0.625rem;
             }
             .king-badge-stalemate .king-badge-icon,
             .king-badge-draw .king-badge-icon {
@@ -5790,6 +5784,17 @@
             const speedControl = document.getElementById('speedControl');
             const arrowSvg = document.getElementById('arrow-svg');
             const boardContainer = document.querySelector('.board-container');
+
+            // chessboard.js rounds squares down to whole pixels, so the board can be a few px
+            // smaller than .board-container; overlays position from the real square size instead.
+            function syncBoardSquareSize() {
+                const boardInner = document.querySelector('#board .board-b72b1');
+                if (!boardContainer || !boardInner || !boardInner.clientWidth) return;
+                boardContainer.style.setProperty('--sq', `${boardInner.clientWidth / 8}px`);
+            }
+            if (typeof ResizeObserver !== 'undefined' && document.getElementById('board')) {
+                new ResizeObserver(syncBoardSquareSize).observe(document.getElementById('board'));
+            }
             const btnTogglePgn = document.getElementById('btnTogglePgn');
             const btnCloseDrawer = document.getElementById('btnCloseDrawer');
             const pgnDrawer = document.getElementById('pgnDrawer');
@@ -8027,7 +8032,7 @@
                 if (!from || !to || from === to) return;
                 const boardEl = document.getElementById('board');
                 if (!boardEl || !arrowSvg) return;
-                const boardRect = boardEl.getBoundingClientRect();
+                const boardRect = (boardEl.querySelector('.board-b72b1') || boardEl).getBoundingClientRect();
                 const squareSize = boardRect.width / 8;
                 if (squareSize <= 0) return;
                 
@@ -8132,8 +8137,8 @@
                 const annotation = document.createElement('div');
                 const rawSlug = raw.replace(/\s+/g, '-');
                 annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
-                annotation.style.left = `${file * 12.5}%`;
-                annotation.style.top = `${rank * 12.5}%`;
+                annotation.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                annotation.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
                 if (typeof symbol === 'string' && symbol.startsWith('<svg')) {
                     if (norm === 'best') annotation.setAttribute('data-symbol', '★');
                     else annotation.setAttribute('data-symbol', '');
@@ -8203,14 +8208,14 @@
 
                     const coverEl = document.createElement('div');
                     coverEl.className = `king-square-cover king-cover-${type}`;
-                    coverEl.style.left = `${file * 12.5}%`;
-                    coverEl.style.top = `${rank * 12.5}%`;
+                    coverEl.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                    coverEl.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
                     boardContainer.appendChild(coverEl);
 
                     const badgeEl = document.createElement('div');
                     badgeEl.className = `king-checkmate-badge king-badge-${type}`;
-                    badgeEl.style.left = `${file * 12.5}%`;
-                    badgeEl.style.top = `${rank * 12.5}%`;
+                    badgeEl.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                    badgeEl.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
                     if (titleText) badgeEl.title = titleText;
 
                     const iconEl = document.createElement('div');
@@ -8233,16 +8238,16 @@
                     const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
                     const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
-                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Checkmate)');
-                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Checkmated');
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', 'Winner', 'Winner (Checkmate)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', 'Loser', 'Checkmated');
                 } else if (isResigned) {
                     const loserColor = resignedColor;
                     const winnerColor = (loserColor === 'w') ? 'b' : 'w';
                     const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
                     const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
-                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Opponent Resigned)');
-                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Resigned');
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', 'Winner', 'Winner (Opponent Resigned)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', 'Loser', 'Resigned');
                 } else if (isStalemate) {
                     if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '½', 'Stalemate (Draw)');
                     if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '½', 'Stalemate (Draw)');
