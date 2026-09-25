@@ -769,6 +769,52 @@ assert(indexHtml.includes('toggleVariationPlayPause()'), "P key and toolbar play
 console.log("✓ Variation Navigation & Interactive Alt Lines passed!");
 
 // -------------------------------------------------------------
+// "Why" card: situation / threat / idea / alternatives
+// -------------------------------------------------------------
+console.log("Testing Why card markup & threat pass...");
+assert(indexHtml.includes('function renderWhyCardHtml(move, index, why)'), "index.html must render the Why card");
+assert(indexHtml.includes('.diag-why {') && indexHtml.includes('.diag-why-row') && indexHtml.includes('.diag-why-verdict.is-equal'), "index.html must style the Why card");
+assert(indexHtml.includes('.arrow-alt {'), "index.html must style alternative arrows");
+assert(indexHtml.includes('function getWhyVariationData(moveIndex, lineType)'), "index.html must build Why variation lines");
+assert(indexHtml.includes("lineType === 'threat' || lineType === 'idea' || lineType.startsWith('alt-')"), "getVariationData must route threat/idea/alt lines");
+assert(indexHtml.includes("playVariation(parseInt(this.dataset.index), this.dataset.line)"), "Why play buttons must play their line");
+assert(indexHtml.includes("\"is the engine's top choice\""), "near-tie best moves must not claim to be uniquely best");
+assert(indexHtml.includes("prog.phase === 'threats'"), "progress text must cover the threat pass");
+
+(async () => {
+    global.Chess = Chess;
+    global.ChessEvaluator = ChessEvaluator;
+    global.SituationRecognizer = SituationRecognizer;
+    global.MoveDiagnostics = require('./js/move-diagnostics.js');
+    const BrowserWhyBlunder = require('./js/browser-analyzer.js');
+    const analyzer = Object.create(BrowserWhyBlunder.prototype);
+    analyzer.isCancelled = false;
+    const evaluated = [];
+    analyzer.pool = {
+        size: 1,
+        evaluate: async (fen, depth, multipv) => {
+            evaluated.push({ fen, depth, multipv });
+            return { bestMove: 'g5g6', lines: { 1: { cp: 483, pv: ['g5g6', 'f7g8', 'f5f6'] } } };
+        }
+    };
+    const fenBefore = '8/1r1b1k2/8/2R2PPp/p2B4/8/5K2/8 b - - 0 42';
+    const keyMove = { move: 'Bxf5', quality: 'mistake', detailed_quality: 'mistake', analysis: { why: { threat: null } } };
+    const quietMove = { move: 'Kf2', quality: 'good move', detailed_quality: 'good', analysis: { why: { threat: null } } };
+    await analyzer._addThreats(
+        [keyMove, quietMove],
+        [{ fenBefore }, { fenBefore }],
+        [{ bestScore: { cp: -336 } }, { bestScore: { cp: -336 } }],
+        null
+    );
+    assert.strictEqual(evaluated.length, 1, "threat search runs only for key moments / mistakes / blunders");
+    assert.strictEqual(evaluated[0].fen, '8/1r1b1k2/8/2R2PPp/p2B4/8/5K2/8 w - - 0 42', "threat search runs on the null-move FEN");
+    assert.strictEqual(evaluated[0].depth, 12);
+    assert(keyMove.analysis.why.threat && keyMove.analysis.why.threat.san === 'g6+', "threat must be attached to the key move");
+    assert.strictEqual(quietMove.analysis.why.threat, null);
+    console.log("✓ Why card markup & threat pass passed!");
+})().catch(e => { console.error('Why card test failed:', e); process.exit(1); });
+
+// -------------------------------------------------------------
 // 10. Mobile UI Rework & Layout Integrity Tests
 // -------------------------------------------------------------
 console.log("Testing Mobile UI Rework & Layout Integrity...");
@@ -1450,8 +1496,8 @@ console.log("✓ Coach board flicker fix regressions passed!");
     assert(indexContent.includes('.coach-move-glyph'), "index.html must define .coach-move-glyph CSS");
     assert(indexContent.includes('.coach-move-san.quality-blunder'), "index.html must style blunder coach moves");
     assert(indexContent.includes('addSquareAnnotation(userResult.move.to'), "index.html must display move feedback annotation on played squares");
-    assert(indexContent.includes('annotation.style.left = `${file * 12.5}%`;'), "index.html must set annotation.style.left");
-    assert(indexContent.includes('annotation.style.top = `${rank * 12.5}%`;'), "index.html must set annotation.style.top");
+    assert(indexContent.includes('annotation.style.left = `calc(var(--sq, 12.5%) * ${file})`;'), "index.html must set annotation.style.left");
+    assert(indexContent.includes('annotation.style.top = `calc(var(--sq, 12.5%) * ${rank})`;'), "index.html must set annotation.style.top");
     assert(indexContent.includes('const CC_EXCELLENT_SVG = \'<svg viewBox="0 0 800 800"'), "index.html must define CC_EXCELLENT_SVG with authentic thumbs-up");
     assert(!indexContent.includes('M8.864.046'), "index.html must not use legacy bootstrap thumbs-up icon");
     assert(indexContent.includes("drawArrow(userResult.bestMoveObj.from, userResult.bestMoveObj.to, 'better')"), "index.html must draw better move arrow on blunder takeback");

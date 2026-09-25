@@ -464,6 +464,7 @@
             }
 
             let completedCount = 0;
+            const diagByPly = [];
 
             // Execute ply evaluations concurrently across the worker pool
             const plyPromises = plyContexts.map(async (ctx) => {
@@ -638,6 +639,7 @@
                     ? ChessEvaluator.classifyMove(wpBefore, wpAfter, { playedIsBest, isBook })
                     : { uiQuality: 'good move', detailedQuality: 'good', wpLoss: 0 });
 
+                if (diag) diagByPly[ply] = diag;
                 const explanation = diag ? diag.explanation : '';
                 const tags = diag ? diag.tags : [];
                 const flaw = diag ? diag.flaw : null;
@@ -709,7 +711,8 @@
                         refutation_variation: refPvFormatted,
                         refutation_from: refFrom,
                         refutation_to: refTo,
-                        threats_created: threatsCreated
+                        threats_created: threatsCreated,
+                        why: diag ? diag.why : null
                     }
                 };
             });
@@ -721,9 +724,59 @@
                 return analysisData;
             }
 
+            // Threat pass: for key moments, mistakes and blunders, ask "what was the
+            // opponent threatening?" with a shallow null-move search.
+            await this._addThreats(moveResults, plyContexts, diagByPly, onProgress);
+            if (this.isCancelled) {
+                analysisData.errors.push("Analysis cancelled by user");
+                return analysisData;
+            }
+
             // Plies are guaranteed to preserve original chronological order (index 0 to totalPlies - 1)
             analysisData.moves = moveResults.filter(Boolean);
             return analysisData;
+        }
+
+        async _addThreats(moveResults, plyContexts, diagByPly, onProgress) {
+            const Diagnostics = (typeof MoveDiagnostics !== 'undefined') ? MoveDiagnostics : null;
+            const Evaluator = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator : null;
+            if (!Diagnostics || !Diagnostics.nullMoveFen || !Diagnostics.describeThreat) return;
+
+            const targets = [];
+            moveResults.forEach((move, i) => {
+                if (!move || !move.analysis || !move.analysis.why || !diagByPly[i]) return;
+                const isKey = Evaluator && Evaluator.isKeyMoment ? Evaluator.isKeyMoment(move) : false;
+                if (isKey || move.quality === 'mistake' || move.quality === 'blunder') targets.push(i);
+            });
+
+            let done = 0;
+            await Promise.all(targets.map(async (i) => {
+                if (this.isCancelled) return;
+                const fenBefore = plyContexts[i].fenBefore;
+                const nullFen = Diagnostics.nullMoveFen(fenBefore);
+                if (!nullFen) return;
+                try {
+                    const nullEval = await this.pool.evaluate(nullFen, 12, 1);
+                    if (this.isCancelled || !nullEval) return;
+                    const threat = Diagnostics.describeThreat(fenBefore, nullEval, diagByPly[i].bestScore);
+                    if (threat) moveResults[i].analysis.why.threat = threat;
+                } catch (e) {
+                    // Non-fatal: the move keeps its explanation without a threat row
+                }
+                done++;
+                if (onProgress) {
+                    onProgress({
+                        phase: 'threats',
+                        ply: done,
+                        totalPlies: targets.length,
+                        percentage: 100,
+                        move: moveResults[i].move,
+                        moveNum: moveResults[i].move_number,
+                        isWhite: moveResults[i].is_white,
+                        workers: this.pool.size
+                    });
+                }
+            }));
         }
     }
 

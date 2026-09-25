@@ -977,8 +977,8 @@
         /* Square Annotations (Lichess Large Floating Move Badges) */
         .square-annotation {
             position: absolute;
-            width: 12.5%;
-            height: 12.5%;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
             z-index: 1010;
             pointer-events: none;
             box-sizing: border-box;
@@ -1054,8 +1054,8 @@
         /* King Checkmate Badges (Winner ⭑ & Loser ×) */
         .king-checkmate-badge {
             position: absolute;
-            width: 12.5%;
-            height: 12.5%;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
             z-index: 1015;
             pointer-events: none !important;
             box-sizing: border-box;
@@ -1064,6 +1064,24 @@
             justify-content: flex-end;
             padding: 2px 2px 0 0;
             animation: kingBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .king-square-cover {
+            position: absolute;
+            width: var(--sq, 12.5%);
+            height: var(--sq, 12.5%);
+            z-index: 1014;
+            pointer-events: none !important;
+            animation: kingCoverFade 0.3s ease-out forwards;
+        }
+        .king-cover-winner { background-color: rgba(129, 182, 76, 0.65); }
+        .king-cover-loser { background-color: rgba(239, 68, 68, 0.6); }
+        .king-cover-stalemate,
+        .king-cover-draw { background-color: rgba(0, 0, 0, 0.35); }
+
+        @keyframes kingCoverFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes kingBadgePop {
@@ -1103,23 +1121,22 @@
             line-height: 1;
         }
 
-        .king-badge-winner .king-badge-icon {
-            background-color: #f59e0b;
-            color: #ffffff;
-            font-size: 2.25rem;
-        }
-        .king-badge-winner .king-badge-symbol {
-            transform: translateY(-2.5px);
-        }
-
+        .king-badge-winner .king-badge-icon,
         .king-badge-loser .king-badge-icon {
-            background-color: #ef4444;
+            width: auto;
+            height: auto;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            white-space: nowrap;
             color: #ffffff;
-            font-size: 1.625rem;
+            font-size: 1.125rem;
             font-weight: 700;
         }
-        .king-badge-loser .king-badge-symbol {
-            transform: translateY(-2px);
+        .king-badge-winner .king-badge-icon {
+            background-color: #6a9f3a;
+        }
+        .king-badge-loser .king-badge-icon {
+            background-color: #ef4444;
         }
 
         .king-badge-stalemate .king-badge-icon,
@@ -1139,17 +1156,12 @@
                 width: 1.75rem;
                 height: 1.75rem;
             }
-            .king-badge-winner .king-badge-icon {
-                font-size: 1.75rem;
-            }
-            .king-badge-winner .king-badge-symbol {
-                transform: translateY(-2px);
-            }
+            .king-badge-winner .king-badge-icon,
             .king-badge-loser .king-badge-icon {
-                font-size: 1.25rem;
-            }
-            .king-badge-loser .king-badge-symbol {
-                transform: translateY(-1.5px);
+                width: auto;
+                height: auto;
+                padding: 0.2rem 0.55rem;
+                font-size: 0.875rem;
             }
             .king-badge-stalemate .king-badge-icon,
             .king-badge-draw .king-badge-icon {
@@ -2902,14 +2914,12 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            box-shadow: 0 3px 12px rgba(54, 146, 231, 0.35);
             text-decoration: none;
             cursor: pointer;
             transition: all 0.15s ease;
         }
         .btn-coach-review:hover {
             background: var(--lic-blue-hover);
-            box-shadow: 0 4px 16px rgba(54, 146, 231, 0.5);
             transform: translateY(-1px);
             color: #ffffff;
         }
@@ -4967,6 +4977,102 @@
             line-height: 1;
         }
 
+        /* "Why" card: Situation / Threat / Idea / Instead rows */
+        .arrow-alt {
+            fill: rgba(150, 150, 150, 0.6);
+        }
+        .diag-why {
+            margin-top: 10px;
+            border: 1px solid var(--lic-border);
+            border-radius: 6px;
+            background: var(--lic-bg-surface);
+            padding: 4px 10px;
+        }
+        .diag-why-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 7px 0;
+            font-size: var(--lic-fs-base);
+            line-height: 1.45;
+        }
+        .diag-why-row + .diag-why-row {
+            border-top: 1px solid var(--lic-border);
+        }
+        .diag-why-row.is-alt + .diag-why-row.is-alt {
+            border-top-style: dashed;
+        }
+        .diag-why-label {
+            flex: 0 0 64px;
+            font-size: var(--lic-fs-sm);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--lic-text-muted);
+            padding-top: 1px;
+        }
+        .diag-why-row.is-threat .diag-why-label {
+            color: var(--lic-red);
+        }
+        .diag-why-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            color: var(--lic-text-primary);
+        }
+        .diag-why-alt-head {
+            display: block;
+        }
+        .diag-why-alt-head .line-move-san {
+            color: var(--lic-text-bright);
+        }
+        .diag-why-eval {
+            font-family: monospace;
+            font-size: var(--lic-fs-sm);
+            color: var(--lic-text-muted);
+        }
+        .diag-why-verdict {
+            font-size: var(--lic-fs-sm);
+            font-weight: 600;
+        }
+        .diag-why-verdict.is-equal { color: var(--lic-blue); }
+        .diag-why-verdict.is-better { color: var(--lic-green); }
+        .diag-why-verdict.is-worse { color: var(--lic-red); }
+        .diag-why-reason {
+            display: block;
+            font-size: var(--lic-fs-sm);
+            color: var(--lic-text-primary);
+            opacity: 0.85;
+        }
+        .diag-why-pv {
+            display: block;
+            margin-top: 4px;
+            background: transparent;
+            padding: 0;
+            font-size: var(--lic-fs-sm);
+        }
+        .diag-why-row[data-from] {
+            cursor: default;
+        }
+        .diag-why-row[data-from]:hover {
+            background: var(--lic-bg-surface-hover);
+            margin: 0 -10px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        .why-play-button {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+
         /* ===== CHESS.COM THEME — END ===== */
     </style>
 </head>
@@ -5772,6 +5878,26 @@
             const speedControl = document.getElementById('speedControl');
             const arrowSvg = document.getElementById('arrow-svg');
             const boardContainer = document.querySelector('.board-container');
+
+            // chessboard.js rounds squares down to whole pixels, so the board can be a few px
+            // smaller than .board-container; overlays position from the real square size instead.
+            // Observe the inner board itself: #board has aspect-ratio so it resizes before the
+            // debounced board.resize() does, and chessboard.js replaces the inner board on re-init.
+            let observedBoardInner = null;
+            const boardSizeObserver = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(() => syncBoardSquareSize()) : null;
+            function syncBoardSquareSize() {
+                const boardInner = document.querySelector('#board .board-b72b1');
+                if (boardSizeObserver && boardInner && boardInner !== observedBoardInner) {
+                    if (observedBoardInner) boardSizeObserver.unobserve(observedBoardInner);
+                    boardSizeObserver.observe(boardInner);
+                    observedBoardInner = boardInner;
+                }
+                if (!boardContainer || !boardInner || !boardInner.clientWidth) return;
+                boardContainer.style.setProperty('--sq', `${boardInner.clientWidth / 8}px`);
+            }
+            if (document.getElementById('board')) {
+                new MutationObserver(syncBoardSquareSize).observe(document.getElementById('board'), { childList: true });
+            }
             const btnTogglePgn = document.getElementById('btnTogglePgn');
             const btnCloseDrawer = document.getElementById('btnCloseDrawer');
             const pgnDrawer = document.getElementById('pgnDrawer');
@@ -7033,7 +7159,9 @@
                         progressBar.style.width = `${pct}%`;
                         progressPercent.textContent = `${pct}%`;
                         const workersMsg = prog.workers ? ` • ${prog.workers} workers in parallel` : '';
-                        progressText.textContent = `Analyzed ${prog.ply} of ${prog.totalPlies} plies (${prog.move || ''})${workersMsg}...`;
+                        progressText.textContent = prog.phase === 'threats'
+                            ? `Checking threats for key moments: ${prog.ply} of ${prog.totalPlies}${workersMsg}...`
+                            : `Analyzed ${prog.ply} of ${prog.totalPlies} plies (${prog.move || ''})${workersMsg}...`;
                     };
 
                     const result = await browserDoctor.analyzeGame(pgn, onProgress, analysisDepth);
@@ -7775,8 +7903,12 @@
                             </div>`;
                     }
 
-                    if (move.analysis.explanation) {
-                        let formattedExpl = escapeHtml(move.analysis.explanation);
+                    const whyData = move.analysis.why || null;
+                    const bubbleText = (whyData && whyData.verdict && move.quality === 'good move')
+                        ? whyData.verdict
+                        : move.analysis.explanation;
+                    if (bubbleText) {
+                        let formattedExpl = escapeHtml(bubbleText);
                         const highlightMoves = [move.move, move.analysis.best_move, move.analysis.refutation].filter(Boolean);
                         highlightMoves.forEach(m => {
                             const escapedM = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -7808,7 +7940,7 @@
                     metaHtml += `<span class="eval-tag" title="Position Evaluation">${evalText}</span>`;
                 }
                 if (move.win_probability !== undefined) {
-                    metaHtml += `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>Win ${(move.win_probability * 100).toFixed(1)}%</span>`;
+                    metaHtml += `<span class="metric-chip" title="Win Probability for ${playerName}"><i class="bi bi-pie-chart-fill me-1"></i>${playerName} win ${(move.win_probability * 100).toFixed(1)}%</span>`;
                 }
                 if (move.win_prob_loss && move.win_prob_loss > 0.02) {
                     metaHtml += `<span class="metric-chip chip-loss" title="Win chance dropped by ${(move.win_prob_loss * 100).toFixed(1)}%"><i class="bi bi-graph-down-arrow me-1"></i>-${(move.win_prob_loss * 100).toFixed(1)}%</span>`;
@@ -7840,8 +7972,15 @@
                 metaHtml += '</div>';
                 html += metaHtml;
 
-                // 3. ONE LINES CARD (refutation row + recommended row)
-                if (move.analysis) {
+                // 3. WHY CARD (situation / threat / idea / alternatives)
+                const why = move.analysis && move.analysis.why;
+                if (why) {
+                    html += renderWhyCardHtml(move, index, why);
+                }
+
+                // 4. ONE LINES CARD (refutation row + recommended row)
+                // A good move's main line already lives in the Why card's Idea row
+                if (move.analysis && !(why && move.quality === 'good move' && why.idea)) {
                     const isRefutationApplicable = (move.quality !== 'good move');
                     const refVarData = isRefutationApplicable ? getVariationData(index, 'refutation') : null;
                     const hasRefutation = Boolean(refVarData && refVarData.moves && refVarData.moves.length > 0);
@@ -7924,6 +8063,25 @@
                     });
                 }
 
+                moveExplanation.querySelectorAll('.why-play-button').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        playVariation(parseInt(this.dataset.index), this.dataset.line);
+                    });
+                });
+
+                // Hovering a Why row previews its first move as an arrow
+                moveExplanation.querySelectorAll('.diag-why-row[data-from]').forEach(row => {
+                    row.addEventListener('mouseenter', function() {
+                        if (isInVariationMode) return;
+                        drawArrow(this.dataset.from, this.dataset.to, this.dataset.arrow || 'alt');
+                    });
+                    row.addEventListener('mouseleave', function() {
+                        if (isInVariationMode) return;
+                        drawMoveArrows(index);
+                    });
+                });
+
                 const playRefutationBtn = moveExplanation.querySelector('.play-refutation-button');
                 if (playRefutationBtn) {
                     playRefutationBtn.addEventListener('click', function(e) {
@@ -7932,6 +8090,70 @@
                         playVariation(idx, 'refutation');
                     });
                 }
+            }
+
+            function highlightSanInText(text, sans) {
+                let out = escapeHtml(text || '');
+                sans.filter(Boolean).forEach(m => {
+                    const escapedM = escapeHtml(m).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    out = out.replace(new RegExp(`(^|[\\s(.])(${escapedM})(?=$|[\\s,.;:)])`, 'g'), `$1<span class="diag-highlight-move">$2</span>`);
+                });
+                return out;
+            }
+
+            function renderWhyCardHtml(move, index, why) {
+                const rows = [];
+                const playBtn = (line, title) => `<button type="button" class="lic-btn why-play-button" data-index="${index}" data-line="${line}" title="${title}" aria-label="${title}"><i class="bi bi-play-fill"></i></button>`;
+
+                if (why.situation && why.situation.text) {
+                    rows.push(`<div class="diag-why-row">
+                        <span class="diag-why-label">Situation</span>
+                        <div class="diag-why-text">${escapeHtml(why.situation.text)}</div>
+                    </div>`);
+                }
+
+                if (why.threat && why.threat.text) {
+                    rows.push(`<div class="diag-why-row is-threat" data-from="${why.threat.from}" data-to="${why.threat.to}" data-arrow="opponent-threat">
+                        <span class="diag-why-label">Threat</span>
+                        <div class="diag-why-text">${highlightSanInText(why.threat.text, [why.threat.san])}</div>
+                        ${playBtn('threat', 'Play the threat')}
+                    </div>`);
+                }
+
+                if (why.idea && (why.idea.text || why.idea.pvFormatted)) {
+                    const ideaText = why.idea.text
+                        ? highlightSanInText(why.idea.text, [move.move])
+                        : '';
+                    const ideaVar = getVariationData(index, 'idea');
+                    const activeStep = (isInVariationMode && activeVariation && activeVariation.moveIndex === index && activeVariation.lineType === 'idea') ? activeVariation.stepIndex : -1;
+                    const ideaLine = (ideaVar && ideaVar.moves.length > 1)
+                        ? `<div class="principal-variation diag-why-pv" data-index="${index}" data-type="idea">${renderVariationLineHtml(ideaVar, activeStep)}</div>`
+                        : '';
+                    rows.push(`<div class="diag-why-row">
+                        <span class="diag-why-label">${move.quality === 'good move' ? 'Idea' : 'Played'}</span>
+                        <div class="diag-why-text">${ideaText}${ideaLine}</div>
+                        ${ideaVar && ideaVar.moves.length > 0 ? playBtn('idea', 'Play the main line') : ''}
+                    </div>`);
+                }
+
+                const alts = Array.isArray(why.alternatives) ? why.alternatives : [];
+                alts.forEach((alt, i) => {
+                    const verdictClass = alt.verdict === 'better' ? 'is-better'
+                        : alt.verdict === 'about equal' ? 'is-equal'
+                        : 'is-worse';
+                    const san = formatSanWithFigurines(alt.san, move.is_white);
+                    rows.push(`<div class="diag-why-row is-alt" data-from="${alt.from}" data-to="${alt.to}" data-arrow="${alt.verdict === 'better' ? 'better' : 'alt'}">
+                        <span class="diag-why-label">${i === 0 ? 'Instead' : ''}</span>
+                        <div class="diag-why-text">
+                            <span class="diag-why-alt-head"><b class="line-move-san">${san}</b> <span class="diag-why-eval">${escapeHtml(alt.evaluation || '')}</span> <span class="diag-why-verdict ${verdictClass}">${escapeHtml(alt.verdict)}</span></span>
+                            <span class="diag-why-reason">${escapeHtml(alt.reason || '')}</span>
+                        </div>
+                        ${playBtn(`alt-${i}`, `Play ${alt.san}`)}
+                    </div>`);
+                });
+
+                if (rows.length === 0) return '';
+                return `<div class="diag-why">${rows.join('')}</div>`;
             }
 
             function updateBoardSquareHighlights(fromSquare, toSquare) {
@@ -8009,7 +8231,7 @@
                 if (!from || !to || from === to) return;
                 const boardEl = document.getElementById('board');
                 if (!boardEl || !arrowSvg) return;
-                const boardRect = boardEl.getBoundingClientRect();
+                const boardRect = (boardEl.querySelector('.board-b72b1') || boardEl).getBoundingClientRect();
                 const squareSize = boardRect.width / 8;
                 if (squareSize <= 0) return;
                 
@@ -8114,8 +8336,8 @@
                 const annotation = document.createElement('div');
                 const rawSlug = raw.replace(/\s+/g, '-');
                 annotation.className = `square-annotation annotation-${norm} annotation-${rawSlug}`;
-                annotation.style.left = `${file * 12.5}%`;
-                annotation.style.top = `${rank * 12.5}%`;
+                annotation.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                annotation.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
                 if (typeof symbol === 'string' && symbol.startsWith('<svg')) {
                     if (norm === 'best') annotation.setAttribute('data-symbol', '★');
                     else annotation.setAttribute('data-symbol', '');
@@ -8132,7 +8354,7 @@
             }
 
             function clearKingCheckmateBadges() {
-                const badges = document.querySelectorAll('.king-checkmate-badge');
+                const badges = document.querySelectorAll('.king-checkmate-badge, .king-square-cover');
                 badges.forEach(badge => badge.remove());
             }
 
@@ -8183,10 +8405,16 @@
                     const file = isFlipped ? 7 - (sq.charCodeAt(0) - 97) : (sq.charCodeAt(0) - 97);
                     const rank = isFlipped ? parseInt(sq.charAt(1)) - 1 : 8 - parseInt(sq.charAt(1));
 
+                    const coverEl = document.createElement('div');
+                    coverEl.className = `king-square-cover king-cover-${type}`;
+                    coverEl.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                    coverEl.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
+                    boardContainer.appendChild(coverEl);
+
                     const badgeEl = document.createElement('div');
                     badgeEl.className = `king-checkmate-badge king-badge-${type}`;
-                    badgeEl.style.left = `${file * 12.5}%`;
-                    badgeEl.style.top = `${rank * 12.5}%`;
+                    badgeEl.style.left = `calc(var(--sq, 12.5%) * ${file})`;
+                    badgeEl.style.top = `calc(var(--sq, 12.5%) * ${rank})`;
                     if (titleText) badgeEl.title = titleText;
 
                     const iconEl = document.createElement('div');
@@ -8209,16 +8437,16 @@
                     const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
                     const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
-                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Checkmate)');
-                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Checkmated');
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', 'Winner', 'Winner (Checkmate)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', 'Loser', 'Checkmated');
                 } else if (isResigned) {
                     const loserColor = resignedColor;
                     const winnerColor = (loserColor === 'w') ? 'b' : 'w';
                     const winnerSq = (winnerColor === 'w') ? whiteKingSq : blackKingSq;
                     const loserSq = (loserColor === 'w') ? whiteKingSq : blackKingSq;
 
-                    if (winnerSq) addKingBadge(winnerSq, 'winner', '⭑', 'Winner (Opponent Resigned)');
-                    if (loserSq) addKingBadge(loserSq, 'loser', '×', 'Resigned');
+                    if (winnerSq) addKingBadge(winnerSq, 'winner', 'Winner', 'Winner (Opponent Resigned)');
+                    if (loserSq) addKingBadge(loserSq, 'loser', 'Loser', 'Resigned');
                 } else if (isStalemate) {
                     if (whiteKingSq) addKingBadge(whiteKingSq, 'stalemate', '½', 'Stalemate (Draw)');
                     if (blackKingSq) addKingBadge(blackKingSq, 'stalemate', '½', 'Stalemate (Draw)');
@@ -8741,10 +8969,87 @@
                 return movesList;
             }
 
+            // Build variation steps from a UCI principal variation
+            function uciPvToVariationMoves(startingFen, pv, maxPlies = 10) {
+                const out = [];
+                if (!Array.isArray(pv)) return out;
+                const tempChess = new Chess(startingFen);
+                for (let i = 0; i < Math.min(maxPlies, pv.length); i++) {
+                    const uci = pv[i];
+                    if (!uci || uci.length < 4) break;
+                    const fenBefore = tempChess.fen();
+                    const isWhite = tempChess.turn() === 'w';
+                    const moveNum = parseInt(fenBefore.split(' ')[5], 10) || 1;
+                    let executed = null;
+                    try {
+                        executed = tempChess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
+                    } catch (e) {}
+                    if (!executed) break;
+                    out.push({
+                        from: executed.from,
+                        to: executed.to,
+                        promotion: executed.promotion,
+                        san: executed.san,
+                        fen: tempChess.fen(),
+                        fenBefore,
+                        isWhite,
+                        moveNumber: moveNum,
+                        stepIndex: i
+                    });
+                }
+                return out;
+            }
+
+            function getFenBeforeMove(moveIndex) {
+                if (moveIndex < moveHistory.length && moveHistory[moveIndex]) return moveHistory[moveIndex].fen;
+                const tempChess = new Chess();
+                for (let i = 0; i < moveIndex; i++) {
+                    try { tempChess.move(moves[i].move); } catch (e) {}
+                }
+                return tempChess.fen();
+            }
+
+            // "Why" card lines: 'threat' (opponent to move after a pass), 'idea' (played line), 'alt-N' (engine alternatives)
+            function getWhyVariationData(moveIndex, lineType) {
+                const move = moves[moveIndex];
+                const why = move && move.analysis && move.analysis.why;
+                if (!why) return null;
+                let startingFen = null;
+                let pv = null;
+                let isRefutation = false;
+                if (lineType === 'threat' && why.threat) {
+                    startingFen = why.threat.fen;
+                    pv = why.threat.pv;
+                    isRefutation = true;
+                } else if (lineType === 'idea' && why.idea) {
+                    startingFen = getFenBeforeMove(moveIndex);
+                    pv = why.idea.pv;
+                } else if (lineType.startsWith('alt-')) {
+                    const alt = (why.alternatives || [])[parseInt(lineType.slice(4), 10)];
+                    if (alt) {
+                        startingFen = getFenBeforeMove(moveIndex);
+                        pv = alt.pv;
+                    }
+                }
+                if (!startingFen || !pv) return null;
+                return {
+                    moveIndex,
+                    move,
+                    lineType,
+                    isRefutation,
+                    startingFen,
+                    moves: uciPvToVariationMoves(startingFen, pv)
+                };
+            }
+
             function getVariationData(moveIndex, lineType = 'better') {
                 if (moveIndex < 0 || moveIndex >= moves.length) return null;
                 const move = moves[moveIndex];
                 if (!move || !move.analysis) return null;
+
+                if (lineType === 'threat' || lineType === 'idea' || lineType.startsWith('alt-')) {
+                    return getWhyVariationData(moveIndex, lineType);
+                }
                 
                 const isRefutation = (lineType === 'refutation');
                 
@@ -8983,7 +9288,11 @@
                     variationBanner.classList.remove('d-none');
                     if (variationTypeBadge) {
                         variationTypeBadge.className = `var-type-badge ${activeVariation.isRefutation ? 'refutation' : 'better'}`;
-                        variationTypeBadge.textContent = activeVariation.isRefutation ? 'Punishing Line' : 'Recommended Line';
+                        const lt = activeVariation.lineType || '';
+                        variationTypeBadge.textContent = lt === 'threat' ? 'Opponent Threat'
+                            : lt.startsWith('alt-') ? 'Alternative Line'
+                            : lt === 'idea' ? 'Main Line'
+                            : (activeVariation.isRefutation ? 'Punishing Line' : 'Recommended Line');
                     }
                     if (variationStatusText) {
                         if (stepIndex === -1) {
@@ -10166,6 +10475,8 @@
                     board.position(coachManager.chess.fen(), false);
                     return;
                 }
+                // Hint level resets once the move is made; refresh so the old "n/4" doesn't linger
+                updateCoachHintBadge();
 
                 const currentFen = board.fen();
                 const targetFen = coachManager.chess.fen().split(' ')[0];
@@ -10869,11 +11180,12 @@
                     </div>`;
                 }
                 const bodyContent = hasCustomBody ? opts.bodyHtml : (detail ? `<div class="cc-coach-detail">${detail}</div>` : '');
+                const headPhrase = (key === 'best' && a.why && a.why.nearTie) ? "is the engine's top choice" : CC_QUALITY_PHRASES[key];
                 const footContent = (opts && opts.footHtml) ? `<div class="cc-coach-foot">${opts.footHtml}</div>` : '';
                 return `<div class="cc-coach-line">
                     <span class="cc-coach-avatar" aria-hidden="true">${CC_COACH_AVATAR_SVG}</span>
                     <div class="cc-coach-bubble q-${key}">
-                        <div class="cc-coach-head">${ccQualityIconHtml(key)}<b>${san}</b> ${CC_QUALITY_PHRASES[key]}</div>
+                        <div class="cc-coach-head">${ccQualityIconHtml(key)}<b>${san}</b> ${headPhrase}</div>
                         ${bodyContent}
                         ${best}
                         ${footContent}

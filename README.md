@@ -4,8 +4,7 @@ WhyBlunder is an in-browser, zero-backend chess game analyzer. It runs a paralle
 
 Traditional chess analysis platforms route game evaluations to centralized server queues, introducing network latency, rate limits, infrastructure operating costs, and subscription walls. WhyBlunder offloads the entire computational pipeline (UCI engine evaluation, win-probability modeling, tactical pattern recognition, and variation tree parsing) to client Web Workers.
 
-<img width="1519" height="1161" alt="image" src="https://github.com/user-attachments/assets/a7b66324-35cb-493a-b4f6-377b6d1c521d" />
-
+<img width="1520" height="1172" alt="image" src="https://github.com/user-attachments/assets/a64e6443-06b8-4b0b-be1e-844b2570e562" />
 
 ---
 
