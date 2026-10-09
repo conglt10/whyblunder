@@ -777,6 +777,15 @@ assert(indexHtml.includes('function renderBlufHtml(move, why)') && indexHtml.inc
 assert(indexHtml.includes('class="diag-why-more"') && indexHtml.includes('Dig deeper'), "Why card details must sit behind a Dig deeper toggle");
 assert(indexHtml.includes('.diag-bluf {') && indexHtml.includes('.diag-bluf-standing.tone-bad'), "index.html must style the BLUF");
 assert(indexHtml.indexOf('// 2. WHY CARD') < indexHtml.indexOf('// 3. ONE META ROW'), "the Why card (BLUF) must render before the meta row");
+
+// Explore: users play their own moves on the board in analysis mode
+assert(indexHtml.includes('return handleExploreDragStart(source, piece);') && indexHtml.includes('return handleExploreDrop(source, target);'), "analysis-mode board drags must go to the explore handlers");
+assert(indexHtml.includes('function playExploreMove(m)') && indexHtml.includes('function startExploreLine(moveIndex, startingFen, keptMoves, m)'), "index.html must build explore lines from board moves");
+assert(/bare\(next\.move\) === bare\(m\.san\)[\s\S]{0,80}goToMove\(currentMoveIndex \+ 1\)/.test(indexHtml), "playing the game's own next move must advance the mainline instead of branching");
+assert(indexHtml.includes('id="exploreLineRow"') && indexHtml.includes('id="exploreLineMoves"') && indexHtml.includes('id="exploreEngine"'), "the variation banner must host the explore line row");
+assert(indexHtml.includes("lt === 'explore' ? 'Your Line'"), "explore lines must be labelled 'Your Line'");
+assert(indexHtml.includes('function renderEvalGauge(whiteWp, evalText)'), "explored positions must be able to repaint the eval bars");
+assert(indexHtml.includes('if (wasExploring) updateEvalGauge(currentMoveIndex);'), "leaving an explore line must restore the game's eval bar");
 assert(indexHtml.includes('.diag-why {') && indexHtml.includes('.diag-why-row') && indexHtml.includes('.diag-why-verdict.is-equal'), "index.html must style the Why card");
 assert(indexHtml.includes('.arrow-alt {'), "index.html must style alternative arrows");
 assert(indexHtml.includes('function getWhyVariationData(moveIndex, lineType)'), "index.html must build Why variation lines");

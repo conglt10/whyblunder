@@ -1185,6 +1185,70 @@
             gap: 8px;
             animation: fadeIn 0.2s ease-out;
             width: 100%;
+            flex-wrap: wrap;
+        }
+        .var-type-badge.explore {
+            background: rgba(54, 146, 231, 0.18);
+            color: #93c5fd;
+            border: 1px solid rgba(54, 146, 231, 0.4);
+        }
+        .explore-line-row {
+            flex: 1 0 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-top: 6px;
+            border-top: 1px solid var(--lic-border);
+            min-width: 0;
+        }
+        .explore-line-moves {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 2px 0;
+            font-size: var(--lic-fs-base);
+            line-height: 1.6;
+        }
+        .explore-line-moves .var-move-num {
+            margin-left: 4px;
+        }
+        .explore-line-moves .var-move-btn.active {
+            background: rgba(54, 146, 231, 0.25);
+            color: #ffffff;
+            border-color: rgba(54, 146, 231, 0.6);
+        }
+        .explore-engine {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            font-size: var(--lic-fs-sm);
+            color: var(--lic-text-primary);
+        }
+        .explore-eval {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--lic-text-bright);
+        }
+        .explore-eval.is-pending {
+            font-family: inherit;
+            font-weight: 400;
+            color: var(--lic-text-muted);
+        }
+        .explore-quality {
+            font-weight: 700;
+            padding: 0 6px;
+            border-radius: 3px;
+            border: 1px solid currentColor;
+        }
+        .explore-quality.q-good-move, .explore-quality.q-best { color: var(--q-good); }
+        .explore-quality.q-great { color: var(--q-great); }
+        .explore-quality.q-brilliant { color: var(--q-brilliant); }
+        .explore-quality.q-inaccuracy { color: var(--q-inaccuracy); }
+        .explore-quality.q-mistake { color: var(--q-mistake); }
+        .explore-quality.q-blunder, .explore-quality.q-miss { color: var(--q-blunder); }
+        .explore-best b {
+            color: var(--lic-text-bright);
         }
 
         @keyframes fadeIn {
@@ -5490,6 +5554,11 @@
                                 <i class="bi bi-arrow-return-left"></i> <span class="d-none d-sm-inline ms-1">Return</span>
                             </button>
                         </div>
+                        <!-- Your own line: moves played on the board, with a live engine read -->
+                        <div id="exploreLineRow" class="explore-line-row d-none">
+                            <div id="exploreLineMoves" class="explore-line-moves"></div>
+                            <div id="exploreEngine" class="explore-engine"></div>
+                        </div>
                     </div>
 
                     <!-- Bottom Player Strip (White) -->
@@ -6256,17 +6325,19 @@
                     if (currentAppMode === 'coach') {
                         return handleCoachDragStart(source, piece, position, orientation);
                     }
-                    return false;
+                    return handleExploreDragStart(source, piece);
                 },
                 onDrop: function(source, target) {
                     if (currentAppMode === 'coach') {
                         return handleCoachDrop(source, target);
                     }
-                    return 'snapback';
+                    return handleExploreDrop(source, target);
                 },
                 onSnapEnd: function() {
                     if (currentAppMode === 'coach') {
                         handleCoachSnapEnd();
+                    } else {
+                        syncExploreBoard();
                     }
                 },
                 onSnapbackEnd: function() {
@@ -7553,7 +7624,6 @@
                 if (mobileEvalBar) mobileEvalBar.classList.remove('is-idle');
 
                 const move = moves[index];
-                const isFlipped = board.orientation() === 'black';
                 let evalText = (move.evaluation !== undefined && move.evaluation !== null) ? `${move.evaluation}` : '';
                 
                 // Parse centipawns or win probability for height gauge
@@ -7571,6 +7641,14 @@
                     }
                 }
 
+                renderEvalGauge(whiteWp, evalText);
+            }
+
+            // Paint both eval bars from a White win probability and a display string
+            function renderEvalGauge(whiteWp, evalText) {
+                const mobileEvalBar = document.getElementById('mobileEvalBar');
+                if (mobileEvalBar) mobileEvalBar.classList.remove('is-idle');
+                const isFlipped = board.orientation() === 'black';
                 whiteWp = Math.max(0.04, Math.min(0.96, whiteWp));
                 const whitePct = Math.round(whiteWp * 100);
 
@@ -8899,7 +8977,7 @@
                 moveExplanation.innerHTML = `
                     <div class="diagnosis-empty">
                         <i class="bi bi-search"></i>
-                        <span>Select any move in the list to view engine diagnosis, tactical tags, threats, and alternative variations.</span>
+                        <span>Select any move in the list to view engine diagnosis, tactical tags, threats, and alternative variations. Drag a piece on the board to try your own line.</span>
                     </div>`;
             }
 
@@ -9400,6 +9478,7 @@
                 if (!activeVariation || activeVariation.moveIndex !== moveIndex || activeVariation.lineType !== lineType) {
                     const varData = getVariationData(moveIndex, lineType);
                     if (!varData || varData.moves.length === 0) {
+                        if (lineType === 'explore') return;
                         if (lineType === 'refutation') alert('No punishment line available.');
                         else alert('No alternative moves available.');
                         return;
@@ -9431,7 +9510,7 @@
                 clearArrows();
                 clearSquareAnnotations();
                 clearKingCheckmateBadges();
-                const arrowStyle = activeVariation.isRefutation ? 'opponent-threat' : 'better';
+                const arrowStyle = activeVariation.isExplore ? 'alt' : (activeVariation.isRefutation ? 'opponent-threat' : 'better');
 
                 if (stepIndex >= 0) {
                     const currentMoveData = varMoves[stepIndex];
@@ -9451,9 +9530,10 @@
                 if (variationBanner) {
                     variationBanner.classList.remove('d-none');
                     if (variationTypeBadge) {
-                        variationTypeBadge.className = `var-type-badge ${activeVariation.isRefutation ? 'refutation' : 'better'}`;
+                        variationTypeBadge.className = `var-type-badge ${activeVariation.isExplore ? 'explore' : (activeVariation.isRefutation ? 'refutation' : 'better')}`;
                         const lt = activeVariation.lineType || '';
-                        variationTypeBadge.textContent = lt === 'threat' ? 'Opponent Threat'
+                        variationTypeBadge.textContent = lt === 'explore' ? 'Your Line'
+                            : lt === 'threat' ? 'Opponent Threat'
                             : lt.startsWith('alt-') ? 'Alternative Line'
                             : lt === 'idea' ? 'Main Line'
                             : (activeVariation.isRefutation ? 'Punishing Line' : 'Recommended Line');
@@ -9487,8 +9567,10 @@
                     }
                 });
 
+                renderExploreRow();
+
                 // If reached the end of variation
-                if (stepIndex === varMoves.length - 1) {
+                if (stepIndex === varMoves.length - 1 && !activeVariation.isExplore) {
                     if (autoPlay) {
                         onVariationComplete(activeVariation.move, activeVariation.isRefutation, activeVariation.startingFen, varMoves);
                     } else {
@@ -9866,9 +9948,12 @@
             }
 
             function stopVariationPlayback() {
+                const wasExploring = Boolean(activeVariation && activeVariation.isExplore);
                 isPlayingVariation = false;
                 isInVariationMode = false;
                 activeVariation = null;
+                renderExploreRow();
+                if (wasExploring) updateEvalGauge(currentMoveIndex);
                 if (animationTimeout) {
                     clearTimeout(animationTimeout);
                     animationTimeout = null;
@@ -9886,6 +9971,257 @@
                 clearSquareAnnotations();
                 clearKingCheckmateBadges();
                 updateMaterialDifference();
+            }
+
+            // ==========================================================================
+            // EXPLORE: play your own moves on the board from any position
+            // A move that matches the game (or the line being shown) just steps forward;
+            // anything else starts or branches a "Your Line" variation. Return / Space /
+            // Esc go back to the game position, arrows step through the line.
+            // ==========================================================================
+            const EXPLORE_DEPTH = 14;
+            const exploreEvalCache = new Map(); // fen -> { cp, mate, pv } from the side to move
+            let exploreWorker = null;
+            let exploreWorkerReady = null;
+            let exploreRunning = false;
+            let exploreRerun = false;
+
+            function handleExploreDragStart(source, piece) {
+                if (currentAppMode === 'coach' || moves.length === 0) return false;
+                if (chess.game_over()) return false;
+                if (!piece || piece.charAt(0) !== chess.turn()) return false;
+                stopKeyMomentTraversal();
+                if (isPlayingVariation) stopVariationAnimationTimer();
+                return true;
+            }
+
+            function handleExploreDrop(source, target) {
+                if (source === target || target === 'offboard') return 'snapback';
+                const probe = new Chess(chess.fen());
+                const m = probe.move({ from: source, to: target, promotion: 'q' });
+                if (!m) return 'snapback';
+                // Let chessboard.js finish the drop before the board is re-rendered
+                setTimeout(() => playExploreMove(m), 0);
+            }
+
+            // Castling, en passant and promotion move more than the dragged piece
+            function syncExploreBoard() {
+                if (board.fen() !== chess.fen().split(' ')[0]) {
+                    board.position(chess.fen(), false);
+                }
+            }
+
+            function sameUciMove(a, b) {
+                return Boolean(a && b) && a.from === b.from && a.to === b.to && (a.promotion || '') === (b.promotion || '');
+            }
+
+            function playExploreMove(m) {
+                playChessSound(m.captured ? 'capture' : 'move');
+                if (isInVariationMode && activeVariation) {
+                    const v = activeVariation;
+                    if (sameUciMove(v.moves[v.stepIndex + 1], m)) {
+                        jumpToVariationStep(v.moveIndex, v.lineType, v.stepIndex + 1, false);
+                        return;
+                    }
+                    startExploreLine(v.moveIndex, v.startingFen, v.moves.slice(0, v.stepIndex + 1), m);
+                    return;
+                }
+                const next = moves[currentMoveIndex + 1];
+                const bare = (san) => (san || '').replace(/[?!+#]+$/g, '');
+                if (next && bare(next.move) === bare(m.san)) {
+                    goToMove(currentMoveIndex + 1);
+                    return;
+                }
+                startExploreLine(currentMoveIndex, chess.fen(), [], m);
+            }
+
+            function startExploreLine(moveIndex, startingFen, keptMoves, m) {
+                const fenBefore = keptMoves.length ? keptMoves[keptMoves.length - 1].fen : startingFen;
+                const temp = new Chess(fenBefore);
+                const executed = temp.move({ from: m.from, to: m.to, promotion: m.promotion });
+                if (!executed) return;
+                const fenParts = fenBefore.split(' ');
+                const step = {
+                    from: executed.from,
+                    to: executed.to,
+                    promotion: executed.promotion,
+                    san: executed.san,
+                    fen: temp.fen(),
+                    fenBefore,
+                    isWhite: fenParts[1] === 'w',
+                    moveNumber: parseInt(fenParts[5], 10) || 1
+                };
+                const lineMoves = keptMoves.concat([step]).map((x, i) => Object.assign({}, x, { stepIndex: i }));
+                stopVariationAnimationTimer();
+                activeVariation = {
+                    moveIndex,
+                    move: moves[moveIndex] || null,
+                    lineType: 'explore',
+                    isRefutation: false,
+                    isExplore: true,
+                    startingFen,
+                    moves: lineMoves,
+                    stepIndex: lineMoves.length - 1
+                };
+                jumpToVariationStep(moveIndex, 'explore', lineMoves.length - 1, false);
+            }
+
+            function renderExploreRow() {
+                const row = document.getElementById('exploreLineRow');
+                if (!row) return;
+                if (!isInVariationMode || !activeVariation || !activeVariation.isExplore) {
+                    row.classList.add('d-none');
+                    return;
+                }
+                row.classList.remove('d-none');
+                const movesEl = document.getElementById('exploreLineMoves');
+                if (movesEl) movesEl.innerHTML = renderVariationLineHtml(activeVariation, activeVariation.stepIndex);
+                renderExploreEngine();
+                runExploreAnalysis();
+            }
+
+            function exploreTarget() {
+                const v = activeVariation;
+                if (!isInVariationMode || !v || !v.isExplore) return null;
+                const s = v.stepIndex;
+                return {
+                    fen: s >= 0 ? v.moves[s].fen : v.startingFen,
+                    step: s >= 0 ? v.moves[s] : null
+                };
+            }
+
+            // White-POV score from a side-to-move engine line
+            function exploreWhiteScore(ev, fen) {
+                const stm = fen.split(' ')[1];
+                if (stm === 'w') return { cp: ev.cp, mate: ev.mate };
+                return {
+                    cp: (ev.cp !== undefined && ev.cp !== null) ? -ev.cp : undefined,
+                    mate: (ev.mate !== undefined && ev.mate !== null) ? -ev.mate : undefined
+                };
+            }
+
+            const EXPLORE_QUALITY_LABELS = {
+                'brilliant': 'Brilliant', 'great': 'Great', 'best': 'Best', 'good move': 'Good',
+                'inaccuracy': 'Inaccuracy', 'mistake': 'Mistake', 'blunder': 'Blunder', 'missed win': 'Missed win'
+            };
+
+            function renderExploreEngine() {
+                const el = document.getElementById('exploreEngine');
+                const target = exploreTarget();
+                if (!el || !target) return;
+                const ev = exploreEvalCache.get(target.fen);
+                if (!ev) {
+                    el.innerHTML = '<span class="explore-eval is-pending"><i class="bi bi-cpu me-1"></i>Evaluating…</span>';
+                    return;
+                }
+                const Evaluator = (typeof ChessEvaluator !== 'undefined') ? ChessEvaluator : null;
+                const whiteScore = exploreWhiteScore(ev, target.fen);
+                const evalText = Evaluator ? Evaluator.formatScore(whiteScore, 'w') : '';
+                const parts = [`<span class="explore-eval" title="Engine evaluation (depth ${EXPLORE_DEPTH})">${escapeHtml(evalText)}</span>`];
+
+                // How good was the move that led here?
+                const step = target.step;
+                const evBefore = step ? exploreEvalCache.get(step.fenBefore) : null;
+                if (Evaluator && step && evBefore) {
+                    const wpBefore = Evaluator.cpToWinProb(Evaluator.scoreToCp(evBefore));
+                    const wpAfter = 1 - Evaluator.cpToWinProb(Evaluator.scoreToCp(ev));
+                    const bestUci = evBefore.pv && evBefore.pv[0];
+                    const playedUci = step.from + step.to + (step.promotion || '');
+                    const cls = Evaluator.classifyMove(wpBefore, wpAfter, { playedIsBest: bestUci === playedUci });
+                    const q = cls.uiQuality;
+                    const label = (bestUci === playedUci) ? 'Best' : (EXPLORE_QUALITY_LABELS[q] || q);
+                    const qClass = (bestUci === playedUci) ? 'best' : getQualityClass(q);
+                    parts.push(`<span class="explore-quality q-${qClass}">${escapeHtml(step.san)} · ${escapeHtml(label)}</span>`);
+                    if (bestUci && bestUci !== playedUci) {
+                        const altSan = MoveDiagnostics.uciToSan(new Chess(step.fenBefore), bestUci);
+                        if (altSan) parts.push(`<span class="explore-best">Engine preferred <b>${escapeHtml(altSan)}</b></span>`);
+                    }
+                }
+
+                const probe = new Chess(target.fen);
+                if (probe.in_checkmate()) {
+                    parts.push('<span class="explore-best"><b>Checkmate</b></span>');
+                } else if (probe.game_over()) {
+                    parts.push('<span class="explore-best"><b>Draw</b></span>');
+                } else if (ev.pv && ev.pv[0]) {
+                    const bestSan = MoveDiagnostics.uciToSan(probe, ev.pv[0]);
+                    if (bestSan) {
+                        parts.push(`<span class="explore-best">Best here: <b>${escapeHtml(bestSan)}</b></span>`);
+                        drawArrow(ev.pv[0].slice(0, 2), ev.pv[0].slice(2, 4), 'better');
+                    }
+                }
+                el.innerHTML = parts.join('');
+
+                if (Evaluator) {
+                    renderEvalGauge(Evaluator.cpToWinProb(Evaluator.scoreToCp(whiteScore)), evalText);
+                }
+            }
+
+            function ensureExploreWorker() {
+                if (exploreWorkerReady) return exploreWorkerReady;
+                if (typeof BrowserWhyBlunder === 'undefined' || !BrowserWhyBlunder.StockfishWorker) {
+                    return Promise.reject(new Error('Engine unavailable'));
+                }
+                exploreWorker = new BrowserWhyBlunder.StockfishWorker(777);
+                exploreWorkerReady = exploreWorker.init().then(() => exploreWorker);
+                exploreWorkerReady.catch(() => {
+                    exploreWorker = null;
+                    exploreWorkerReady = null;
+                });
+                return exploreWorkerReady;
+            }
+
+            async function evalExploreFen(fen) {
+                if (exploreEvalCache.has(fen)) return;
+                const worker = await ensureExploreWorker();
+                const res = await worker.evaluate(fen, EXPLORE_DEPTH, 1);
+                const line = res && res.lines && res.lines[1];
+                if (line && (line.cp !== undefined || line.mate !== undefined)) {
+                    exploreEvalCache.set(fen, { cp: line.cp, mate: line.mate, pv: line.pv || [] });
+                }
+            }
+
+            // One search at a time; if the user moves on mid-search, re-plan for the new position
+            async function runExploreAnalysis() {
+                if (exploreRunning) {
+                    exploreRerun = true;
+                    return;
+                }
+                exploreRunning = true;
+                try {
+                    do {
+                        exploreRerun = false;
+                        const target = exploreTarget();
+                        if (!target) break;
+                        const fens = [target.fen];
+                        if (target.step) fens.push(target.step.fenBefore);
+                        const missing = fens.filter(fen => !exploreEvalCache.has(fen));
+                        for (const fen of missing) {
+                            if (exploreRerun) break;
+                            await evalExploreFen(fen);
+                        }
+                        if (!exploreRerun && missing.length > 0) renderExploreEngine();
+                    } while (exploreRerun);
+                } catch (e) {
+                    const el = document.getElementById('exploreEngine');
+                    if (el && exploreTarget()) el.innerHTML = '<span class="explore-eval is-pending">Engine unavailable</span>';
+                } finally {
+                    exploreRunning = false;
+                }
+            }
+
+            const exploreLineMovesEl = document.getElementById('exploreLineMoves');
+            if (exploreLineMovesEl) {
+                exploreLineMovesEl.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.var-move-btn');
+                    if (!btn || !activeVariation || !activeVariation.isExplore) return;
+                    e.stopPropagation();
+                    const step = parseInt(btn.dataset.step, 10);
+                    if (!isNaN(step)) {
+                        stopVariationAnimationTimer();
+                        jumpToVariationStep(activeVariation.moveIndex, 'explore', step, false);
+                    }
+                });
             }
 
             function returnToGamePosition() {
