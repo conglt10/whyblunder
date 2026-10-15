@@ -395,6 +395,152 @@
         return { band: 'losing', text: `${mover} is losing (${evalText}). The task is to make ${opp}'s win as hard as possible.` };
     }
 
+    const WHY_BAND_RANK = { 'losing': 0, 'worse': 1, 'slightly-worse': 2, 'equal': 3, 'slightly-better': 4, 'better': 5, 'winning': 6 };
+
+    function countPieces(list) {
+        const order = ['q', 'r', 'b', 'n', 'p'];
+        const parts = [];
+        order.forEach(type => {
+            const n = list.filter(t => t === type).length;
+            if (n === 0) return;
+            parts.push(n === 1 ? `a ${WHY_PIECE_NAMES[type]}` : `${WHY_COUNT_WORDS[n] || n} ${WHY_PIECE_NAMES[type]}s`);
+        });
+        return joinWords(parts);
+    }
+
+    /**
+     * Who is ahead on material, in words: "Material is level", "White is up a knight",
+     * "Black has a rook for a bishop and a pawn".
+     */
+    function materialBalance(fen) {
+        if (!fen) return { diff: 0, text: '' };
+        const white = [];
+        const black = [];
+        for (const ch of fen.split(' ')[0]) {
+            const lower = ch.toLowerCase();
+            if (!WHY_PIECE_VALUES[lower]) continue;
+            (ch === lower ? black : white).push(lower);
+        }
+        const diff = white.reduce((s, t) => s + WHY_PIECE_VALUES[t], 0) - black.reduce((s, t) => s + WHY_PIECE_VALUES[t], 0);
+        if (diff === 0) return { diff, text: 'Material is level' };
+        const w = white.slice();
+        const b = black.slice();
+        for (let i = w.length - 1; i >= 0; i--) {
+            const j = b.indexOf(w[i]);
+            if (j >= 0) { w.splice(i, 1); b.splice(j, 1); }
+        }
+        const ahead = diff > 0 ? 'White' : 'Black';
+        const plus = diff > 0 ? w : b;
+        const minus = diff > 0 ? b : w;
+        const text = minus.length
+            ? `${ahead} has ${countPieces(plus)} for ${countPieces(minus)}`
+            : `${ahead} is up ${countPieces(plus)}`;
+        return { diff, text };
+    }
+
+    function bandRank(situation) {
+        const r = WHY_BAND_RANK[situation && situation.band];
+        return r === undefined ? 3 : r;
+    }
+
+    /** "slightly better", "clearly better", "winning" for the side that is ahead in this band. */
+    function bandAdjective(band) {
+        if (band === 'winning' || band === 'losing') return 'winning';
+        if (band === 'better' || band === 'worse') return 'clearly better';
+        if (band === 'slightly-better' || band === 'slightly-worse') return 'slightly better';
+        return 'equal';
+    }
+
+    /** Short "who stands how" label for one side of the before/after strip. */
+    function standingLabel(situation, moverColor) {
+        const band = situation && situation.band;
+        const rank = bandRank(situation);
+        if (band === 'equal') return 'Roughly equal';
+        const leader = sideName(rank > 3 ? moverColor : (moverColor === 'w' ? 'b' : 'w'));
+        return `${leader} ${bandAdjective(band) === 'winning' ? 'is winning' : `is ${bandAdjective(band)}`}`;
+    }
+
+    /**
+     * Bottom line up front: where the game stood before the move, where it stands
+     * after it, and one sentence that ties the two together.
+     * Scores are mover-POV, as everywhere else in diagnose().
+     */
+    function buildBluf(options) {
+        const {
+            fenBefore, san, moverColor, bestScore, playedScore,
+            isBad, playedIsBest, bestSan, refSan, playedSummary, quality
+        } = options;
+        const mover = sideName(moverColor);
+        const opp = sideName(moverColor === 'w' ? 'b' : 'w');
+        const before = describeSituation(bestScore, moverColor);
+        const after = describeSituation(playedScore, moverColor);
+        const rb = bandRank(before);
+        const ra = bandRank(after);
+        const bestMates = bestScore && bestScore.mate !== undefined && bestScore.mate !== null && bestScore.mate > 0;
+        const playedMates = playedScore && playedScore.mate !== undefined && playedScore.mate !== null && playedScore.mate > 0;
+        const oppStanding = (band) => `${opp} is now ${bandAdjective(band)}`;
+
+        let text;
+        if (bestMates && !playedMates) {
+            text = ra === 6
+                ? `${san} misses a forced mate, but ${mover} is still winning.`
+                : `${san} lets a forced mate slip: ${ra > 3 ? `${mover} is now only ${bandAdjective(after.band)}` : (ra === 3 ? 'the position is now roughly equal' : oppStanding(after.band))}.`;
+        } else if (ra >= rb || !isBad) {
+            if (bestMates) text = `${san} keeps the forced mate on track.`;
+            else if (ra === 6) text = `${san} keeps ${mover} winning.`;
+            else if (ra >= 4) text = `${san} keeps ${mover}'s edge.`;
+            else if (ra === 3) text = `${san} keeps the balance.`;
+            else if (ra >= 1) text = `${san} holds on: ${opp} keeps ${ra === 2 ? 'a small' : 'a clear'} edge, but nothing more.`;
+            else text = `${san} is ${playedIsBest ? 'the most stubborn try' : 'a fighting try'}, but ${mover} is still losing.`;
+        } else if (rb >= 4 && ra < 3) {
+            text = `${san} throws away ${mover}'s advantage: ${oppStanding(after.band)}.`;
+        } else if (rb >= 4 && ra === 3) {
+            text = `${san} lets ${mover}'s advantage slip; the position is now level.`;
+        } else if (rb >= 4) {
+            text = `${san} gives back part of the advantage: ${mover} is now ${bandAdjective(after.band)} instead of ${bandAdjective(before.band)}.`;
+        } else if (rb === 3) {
+            text = `${san} hands the advantage to ${opp}, who is now ${bandAdjective(after.band)}.`;
+        } else {
+            text = `${san} makes a difficult position worse: ${oppStanding(after.band)}.`;
+        }
+
+        // The concrete outcome of a bad move, then the better choice
+        if (isBad) {
+            let consequence = '';
+            if (playedSummary) {
+                const mateEv = playedSummary.events.find(e => e.mate);
+                const oppPromo = playedSummary.promotions.find(p => p.color !== moverColor);
+                if (mateEv && mateEv.color !== moverColor) consequence = `${mover} gets mated (${mateEv.label})`;
+                else if (playedSummary.net <= -1 && playedSummary.ledgerText) consequence = `${mover} ${playedSummary.ledgerText}`;
+                else if (oppPromo) consequence = `${opp} promotes a pawn (${oppPromo.label})`;
+            }
+            const reply = playedSummary && playedSummary.events[1];
+            const replyLabel = reply ? reply.label : refSan;
+            if (consequence && replyLabel) text += ` After ${replyLabel}, ${consequence}.`;
+            else if (consequence) text += ` In the main line, ${consequence}.`;
+            if (bestSan && !playedIsBest) text += ` Better was ${bestSan}.`;
+        }
+
+        const material = materialBalance(fenBefore);
+        return {
+            before: {
+                band: before.band,
+                label: standingLabel(before, moverColor),
+                evaluation: formatWhiteEval(bestScore, moverColor),
+                material: material.text
+            },
+            after: {
+                band: after.band,
+                label: standingLabel(after, moverColor),
+                evaluation: formatWhiteEval(playedScore, moverColor)
+            },
+            move: san,
+            quality: quality || null,
+            shift: ra > rb ? 'up' : (ra < rb ? 'down' : 'same'),
+            text
+        };
+    }
+
     /**
      * Build a null-move FEN (the mover "passes"), or null when that is illegal.
      */
@@ -904,7 +1050,20 @@
                 pv: playedPv ? playedPv.slice() : [],
                 pvFormatted: playedPv ? formatPv(boardBefore, playedPv, 8) : ''
             } : null,
-            alternatives
+            alternatives,
+            bluf: buildBluf({
+                fenBefore,
+                san: sanPlayedForWhy,
+                moverColor,
+                bestScore: bestScoreObj,
+                playedScore: playedScoreObj,
+                isBad,
+                playedIsBest,
+                bestSan,
+                refSan,
+                playedSummary,
+                quality: classification.uiQuality
+            })
         };
         if (engine.threat) {
             why.threat = describeThreat(fenBefore, engine.threat, bestScoreObj);
@@ -1070,6 +1229,8 @@
         summarizeLine,
         buildAlternatives,
         describeSituation,
+        buildBluf,
+        materialBalance,
         describeThreat,
         nullMoveFen,
         _detectOfferedPiece: detectOfferedPiece

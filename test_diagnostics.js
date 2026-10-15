@@ -1538,6 +1538,59 @@ whyCheck('why-summarize-line-ledger', () => {
     assert.deepStrictEqual(MoveDiagnostics.summarizeLine(BXF5_FEN, []).events, []);
 });
 
+whyCheck('why-bluf-before-after-bottom-line', () => {
+    const d = MoveDiagnostics.diagnose({
+        fenBefore: BXF5_FEN,
+        playedMove: 'd7f5',
+        engine: { bestMove: 'd7f5', lines: BXF5_LINES },
+        context: { ply: 84, adaptive: true }
+    });
+    const b = d.why.bluf;
+    assert(b, 'diagnose must return why.bluf');
+    assert.strictEqual(b.before.evaluation, '+3.36');
+    assert.strictEqual(b.before.label, 'White is clearly better');
+    assert.strictEqual(b.before.material, 'Material is level');
+    assert.strictEqual(b.after.label, 'White is clearly better');
+    assert.strictEqual(b.shift, 'same');
+    assert(/^Bxf5 holds on: White keeps a clear edge/.test(b.text), `bluf: ${b.text}`);
+});
+
+whyCheck('why-bluf-blunder-outcome', () => {
+    // 3.Nxe5?? Nxe5: the knight is lost for a pawn
+    const fen = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3';
+    const d = MoveDiagnostics.diagnose({
+        fenBefore: fen,
+        playedMove: 'f3e5',
+        engine: {
+            lines: { 1: cpLine(30, ['f1c4', 'g8f6']), 2: cpLine(25, ['f1b5', 'a7a6']) },
+            post: { bestMove: 'c6e5', lines: { 1: cpLine(250, ['c6e5', 'd2d4', 'e5c6']) } }
+        },
+        context: { ply: 5 }
+    });
+    const b = d.why.bluf;
+    assert.strictEqual(b.before.label, 'Roughly equal');
+    assert.strictEqual(b.after.label, 'Black is clearly better');
+    assert.strictEqual(b.shift, 'down');
+    assert(/hands the advantage to Black/.test(b.text), `bluf: ${b.text}`);
+    assert(/After 3\.\.\.Nxe5, White gives up the knight for the e-pawn/.test(b.text), `bluf: ${b.text}`);
+    assert(/Better was Bc4\./.test(b.text), `bluf: ${b.text}`);
+});
+
+whyCheck('why-bluf-material-balance', () => {
+    assert.strictEqual(MoveDiagnostics.materialBalance('4k3/8/8/8/8/8/8/R3K3 w - - 0 1').text, 'White is up a rook');
+    assert.strictEqual(MoveDiagnostics.materialBalance('4k3/8/8/8/8/8/8/R3K3 w - - 0 1').diff, 5);
+    assert.strictEqual(MoveDiagnostics.materialBalance('4k3/1b5p/8/8/8/8/8/R3K3 w - - 0 1').text, 'White has a rook for a bishop and a pawn');
+    assert.strictEqual(MoveDiagnostics.materialBalance('4k3/pp6/8/8/8/8/8/4K3 w - - 0 1').text, 'Black is up two pawns');
+});
+
+whyCheck('why-bluf-missed-mate', () => {
+    const b = MoveDiagnostics.buildBluf({
+        fenBefore: '4k3/8/8/8/8/8/8/R3K3 w - - 0 1', san: 'Ra2', moverColor: 'w',
+        bestScore: { mate: 3 }, playedScore: { cp: 900 }, isBad: true, playedIsBest: false, bestSan: 'Ra8+'
+    });
+    assert(/^Ra2 misses a forced mate, but White is still winning\. Better was Ra8\+\.$/.test(b.text), `bluf: ${b.text}`);
+});
+
 whyCheck('why-alternatives-single-line', () => {
     const alts = MoveDiagnostics.buildAlternatives(BXF5_FEN, { 1: BXF5_LINES[1] }, 'd7f5', { cp: -336 });
     assert.deepStrictEqual(alts, []);

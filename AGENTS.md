@@ -151,12 +151,18 @@ The UI in `index.html` expects analyzed moves from `BrowserWhyBlunder` / `MoveDi
       situation: { band: "worse", text: "White is clearly better (+3.36). ..." },
       threat: { san, from, to, fen, pv, evaluation, gainCp, text } | null, // null-move search, key moments only
       idea: { text, pv, pvFormatted } | null,
-      alternatives: [{ san, uci, from, to, evaluation, cp, wp, deltaWp, verdict, reason, pv, pvFormatted }]
+      alternatives: [{ san, uci, from, to, evaluation, cp, wp, deltaWp, verdict, reason, pv, pvFormatted }],
+      bluf: {                     // Bottom line up front, shown above the "Dig deeper" rows
+        before: { band, label: "White is clearly better", evaluation: "+1.79", material: "Material is level" },
+        after: { band, label: "Roughly equal", evaluation: "+0.16" },
+        move: "Nxe5", quality: "mistake", shift: "down",   // 'up' | 'same' | 'down' (mover POV)
+        text: "Nxe5 lets White's advantage slip; the position is now level. After 4...Qg5, ..."
+      }
     }
   }
 }
 ```
-`why` is optional: games in the analysis cache from before it existed render the older layout.
+`why` is optional: games in the analysis cache from before it existed render the older layout. The same goes for `why.bluf`: without it the Why card renders its rows flat, with no "Dig deeper" toggle.
 Any changes to diagnostic fields must be **additive** (e.g. `evidence`, `confidence`).
 
 ---
@@ -218,6 +224,7 @@ Any changes to diagnostic fields must be **additive** (e.g. `evidence`, `confide
   - Small: `--lic-fs-sm: 0.75rem` (12px)
   - Badges: `--lic-fs-badge: 1.25rem` (20px)
 - **chess.com Theme Layer (default)**: `body[data-theme="cc"]` remaps the `--lic-*` tokens to a chess.com palette (charcoal + Lichess-orange accent `--cc-cta`, `#d64f00`) and switches desktop to a 2-column shell (board | right panel) with a fixed left sidebar (`#ccSidebar`, forwards clicks to the hidden header controls). The Lichess look remains available via `data-theme="lichess"`; the preference persists in `localStorage` (`whyblunder_theme`, `whyblunder_board_theme`) and is applied by an inline script at `<body>` *before* the board is created. The default board is Lichess brown (`data-board-theme="brown"`); a one-time `whyblunder_board_theme_v2` migration moves the old auto-saved green default to brown. Game Review summary (`#ccReviewSummary`: accuracy via `ChessEvaluator.gameAccuracy/phaseAccuracy`, classification counts, SVG eval graph) opens after analysis. All CC CSS lives in the `CHESS.COM THEME` block at the end of `<style>`; all CC JS in the `CHESS.COM-STYLE UI` block before the `window.*` exports. See `docs/chesscom-ui-plan.md`.
+- **Explore Mode (analysis)**: Dragging a legal move on the board in analysis mode plays it from the shown position. If it matches the game's next move (or the next move of the line on screen) it simply steps forward; otherwise it starts or branches a `lineType: 'explore'` variation ("Your Line") that reuses the variation banner (`#variationBanner`, ←/→/Home/End, Return/Space/Esc back to the game). `#exploreLineRow` shows the line and a depth-14 read from a dedicated `StockfishWorker` (eval, quality of the move, engine's preferred move, best reply), cached per FEN. Promotions auto-queen.
 - **Responsive Layout**: Dedicated mobile toolbar (`.mobile-nav-toolbar`), bottom capsule navigation (`.mobile-nav-capsule`), swipeable ticker (`.mobile-move-ticker`), and offcanvas move list (`.mobile-moves-offcanvas`).
 
 ---
